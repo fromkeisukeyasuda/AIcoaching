@@ -8,7 +8,7 @@ interface CharacterAvatarProps {
   loading?: boolean;
 }
 
-/* ── Shared animation styles ── */
+/* ── Shared animation styles (used only by DefaultCharacter SVG) ── */
 const blinkAnim = {
   transformBox: "fill-box",
   transformOrigin: "center",
@@ -26,6 +26,46 @@ const speakAnim = {
   transformOrigin: "center",
   animation: "speakMouth 0.35s ease-in-out infinite alternate",
 } as React.CSSProperties;
+
+/* ── Static image character (田中・佐藤・鈴木) ── */
+function CharacterImage({
+  src,
+  alt,
+  speaking,
+}: {
+  src: string;
+  alt: string;
+  speaking: boolean;
+}) {
+  return (
+    <div
+      style={{
+        width: 148,
+        height: 148,
+        borderRadius: 14,
+        overflow: "hidden",
+        background: "#f0ece4",
+        flexShrink: 0,
+        boxShadow: speaking
+          ? "0 0 0 2px rgba(99,102,241,0.5), 0 6px 24px rgba(0,0,0,0.4)"
+          : "0 4px 20px rgba(0,0,0,0.35)",
+        transition: "box-shadow 0.5s ease",
+      }}
+    >
+      <img
+        src={src}
+        alt={alt}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          objectPosition: "center center",
+          display: "block",
+        }}
+      />
+    </div>
+  );
+}
 
 /* ═════════════════════════════════════════════
    田中 誠 — Navy suit, black rectangular glasses, spiky anime hair
@@ -534,9 +574,9 @@ export default function CharacterAvatar({
 
       {/* Character with float animation */}
       <div style={floatStyle}>
-        {charType === "tanaka"  && <TanakaMakoto  speaking={speaking} />}
-        {charType === "sato"    && <SatoMisaki    speaking={speaking} />}
-        {charType === "suzuki"  && <SuzukiKenichi speaking={speaking} />}
+        {charType === "tanaka"  && <CharacterImage src="/characters/tanaka.png" alt="田中 誠"   speaking={speaking} />}
+        {charType === "sato"    && <CharacterImage src="/characters/sato.png"   alt="佐藤 美咲" speaking={speaking} />}
+        {charType === "suzuki"  && <CharacterImage src="/characters/suzuki.png" alt="鈴木 健一" speaking={speaking} />}
         {charType === "default" && <DefaultCharacter speaking={speaking} />}
       </div>
     </div>

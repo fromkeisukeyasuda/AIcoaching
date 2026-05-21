@@ -1,23 +1,23 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 export type VoiceInputStatus = "idle" | "recording" | "unsupported";
 
-interface SpeechRecognitionResult {
+// Web Speech API 型定義
+interface ISpeechRecognitionResult {
   readonly length: number;
-  [index: number]: { transcript: string; confidence: number };
+  [index: number]: { transcript: string };
 }
-interface SpeechRecognitionResultList {
+interface ISpeechRecognitionResultList {
   readonly length: number;
-  [index: number]: SpeechRecognitionResult;
+  [index: number]: ISpeechRecognitionResult;
 }
-interface SpeechRecognitionResultEvent {
-  readonly results: SpeechRecognitionResultList;
+interface ISpeechRecognitionEvent {
+  readonly results: ISpeechRecognitionResultList;
 }
-interface SpeechRecognitionErrorEvent {
+interface ISpeechRecognitionErrorEvent {
   error: string;
-  message?: string;
 }
 interface ISpeechRecognition extends EventTarget {
   lang: string;
@@ -26,103 +26,139 @@ interface ISpeechRecognition extends EventTarget {
   maxAlternatives: number;
   onstart: (() => void) | null;
   onend: (() => void) | null;
-  onerror: ((e: SpeechRecognitionErrorEvent) => void) | null;
-  onresult: ((e: SpeechRecognitionResultEvent) => void) | null;
+  onerror: ((e: ISpeechRecognitionErrorEvent) => void) | null;
+  onresult: ((e: ISpeechRecognitionEvent) => void) | null;
   start(): void;
   stop(): void;
   abort(): void;
 }
-interface ISpeechRecognitionConstructor {
-  new(): ISpeechRecognition;
-}
+type ISpeechRecognitionCtor = new () => ISpeechRecognition;
 
 const ERROR_MESSAGES: Record<string, string> = {
-  "not-allowed": "マイクへのアクセスが拒否されました。ブラウザの設定でマイクを許可してください。",
-  "no-speech": "音声が検出されませんでした。もう一度話しかけてください。",
-  "network": "ネットワークエラーが発生しました。",
-  "audio-capture": "マイクが見つかりません。マイクが接続されているか確認してください。",
+  "not-allowed":
+    "マイクのアクセスが拒否されています。ブラウザのアドレスバー横 🔒 からマイクを「許可」にしてください。",
+  "no-speech": "音声が検出されませんでした。もう少し大きな声で話してみてください。",
+  "audio-capture":
+    "マイクが見つかりません。PCにマイクが接続されているか確認してください。",
+  "network": "",   // 下で別処理
   "aborted": "",
 };
+
+function getSR(): ISpeechRecognitionCtor | null {
+  if (typeof window === "undefined") return null;
+  const w = window as Window & {
+    SpeechRecognition?: ISpeechRecognitionCtor;
+    webkitSpeechRecognition?: ISpeechRecognitionCtor;
+  };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+}
 
 export function useVoiceInput(onResult: (text: string) => void) {
   const [status, setStatus] = useState<VoiceInputStatus>("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
-  const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const onResultRef = useRef(onResult);
+  const activeRef = useRef<ISpeechRecognition | null>(null);
+  const networkRetryRef = useRef(0);
 
-  // onResult を ref で保持することで useEffect を再実行しない
   useEffect(() => { onResultRef.current = onResult; }, [onResult]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!getSR()) setStatus("unsupported");
+  }, []);
 
-    const w = window as Window & {
-      SpeechRecognition?: ISpeechRecognitionConstructor;
-      webkitSpeechRecognition?: ISpeechRecognitionConstructor;
-    };
-    const SR = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+  // 毎回新しいインスタンスを生成して接続をリフレッシュ
+  const start = useCallback(() => {
+    const SR = getSR();
+    if (!SR) return;
 
-    if (!SR) {
-      setStatus("unsupported");
-      return;
-    }
+    // 前の認識を止める
+    try { activeRef.current?.abort(); } catch { /* ignore */ }
 
-    const recognition = new SR();
-    recognition.lang = "ja-JP";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    const r = new SR();
+    r.lang = "ja-JP";
+    r.continuous = false;
+    r.interimResults = false;
+    r.maxAlternatives = 1;
 
-    recognition.onstart = () => {
+    r.onstart = () => {
       setStatus("recording");
       setErrorMsg("");
+      networkRetryRef.current = 0;
     };
-    recognition.onend = () => {
+
+    r.onend = () => {
       setStatus("idle");
     };
-    recognition.onerror = (e: SpeechRecognitionErrorEvent) => {
+
+    r.onerror = (e: ISpeechRecognitionErrorEvent) => {
       setStatus("idle");
-      const msg = ERROR_MESSAGES[e.error] ?? `エラーが発生しました（${e.error}）`;
-      if (msg) setErrorMsg(msg);
+
+      if (e.error === "network") {
+        networkRetryRef.current += 1;
+        if (networkRetryRef.current <= 2) {
+          // 少し待ってから自動リトライ（最大2回）
+          setTimeout(() => {
+            const r2 = new SR();
+            r2.lang = "ja-JP";
+            r2.continuous = false;
+            r2.interimResults = false;
+            r2.maxAlternatives = 1;
+            r2.onstart = r.onstart;
+            r2.onend = r.onend;
+            r2.onerror = (e2) => {
+              if (e2.error === "network") {
+                setErrorMsg(
+                  "Chromeの音声認識サーバーへの接続に失敗しました。\n" +
+                  "① Windowsの設定 → プライバシー → マイクで「アプリのアクセスを許可」を確認\n" +
+                  "② chrome://settings/content/microphone でlocalhost が許可されているか確認"
+                );
+              }
+            };
+            r2.onresult = r.onresult;
+            activeRef.current = r2;
+            try { r2.start(); } catch { /* ignore */ }
+          }, 500);
+          return;
+        }
+        setErrorMsg(
+          "Chromeの音声認識サーバーへの接続に失敗しました。\n" +
+          "① Windowsの設定 → プライバシー → マイクで「アプリのアクセスを許可」を確認\n" +
+          "② chrome://settings/content/microphone でlocalhost が許可されているか確認"
+        );
+        return;
+      }
+
+      const msg = ERROR_MESSAGES[e.error];
+      if (msg !== undefined && msg !== "") setErrorMsg(msg);
     };
-    recognition.onresult = (e: SpeechRecognitionResultEvent) => {
+
+    r.onresult = (e: ISpeechRecognitionEvent) => {
       const transcript = e.results[0][0].transcript;
-      onResultRef.current(transcript);
+      if (transcript) onResultRef.current(transcript);
       setErrorMsg("");
     };
 
-    recognitionRef.current = recognition;
-
-    return () => {
-      recognition.onstart = null;
-      recognition.onend = null;
-      recognition.onerror = null;
-      recognition.onresult = null;
-      try { recognition.abort(); } catch { /* ignore */ }
-    };
-  }, []); // マウント時1回だけ
-
-  const start = useCallback(() => {
-    setErrorMsg("");
-    try {
-      recognitionRef.current?.start();
-    } catch {
-      // already started — stop and restart
-      try { recognitionRef.current?.stop(); } catch { /* ignore */ }
-    }
+    activeRef.current = r;
+    setStatus("recording");
+    try { r.start(); } catch { setStatus("idle"); }
   }, []);
 
   const stop = useCallback(() => {
-    try { recognitionRef.current?.stop(); } catch { /* ignore */ }
+    try { activeRef.current?.stop(); } catch { /* ignore */ }
+    setStatus("idle");
   }, []);
 
   const toggle = useCallback(() => {
-    if (status === "recording") {
-      stop();
-    } else {
-      start();
-    }
+    if (status === "recording") stop();
+    else start();
   }, [status, start, stop]);
+
+  // アンマウント時にクリーンアップ
+  useEffect(() => {
+    return () => {
+      try { activeRef.current?.abort(); } catch { /* ignore */ }
+    };
+  }, []);
 
   return { status, errorMsg, toggle };
 }

@@ -259,63 +259,148 @@ function SatoMisaki({ speaking }: { speaking: boolean }) {
 }
 
 /* ═════════════════════════════════════════════
-   鈴木 健一 — Teal casual, messy hair, tired expression
+   鈴木 健一 — Dark teal open-collar shirt, wild messy black hair,
+               half-lidded calm eyes, stubble, angular face (35歳)
 ═════════════════════════════════════════════ */
 function SuzukiKenichi({ speaking }: { speaking: boolean }) {
+  const skin = "#e4b878";
+  const skinShadow = "#c09060";
+  const hair = "#0c0c14";
+  const shirt = "#1d6470";
+
   return (
     <svg viewBox="0 0 160 200" width="140" height="175" xmlns="http://www.w3.org/2000/svg">
-      {/* Neck shadow */}
-      <rect x="70" y="134" width="20" height="18" rx="2" fill="#d8a878" />
-      {/* Teal casual shirt */}
-      <path d="M22,168 Q38,150 68,148 L72,157 L80,167 L88,157 L92,148 Q122,150 138,168 L138,200 L22,200 Z" fill="#065f46" />
-      {/* Open collar detail */}
-      <path d="M73,148 L76,158 L80,167 L84,158 L87,148 L80,154 Z" fill="#047857" />
-      {/* Collar shadow */}
-      <path d="M74,148 L80,157 L86,148 L80,153 Z" fill="#034737" opacity="0.4" />
-      {/* Neck skin */}
-      <rect x="70" y="131" width="20" height="20" rx="2" fill="#f0c898" />
-      {/* Hair back — messy */}
-      <ellipse cx="80" cy="82" rx="47" ry="43" fill="#2c2010" />
-      {/* Messy hairline */}
-      <path d="M38,87 Q42,47 80,43 Q118,47 122,87 Q113,60 95,53 Q82,47 66,51 Q50,57 38,87 Z" fill="#2c2010" />
-      {/* Messy strands sticking up */}
-      <line x1="57" y1="43" x2="52" y2="34" stroke="#2c2010" strokeWidth="4" strokeLinecap="round" />
-      <line x1="78" y1="42" x2="76" y2="32" stroke="#2c2010" strokeWidth="4.5" strokeLinecap="round" />
-      <line x1="100" y1="44" x2="105" y2="35" stroke="#2c2010" strokeWidth="4" strokeLinecap="round" />
-      <line x1="68" y1="41" x2="65" y2="34" stroke="#2c2010" strokeWidth="3.5" strokeLinecap="round" />
-      {/* Face */}
-      <ellipse cx="80" cy="89" rx="44" ry="47" fill="#f0c898" />
-      {/* Light stubble hint */}
-      <ellipse cx="80" cy="112" rx="16" ry="8" fill="#2c2010" opacity="0.06" />
-      {/* Cheek shadow */}
-      <ellipse cx="55" cy="98" rx="9" ry="5" fill="#d09070" opacity="0.2" />
-      <ellipse cx="105" cy="98" rx="9" ry="5" fill="#d09070" opacity="0.2" />
-      {/* Eyebrows — slightly furrowed, tired */}
-      <path d="M53,74 Q63,68 73,72" stroke="#2c2010" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.9" />
-      <path d="M87,72 Q97,68 107,74" stroke="#2c2010" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.9" />
-      {/* Left eye — tired (narrower, heavy lid) */}
+
+      {/* ── OUTFIT — open collar teal shirt ── */}
+      {/* Neck shadow behind collar */}
+      <rect x="71" y="132" width="18" height="20" rx="2" fill={skinShadow} />
+      {/* Shirt body */}
+      <path d="M14,200 L14,170 Q30,148 64,145 L70,158 L80,170 L90,158 L96,145 Q130,148 146,170 L146,200 Z" fill={shirt} />
+      {/* Shirt shadow fold */}
+      <path d="M14,200 L14,185 Q30,172 64,168 L70,178 L80,170 L90,178 L96,168 Q130,172 146,185 L146,200 Z" fill="#144e5a" opacity="0.35" />
+      {/* Left collar panel */}
+      <path d="M64,145 Q70,149 72,156 L80,152 L80,145 Z" fill="#144e5a" />
+      {/* Right collar panel */}
+      <path d="M96,145 Q90,149 88,156 L80,152 L80,145 Z" fill="#144e5a" />
+      {/* Collar left point */}
+      <path d="M58,143 Q64,140 70,148 Q66,147 60,148 Z" fill={shirt} />
+      {/* Collar right point */}
+      <path d="M102,143 Q96,140 90,148 Q94,147 100,148 Z" fill={shirt} />
+      {/* Chest skin at open collar */}
+      <path d="M70,148 L80,152 L90,148 L86,145 L80,150 L74,145 Z" fill={skinShadow} opacity="0.55" />
+      {/* Shirt center placket */}
+      <line x1="80" y1="152" x2="80" y2="200" stroke="#144e5a" strokeWidth="1" opacity="0.4" />
+      {/* Buttons */}
+      <circle cx="80" cy="162" r="1.5" fill="#144e5a" />
+      <circle cx="80" cy="172" r="1.5" fill="#144e5a" />
+      <circle cx="80" cy="182" r="1.5" fill="#144e5a" />
+      {/* Chest pocket */}
+      <path d="M108,158 L122,158 L122,167 L108,167" fill="none" stroke="#144e5a" strokeWidth="1.2" />
+
+      {/* ── NECK ── */}
+      <rect x="71" y="128" width="18" height="22" rx="2" fill={skin} />
+      <path d="M71,130 Q74,148 71,150 L71,128 Z" fill={skinShadow} opacity="0.25" />
+      <path d="M89,130 Q86,148 89,150 L89,128 Z" fill={skinShadow} opacity="0.25" />
+
+      {/* ── EARS ── */}
+      <ellipse cx="38" cy="90" rx="5" ry="7" fill={skin} />
+      <ellipse cx="122" cy="90" rx="5" ry="7" fill={skin} />
+      <path d="M36,87 Q39,92 36,97" stroke={skinShadow} strokeWidth="1.5" fill="none" opacity="0.45" />
+      <path d="M124,87 Q121,92 124,97" stroke={skinShadow} strokeWidth="1.5" fill="none" opacity="0.45" />
+
+      {/* ── BACK HAIR ── */}
+      <ellipse cx="80" cy="74" rx="47" ry="42" fill={hair} />
+      {/* Side hair hanging left */}
+      <path d="M34,82 Q24,106 28,128 Q34,116 38,100 Z" fill={hair} />
+      {/* Side hair hanging right */}
+      <path d="M126,82 Q136,106 132,128 Q126,116 122,100 Z" fill={hair} />
+
+      {/* ── FACE — angular, longer shape ── */}
+      <path d="M42,82 Q38,112 50,134 Q62,152 80,155 Q98,152 110,134 Q122,112 118,82 Q112,48 80,46 Q48,48 42,82 Z" fill={skin} />
+
+      {/* Cheek hollow shadow — gaunt/lean look */}
+      <path d="M44,102 Q48,116 53,122 Q46,116 42,104 Z" fill={skinShadow} opacity="0.28" />
+      <path d="M116,102 Q112,116 107,122 Q114,116 118,104 Z" fill={skinShadow} opacity="0.28" />
+      {/* Under-eye fatigue shadow */}
+      <ellipse cx="63" cy="89" rx="9" ry="3" fill={skinShadow} opacity="0.14" />
+      <ellipse cx="97" cy="89" rx="9" ry="3" fill={skinShadow} opacity="0.14" />
+      {/* Nose bridge subtle shadow */}
+      <path d="M78,82 L77,102" stroke={skinShadow} strokeWidth="1.5" fill="none" opacity="0.2" strokeLinecap="round" />
+      {/* Jaw definition */}
+      <path d="M58,140 Q80,154 102,140" stroke={skinShadow} strokeWidth="1" fill="none" opacity="0.15" />
+
+      {/* ── FRONT HAIR — wild messy volumious ── */}
+      {/* Main hair crown */}
+      <path d="M42,82 Q48,48 80,44 Q112,48 118,82 Q108,60 80,58 Q52,60 42,82 Z" fill={hair} />
+      {/* Wild strands — spreading in all directions */}
+      <path d="M44,72 Q30,58 24,44 Q36,56 44,70 Z" fill={hair} />
+      <path d="M52,56 Q46,36 48,22 Q52,38 56,54 Z" fill={hair} />
+      <path d="M62,50 Q58,28 62,14 Q66,32 66,50 Z" fill={hair} />
+      <path d="M74,46 Q70,24 76,10 Q80,28 78,46 Z" fill={hair} />
+      <path d="M84,44 Q86,20 90,8 Q90,28 88,46 Z" fill={hair} />
+      <path d="M96,48 Q100,26 104,16 Q102,34 98,50 Z" fill={hair} />
+      <path d="M106,56 Q114,36 118,24 Q114,42 108,58 Z" fill={hair} />
+      <path d="M116,70 Q130,56 136,44 Q124,56 116,72 Z" fill={hair} />
+      {/* Forehead bangs */}
+      <path d="M46,76 Q58,56 76,62 Q66,74 52,80 Z" fill={hair} />
+      <path d="M54,72 Q66,62 78,66 Q70,76 58,80 Z" fill={hair} opacity="0.8" />
+
+      {/* ── STUBBLE — realistic beard shadow ── */}
+      <ellipse cx="80" cy="131" rx="22" ry="12" fill={hair} opacity="0.09" />
+      <ellipse cx="80" cy="137" rx="16" ry="8" fill={hair} opacity="0.1" />
+      {/* Stubble dot pattern */}
+      <circle cx="73" cy="128" r="0.8" fill={hair} opacity="0.18" />
+      <circle cx="78" cy="131" r="0.8" fill={hair} opacity="0.18" />
+      <circle cx="82" cy="131" r="0.8" fill={hair} opacity="0.18" />
+      <circle cx="87" cy="128" r="0.8" fill={hair} opacity="0.18" />
+      <circle cx="70" cy="132" r="0.7" fill={hair} opacity="0.14" />
+      <circle cx="90" cy="132" r="0.7" fill={hair} opacity="0.14" />
+      <circle cx="75" cy="135" r="0.7" fill={hair} opacity="0.15" />
+      <circle cx="80" cy="136" r="0.8" fill={hair} opacity="0.16" />
+      <circle cx="85" cy="135" r="0.7" fill={hair} opacity="0.15" />
+      <circle cx="68" cy="128" r="0.6" fill={hair} opacity="0.1" />
+      <circle cx="92" cy="128" r="0.6" fill={hair} opacity="0.1" />
+
+      {/* ── EYEBROWS — thick, straight, dark ── */}
+      <path d="M50,73 Q63,70 76,72" stroke={hair} strokeWidth="3.8" fill="none" strokeLinecap="round" opacity="0.95" />
+      <path d="M84,72 Q97,70 110,73" stroke={hair} strokeWidth="3.8" fill="none" strokeLinecap="round" opacity="0.95" />
+
+      {/* ── EYES — half-lidded, calm/tired droopy ── */}
+      {/* Left eye */}
       <g style={blinkAnim}>
-        <ellipse cx="63" cy="82" rx="7.5" ry="5.5" fill="white" />
-        <ellipse cx="63" cy="82.5" rx="4.5" ry="4.5" fill="#1a0e0a" />
-        <ellipse cx="61" cy="80.5" rx="1.8" ry="1.5" fill="white" opacity="0.5" />
-        {/* Heavy upper eyelid covering top third */}
-        <path d="M55.5,80 Q63,76.5 70.5,80" fill="#f0c898" />
+        <ellipse cx="63" cy="82" rx="11" ry="6.5" fill="white" />
+        <ellipse cx="63" cy="83" rx="7.5" ry="5.5" fill="#28180c" />
+        <ellipse cx="63" cy="83" rx="4.5" ry="4.2" fill="#0c0808" />
+        <ellipse cx="60.5" cy="80.5" rx="2.2" ry="1.6" fill="white" opacity="0.5" />
+        {/* Heavy drooping upper eyelid — covers top ~40% */}
+        <path d="M52,79 Q63,74 74,79" fill={skin} />
+        <path d="M52,79 Q63,74 74,79" fill="none" stroke={hair} strokeWidth="2.2" strokeLinecap="round" />
       </g>
-      {/* Right eye — tired */}
+      {/* Right eye */}
       <g style={blinkAnimDelay}>
-        <ellipse cx="97" cy="82" rx="7.5" ry="5.5" fill="white" />
-        <ellipse cx="97" cy="82.5" rx="4.5" ry="4.5" fill="#1a0e0a" />
-        <ellipse cx="95" cy="80.5" rx="1.8" ry="1.5" fill="white" opacity="0.5" />
-        {/* Heavy upper eyelid */}
-        <path d="M89.5,80 Q97,76.5 104.5,80" fill="#f0c898" />
+        <ellipse cx="97" cy="82" rx="11" ry="6.5" fill="white" />
+        <ellipse cx="97" cy="83" rx="7.5" ry="5.5" fill="#28180c" />
+        <ellipse cx="97" cy="83" rx="4.5" ry="4.2" fill="#0c0808" />
+        <ellipse cx="94.5" cy="80.5" rx="2.2" ry="1.6" fill="white" opacity="0.5" />
+        {/* Heavy drooping upper eyelid */}
+        <path d="M86,79 Q97,74 108,79" fill={skin} />
+        <path d="M86,79 Q97,74 108,79" fill="none" stroke={hair} strokeWidth="2.2" strokeLinecap="round" />
       </g>
-      {/* Nose */}
-      <path d="M76,93 Q80,100 84,93" stroke="#c09870" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.5" />
-      {/* Tired/flat mouth — slight downturn */}
+
+      {/* ── NOSE — more prominent/realistic ── */}
+      <path d="M76,100 Q80,107 84,100" stroke={skinShadow} strokeWidth="1.8" fill="none" strokeLinecap="round" opacity="0.65" />
+      <path d="M79,82 L78,100" stroke={skinShadow} strokeWidth="1" fill="none" opacity="0.2" strokeLinecap="round" />
+      <ellipse cx="77" cy="102" rx="2.2" ry="1.2" fill={skinShadow} opacity="0.2" />
+      <ellipse cx="83" cy="102" rx="2.2" ry="1.2" fill={skinShadow} opacity="0.2" />
+
+      {/* ── MOUTH — flat neutral expression ── */}
       {speaking ? (
-        <ellipse cx="80" cy="108" rx="9" ry="6.5" fill="#2a0a0a" style={speakAnim} />
+        <ellipse cx="80" cy="116" rx="9" ry="6.5" fill="#2a0a0a" style={speakAnim} />
       ) : (
-        <path d="M70,110 Q80,113 90,110" stroke="#b08070" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        <>
+          <path d="M72,116 Q80,119 88,116" stroke="#b08878" strokeWidth="2" fill="none" strokeLinecap="round" />
+          <path d="M74,116 Q80,118 86,116" stroke="#c8a090" strokeWidth="0.8" fill="none" strokeLinecap="round" opacity="0.45" />
+        </>
       )}
     </svg>
   );

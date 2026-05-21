@@ -7,6 +7,7 @@ import { Message, Scenario } from "@/types";
 import { scenarios as builtInScenarios } from "@/lib/scenarios";
 import ChatMessage from "@/components/ChatMessage";
 import TypingIndicator from "@/components/TypingIndicator";
+import CharacterAvatar from "@/components/CharacterAvatar";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
@@ -381,48 +382,25 @@ export default function SessionPage() {
         <div className={`flex-shrink-0 flex flex-col items-center justify-center px-4 transition-all duration-300 ${showLog ? "py-6" : "py-10"}`}>
 
           {isStarting ? (
-            <div className="text-center">
-              <div className="w-24 h-24 rounded-full bg-indigo-500/10 border-2 border-indigo-500/20 flex items-center justify-center text-5xl mx-auto mb-4 animate-pulse">
-                {selectedScenario.icon}
-              </div>
-              <p className="text-white/30 text-sm">セッションを準備中...</p>
+            <div className="flex flex-col items-center">
+              <CharacterAvatar
+                clientName={selectedScenario.clientName}
+                speaking={false}
+                loading={true}
+              />
+              <p className="text-white/30 text-sm -mt-2">セッションを準備中...</p>
             </div>
           ) : (
             <>
-              {/* アバター＋リング */}
-              <div className="relative flex items-center justify-center mb-3">
-                {/* 発話中のパルスリング */}
-                {tts.speaking && (
-                  <>
-                    <div
-                      className="absolute w-44 h-44 rounded-full border border-indigo-500/15"
-                      style={{ animation: "ping 2s cubic-bezier(0,0,0.2,1) infinite" }}
-                    />
-                    <div
-                      className="absolute w-36 h-36 rounded-full border border-indigo-500/25"
-                      style={{ animation: "ping 2s cubic-bezier(0,0,0.2,1) 0.4s infinite" }}
-                    />
-                  </>
-                )}
-                {/* ローディングスピナー */}
-                {isLoading && !tts.speaking && (
-                  <div className="absolute w-32 h-32 rounded-full border border-t-indigo-400/60 border-white/5 animate-spin" />
-                )}
-
-                {/* アバター本体 */}
-                <div
-                  className={`relative w-24 h-24 rounded-full flex items-center justify-center text-5xl transition-all duration-500 ${
-                    tts.speaking
-                      ? "bg-indigo-500/20 border-2 border-indigo-400/50 shadow-[0_0_40px_rgba(99,102,241,0.25)]"
-                      : "bg-white/[0.05] border-2 border-white/10"
-                  }`}
-                >
-                  {selectedScenario.icon}
-                </div>
-              </div>
+              {/* キャラクターアバター */}
+              <CharacterAvatar
+                clientName={selectedScenario.clientName}
+                speaking={tts.speaking}
+                loading={isLoading && !tts.speaking}
+              />
 
               {/* 音声波形 */}
-              <div className="mb-3">
+              <div className="mb-3 -mt-2">
                 <SoundWave active={tts.speaking} />
               </div>
 

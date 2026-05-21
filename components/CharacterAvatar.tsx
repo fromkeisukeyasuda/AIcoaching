@@ -146,62 +146,113 @@ function TanakaMakoto({ speaking }: { speaking: boolean }) {
 }
 
 /* ═════════════════════════════════════════════
-   佐藤 美咲 — Violet blazer, long dark hair, warm smile
+   佐藤 美咲 — Purple blazer, long flowing hair, drop earrings
 ═════════════════════════════════════════════ */
 function SatoMisaki({ speaking }: { speaking: boolean }) {
+  const skin = "#f5cba8";
+  const skinShadow = "#dba880";
+  const hair = "#1c1520";
+  const blazer = "#6B38A0";
+
   return (
     <svg viewBox="0 0 160 200" width="140" height="175" xmlns="http://www.w3.org/2000/svg">
+
+      {/* ── OUTFIT ── */}
       {/* Neck shadow */}
-      <rect x="70" y="134" width="20" height="18" rx="2" fill="#e8b890" />
-      {/* Long hair strands in front of outfit */}
-      <path d="M35,92 Q27,125 31,166 Q37,176 43,172 Q39,147 41,117 Q45,97 39,92 Z" fill="#1a0a20" />
-      <path d="M125,92 Q133,125 129,166 Q123,176 117,172 Q121,147 119,117 Q115,97 121,92 Z" fill="#1a0a20" />
-      {/* Violet blazer */}
-      <path d="M18,172 Q33,150 68,148 L72,162 L80,173 L88,162 L92,148 Q127,150 142,172 L142,200 L18,200 Z" fill="#6d28d9" />
-      {/* Left lapel highlight */}
-      <path d="M68,148 L72,162 L80,173 L71,165 Q55,156 48,150 Z" fill="#a78bfa" opacity="0.35" />
-      {/* Right lapel highlight */}
-      <path d="M92,148 L88,162 L80,173 L89,165 Q105,156 112,150 Z" fill="#a78bfa" opacity="0.35" />
-      {/* Light blouse at center */}
-      <path d="M73,148 L77,163 L80,173 L83,163 L87,148 L80,155 Z" fill="#f3e8ff" />
-      {/* Neck skin */}
-      <rect x="70" y="131" width="20" height="20" rx="2" fill="#f8d0b0" />
-      {/* Hair back */}
-      <ellipse cx="80" cy="80" rx="48" ry="44" fill="#1a0a20" />
-      {/* Hair top */}
-      <path d="M35,85 Q40,42 80,39 Q120,42 125,85 Q110,55 80,53 Q50,55 35,85 Z" fill="#1a0a20" />
-      {/* Face */}
-      <ellipse cx="80" cy="89" rx="44" ry="47" fill="#f8d0b0" />
-      {/* Cheek blush — warm */}
-      <ellipse cx="54" cy="97" rx="10" ry="6" fill="#f4a0a0" opacity="0.3" />
-      <ellipse cx="106" cy="97" rx="10" ry="6" fill="#f4a0a0" opacity="0.3" />
-      {/* Gold earrings */}
-      <circle cx="36" cy="98" r="4.5" fill="#f59e0b" />
-      <circle cx="36" cy="98" r="2.5" fill="#fcd34d" />
-      <circle cx="124" cy="98" r="4.5" fill="#f59e0b" />
-      <circle cx="124" cy="98" r="2.5" fill="#fcd34d" />
-      {/* Eyebrows — soft arched */}
-      <path d="M53,69 Q63,63 73,67" stroke="#1a0a20" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <path d="M87,67 Q97,63 107,69" stroke="#1a0a20" strokeWidth="2" fill="none" strokeLinecap="round" />
-      {/* Left eye — large/bright */}
+      <rect x="71" y="134" width="18" height="18" rx="2" fill={skinShadow} />
+      {/* Long hair strands in front of outfit — left */}
+      <path d="M34,92 Q22,130 26,174 Q32,184 42,180 Q37,155 39,124 Q43,100 38,92 Z" fill={hair} />
+      {/* Long hair strands — right */}
+      <path d="M126,92 Q138,130 134,174 Q128,184 118,180 Q123,155 121,124 Q117,100 122,92 Z" fill={hair} />
+      {/* Additional thin right strand */}
+      <path d="M120,94 Q132,132 130,170 Q126,178 122,175 Q126,150 124,120 Q120,100 120,94 Z" fill={hair} opacity="0.6" />
+      {/* Purple blazer */}
+      <path d="M14,200 L14,170 Q28,148 64,144 L70,158 L80,172 L90,158 L96,144 Q132,148 146,170 L146,200 Z" fill={blazer} />
+      {/* Left lapel */}
+      <path d="M64,144 L70,158 L80,172 L72,164 Q54,154 44,146 Z" fill="#572E84" />
+      {/* Right lapel */}
+      <path d="M96,144 L90,158 L80,172 L88,164 Q106,154 116,146 Z" fill="#572E84" />
+      {/* Suit pocket */}
+      <path d="M112,163 L126,163 L126,170 L112,170" fill="none" stroke="#572E84" strokeWidth="1.2" />
+      {/* White/cream blouse — V-neck */}
+      <path d="M72,144 L78,160 L80,172 L82,160 L88,144 Q80,152 72,144 Z" fill="#ede8e0" />
+
+      {/* ── NECK ── */}
+      <rect x="71" y="130" width="18" height="20" rx="2" fill={skin} />
+
+      {/* ── EAR (before face) ── */}
+      <ellipse cx="38" cy="90" rx="5" ry="7.5" fill={skin} />
+      <ellipse cx="122" cy="90" rx="5" ry="7.5" fill={skin} />
+      <path d="M36,87 Q39,92 36,97" stroke={skinShadow} strokeWidth="1.5" fill="none" opacity="0.45" />
+      <path d="M124,87 Q121,92 124,97" stroke={skinShadow} strokeWidth="1.5" fill="none" opacity="0.45" />
+
+      {/* ── BACK HAIR (behind face) ── */}
+      <ellipse cx="80" cy="76" rx="48" ry="44" fill={hair} />
+
+      {/* ── FACE (anime oval, narrowing chin) ── */}
+      <path d="M42,76 Q38,108 56,130 Q68,144 80,146 Q92,144 104,130 Q122,108 118,76 Q112,44 80,42 Q48,44 42,76 Z" fill={skin} />
+
+      {/* Cheek blush — warm pink */}
+      <ellipse cx="51" cy="104" rx="13" ry="7" fill="#f0a090" opacity="0.32" />
+      <ellipse cx="109" cy="104" rx="13" ry="7" fill="#f0a090" opacity="0.32" />
+
+      {/* ── FRONT HAIR (drawn over face) ── */}
+      {/* Main hair top with slight center-left parting */}
+      <path d="M42,76 Q48,44 80,40 Q112,44 118,76 Q108,58 80,56 Q52,58 42,76 Z" fill={hair} />
+      {/* Hair body left side */}
+      <path d="M42,76 Q36,86 36,104 Q40,94 44,84 Z" fill={hair} />
+      {/* Hair body right side */}
+      <path d="M118,76 Q124,86 124,104 Q120,94 116,84 Z" fill={hair} />
+      {/* Left-sweep bang crossing forehead */}
+      <path d="M44,74 Q56,52 74,58 Q64,72 50,80 Z" fill={hair} />
+      {/* Thin strand across left eye area */}
+      <path d="M52,74 Q60,64 70,66 Q64,74 56,80 Z" fill={hair} opacity="0.75" />
+
+      {/* ── GOLD DROP EARRINGS ── */}
+      {/* Left — small post + oval hoop below */}
+      <circle cx="37" cy="96" r="2.2" fill="#c8900a" />
+      <ellipse cx="37" cy="106" rx="3.5" ry="5.5" fill="none" stroke="#c8900a" strokeWidth="2.2" />
+      {/* Right */}
+      <circle cx="123" cy="96" r="2.2" fill="#c8900a" />
+      <ellipse cx="123" cy="106" rx="3.5" ry="5.5" fill="none" stroke="#c8900a" strokeWidth="2.2" />
+
+      {/* ── EYEBROWS — soft flat-gentle arch, warm brown ── */}
+      <path d="M52,68 Q63,63 74,66" stroke="#4a3020" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+      <path d="M86,66 Q97,63 108,68" stroke="#4a3020" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+
+      {/* ── EYES — anime female, open warm expression ── */}
+      {/* Left eye */}
       <g style={blinkAnim}>
-        <ellipse cx="63" cy="79" rx="9" ry="8" fill="white" />
-        <ellipse cx="63" cy="79" rx="6" ry="6.5" fill="#1a0a10" />
-        <ellipse cx="60.5" cy="76.5" rx="2.5" ry="2" fill="white" opacity="0.7" />
+        <ellipse cx="63" cy="80" rx="10.5" ry="9.5" fill="white" />
+        <ellipse cx="63" cy="81" rx="7" ry="7.5" fill="#6b4028" />
+        <ellipse cx="63" cy="81" rx="4.5" ry="5" fill="#180808" />
+        <ellipse cx="59.5" cy="77" rx="3" ry="2.2" fill="white" opacity="0.9" />
+        <ellipse cx="67" cy="83.5" rx="1.2" ry="1" fill="white" opacity="0.45" />
+        {/* Lower lash — very subtle */}
+        <path d="M53,87 Q63,89.5 73,87" fill="none" stroke="#4a3020" strokeWidth="0.6" opacity="0.25" />
       </g>
       {/* Right eye */}
       <g style={blinkAnimDelay}>
-        <ellipse cx="97" cy="79" rx="9" ry="8" fill="white" />
-        <ellipse cx="97" cy="79" rx="6" ry="6.5" fill="#1a0a10" />
-        <ellipse cx="94.5" cy="76.5" rx="2.5" ry="2" fill="white" opacity="0.7" />
+        <ellipse cx="97" cy="80" rx="10.5" ry="9.5" fill="white" />
+        <ellipse cx="97" cy="81" rx="7" ry="7.5" fill="#6b4028" />
+        <ellipse cx="97" cy="81" rx="4.5" ry="5" fill="#180808" />
+        <ellipse cx="93.5" cy="77" rx="3" ry="2.2" fill="white" opacity="0.9" />
+        <ellipse cx="101" cy="83.5" rx="1.2" ry="1" fill="white" opacity="0.45" />
+        {/* Lower lash — very subtle */}
+        <path d="M87,87 Q97,89.5 107,87" fill="none" stroke="#4a3020" strokeWidth="0.6" opacity="0.25" />
       </g>
-      {/* Nose */}
-      <path d="M77,92 Q80,98 83,92" stroke="#d0a880" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.5" />
-      {/* Warm smile */}
+
+      {/* ── NOSE (anime minimal) ── */}
+      <path d="M78,95 Q80,100 82,95" stroke={skinShadow} strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.5" />
+
+      {/* ── MOUTH — warm soft smile ── */}
       {speaking ? (
-        <ellipse cx="80" cy="108" rx="10" ry="7" fill="#2a0a0a" style={speakAnim} />
+        <ellipse cx="80" cy="114" rx="9" ry="6.5" fill="#2a0a0a" style={speakAnim} />
       ) : (
-        <path d="M68,104 Q80,116 92,104" stroke="#d17b7b" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        <>
+          <path d="M71,112 Q80,120 89,112" stroke="#c07870" strokeWidth="2" fill="none" strokeLinecap="round" />
+          <path d="M74,112 Q80,116 86,112" stroke="#d88878" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.55" />
+        </>
       )}
     </svg>
   );

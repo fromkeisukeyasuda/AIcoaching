@@ -58,7 +58,7 @@
   50%       { transform: translateY(-5px); }
 }
 
-/* Eye blink — double blink for naturalness */
+/* Eye blink — double blink for naturalness (SVG characters) */
 @keyframes eyeBlink {
   0%, 82%, 100% { transform: scaleY(1); }
   86%           { transform: scaleY(0.08); }
@@ -67,17 +67,23 @@
   96%           { transform: scaleY(1); }
 }
 
-/* Mouth open/close when speaking */
+/* Mouth open/close when speaking (SVG characters) */
 @keyframes speakMouth {
   0%   { transform: scaleY(0.15); }
   100% { transform: scaleY(1); }
 }
 
-/* Eye blink cover — overlaid on image characters (inverse of eyeBlink) */
-@keyframes eyeBlinkCover {
-  0%, 82%, 100% { transform: scaleY(0); }
-  86%           { transform: scaleY(1); }
-  89%           { transform: scaleY(0.1); }
-  93%           { transform: scaleY(1); }
-  96%           { transform: scaleY(0); }
+/* Portrait image — idle breathing + gentle float */
+@keyframes portraitBreathe {
+  0%, 100% { transform: scale(1)    translateY(0px); }
+  35%      { transform: scale(1.02) translateY(-7px); }
+  65%      { transform: scale(1.015) translateY(-5px); }
+}
+
+/* Portrait image — speaking pulse (livelier, stays near center) */
+@keyframes portraitSpeak {
+  0%, 100% { transform: scale(1)     translateY(0px); }
+  20%      { transform: scale(1.028) translateY(-4px); }
+  50%      { transform: scale(1.014) translateY(-2px); }
+  80%      { transform: scale(1.024) translateY(-5px); }
 }

@@ -378,8 +378,8 @@ export default function SessionPage() {
       {/* ── メインコンテンツ ── */}
       <div className="flex-1 flex flex-col overflow-hidden">
 
-        {/* アバターセクション */}
-        <div className={`flex-shrink-0 flex flex-col items-center justify-center px-4 transition-all duration-300 ${showLog ? "py-6" : "py-10"}`}>
+        {/* アバターセクション（flex-shrink-0 で固定高さ） */}
+        <div className={`flex-shrink-0 flex flex-col items-center justify-center px-4 transition-all duration-300 ${showLog ? "pt-4 pb-2" : "pt-5 pb-2"}`}>
 
           {isStarting ? (
             <div className="flex flex-col items-center">
@@ -400,44 +400,46 @@ export default function SessionPage() {
               />
 
               {/* 音声波形 */}
-              <div className="mb-3 -mt-2">
+              <div className="mb-2 -mt-2">
                 <SoundWave active={tts.speaking} />
               </div>
 
               {/* クライアント名 */}
-              <div className="text-center mb-5">
+              <div className="text-center">
                 <p className="text-white font-semibold text-base">{selectedScenario.clientName}</p>
                 <p className="text-white/35 text-xs mt-0.5">{selectedScenario.clientRole}</p>
               </div>
-
-              {/* 最新メッセージバブル（ログ非表示時のみ） */}
-              {!showLog && (
-                <div className="max-w-md w-full">
-                  <div className="relative bg-white/[0.05] border border-white/[0.08] rounded-2xl rounded-tl-sm px-4 py-3.5 backdrop-blur-sm">
-                    {lastAssistantMsg ? (
-                      <p className="text-white/75 text-sm leading-relaxed">
-                        {lastAssistantMsg.length > 200
-                          ? lastAssistantMsg.slice(0, 200) + "…"
-                          : lastAssistantMsg}
-                      </p>
-                    ) : isLoading ? (
-                      <div className="flex gap-1 items-center">
-                        <span className="typing-dot" />
-                        <span className="typing-dot" />
-                        <span className="typing-dot" />
-                      </div>
-                    ) : (
-                      <p className="text-white/20 text-sm italic">セッション開始を待っています...</p>
-                    )}
-                  </div>
-                  {userMsgCount > 0 && (
-                    <p className="text-center text-white/15 text-xs mt-3">{userMsgCount}往復</p>
-                  )}
-                </div>
-              )}
             </>
           )}
         </div>
+
+        {/* メッセージバブル（ログ非表示時）— flex-1 で余白を埋める */}
+        {!showLog && !isStarting && (
+          <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pt-4 pb-2 flex flex-col items-center">
+            <div className="max-w-md w-full">
+              <div className="relative bg-white/[0.05] border border-white/[0.08] rounded-2xl rounded-tl-sm px-4 py-3.5 backdrop-blur-sm">
+                {lastAssistantMsg ? (
+                  <p className="text-white/75 text-sm leading-relaxed">
+                    {lastAssistantMsg.length > 200
+                      ? lastAssistantMsg.slice(0, 200) + "…"
+                      : lastAssistantMsg}
+                  </p>
+                ) : isLoading ? (
+                  <div className="flex gap-1 items-center">
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                  </div>
+                ) : (
+                  <p className="text-white/20 text-sm italic">セッション開始を待っています...</p>
+                )}
+              </div>
+              {userMsgCount > 0 && (
+                <p className="text-center text-white/15 text-xs mt-3">{userMsgCount}往復</p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* 会話ログ（トグル表示） */}
         {showLog && (

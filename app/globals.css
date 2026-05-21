@@ -72,3 +72,12 @@
   0%   { transform: scaleY(0.15); }
   100% { transform: scaleY(1); }
 }
+
+/* Eye blink cover — overlaid on image characters (inverse of eyeBlink) */
+@keyframes eyeBlinkCover {
+  0%, 82%, 100% { transform: scaleY(0); }
+  86%           { transform: scaleY(1); }
+  89%           { transform: scaleY(0.1); }
+  93%           { transform: scaleY(1); }
+  96%           { transform: scaleY(0); }
+}

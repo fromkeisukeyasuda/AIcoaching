@@ -27,16 +27,63 @@ const speakAnim = {
   animation: "speakMouth 0.35s ease-in-out infinite alternate",
 } as React.CSSProperties;
 
-/* ── Static image character (田中・佐藤・鈴木) ── */
+/* ── Per-character SVG overlay configs (positions in 148×148px space) ── */
+type OverlayConfig = {
+  leftEye:  { cx: number; cy: number; rx: number; ry: number; skin: string };
+  rightEye: { cx: number; cy: number; rx: number; ry: number; skin: string };
+  mouth:    { cx: number; cy: number; rx: number; ry: number };
+};
+
+const OVERLAY_CONFIGS: Record<string, OverlayConfig> = {
+  tanaka: {
+    leftEye:  { cx: 53, cy: 59, rx: 12, ry: 6.5, skin: "#f0b898" },
+    rightEye: { cx: 95, cy: 59, rx: 12, ry: 6.5, skin: "#f0b898" },
+    mouth:    { cx: 74, cy: 80, rx: 9,  ry: 6.5 },
+  },
+  sato: {
+    leftEye:  { cx: 52, cy: 62, rx: 11, ry: 6,   skin: "#f0c8a8" },
+    rightEye: { cx: 96, cy: 62, rx: 11, ry: 6,   skin: "#f0c8a8" },
+    mouth:    { cx: 74, cy: 83, rx: 9,  ry: 6 },
+  },
+  suzuki: {
+    leftEye:  { cx: 53, cy: 57, rx: 13, ry: 5.5, skin: "#dca870" },
+    rightEye: { cx: 96, cy: 57, rx: 13, ry: 5.5, skin: "#dca870" },
+    mouth:    { cx: 74, cy: 75, rx: 10, ry: 6.5 },
+  },
+};
+
+const coverBlinkL = {
+  transformBox: "fill-box",
+  transformOrigin: "center",
+  animation: "eyeBlinkCover 4.5s ease-in-out infinite",
+} as React.CSSProperties;
+
+const coverBlinkR = {
+  transformBox: "fill-box",
+  transformOrigin: "center",
+  animation: "eyeBlinkCover 4.5s ease-in-out 0.07s infinite",
+} as React.CSSProperties;
+
+const coverSpeak = {
+  transformBox: "fill-box",
+  transformOrigin: "center",
+  animation: "speakMouth 0.35s ease-in-out infinite alternate",
+} as React.CSSProperties;
+
+/* ── Static image character with SVG animation overlay (田中・佐藤・鈴木) ── */
 function CharacterImage({
   src,
   alt,
   speaking,
+  charType,
 }: {
   src: string;
   alt: string;
   speaking: boolean;
+  charType: string;
 }) {
+  const cfg = OVERLAY_CONFIGS[charType];
+
   return (
     <div
       style={{
@@ -46,12 +93,14 @@ function CharacterImage({
         overflow: "hidden",
         background: "#f0ece4",
         flexShrink: 0,
+        position: "relative",
         boxShadow: speaking
           ? "0 0 0 2px rgba(99,102,241,0.5), 0 6px 24px rgba(0,0,0,0.4)"
           : "0 4px 20px rgba(0,0,0,0.35)",
         transition: "box-shadow 0.5s ease",
       }}
     >
+      {/* Base image */}
       <img
         src={src}
         alt={alt}
@@ -63,6 +112,41 @@ function CharacterImage({
           display: "block",
         }}
       />
+
+      {/* SVG animation overlay */}
+      {cfg && (
+        <svg
+          viewBox="0 0 148 148"
+          width="148"
+          height="148"
+          style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Left eye blink cover (skin-coloured ellipse appears during blink) */}
+          <ellipse
+            cx={cfg.leftEye.cx}  cy={cfg.leftEye.cy}
+            rx={cfg.leftEye.rx}  ry={cfg.leftEye.ry}
+            fill={cfg.leftEye.skin}
+            style={coverBlinkL}
+          />
+          {/* Right eye blink cover */}
+          <ellipse
+            cx={cfg.rightEye.cx}  cy={cfg.rightEye.cy}
+            rx={cfg.rightEye.rx}  ry={cfg.rightEye.ry}
+            fill={cfg.rightEye.skin}
+            style={coverBlinkR}
+          />
+          {/* Speaking mouth overlay */}
+          {speaking && (
+            <ellipse
+              cx={cfg.mouth.cx}  cy={cfg.mouth.cy}
+              rx={cfg.mouth.rx}  ry={cfg.mouth.ry}
+              fill="rgba(35,12,12,0.88)"
+              style={coverSpeak}
+            />
+          )}
+        </svg>
+      )}
     </div>
   );
 }
@@ -574,9 +658,9 @@ export default function CharacterAvatar({
 
       {/* Character with float animation */}
       <div style={floatStyle}>
-        {charType === "tanaka"  && <CharacterImage src="/characters/tanaka.png" alt="田中 誠"   speaking={speaking} />}
-        {charType === "sato"    && <CharacterImage src="/characters/sato.png"   alt="佐藤 美咲" speaking={speaking} />}
-        {charType === "suzuki"  && <CharacterImage src="/characters/suzuki.png" alt="鈴木 健一" speaking={speaking} />}
+        {charType === "tanaka"  && <CharacterImage src="/characters/tanaka.png" alt="田中 誠"   speaking={speaking} charType="tanaka"  />}
+        {charType === "sato"    && <CharacterImage src="/characters/sato.png"   alt="佐藤 美咲" speaking={speaking} charType="sato"    />}
+        {charType === "suzuki"  && <CharacterImage src="/characters/suzuki.png" alt="鈴木 健一" speaking={speaking} charType="suzuki"  />}
         {charType === "default" && <DefaultCharacter speaking={speaking} />}
       </div>
     </div>

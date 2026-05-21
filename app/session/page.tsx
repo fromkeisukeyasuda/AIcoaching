@@ -40,6 +40,13 @@ function SoundWave({ active }: { active: boolean }) {
   );
 }
 
+/* キャラクター別デフォルト音声（VOICEVOXスピーカー名、優先順位順） */
+const CHARACTER_VOICE_PREFS: Record<string, string[]> = {
+  "田中": ["玄野武宏", "白上虎太郎", "青山龍星"],   // 落ち着いた30代男性
+  "佐藤": ["春日部つむぎ", "四国めたん", "九州そら"], // 明るい28歳女性
+  "鈴木": ["青山龍星", "玄野武宏", "白上虎太郎"],    // 疲れた35歳男性
+};
+
 export default function SessionPage() {
   const router = useRouter();
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
@@ -146,6 +153,19 @@ export default function SessionPage() {
   /* ── Start session ── */
   const startSession = useCallback(
     async (scenario: Scenario) => {
+      // キャラクターに合わせたデフォルト音声を設定
+      if (tts.voiceBoxAvailable && tts.speakerStyles.length > 0) {
+        const prefs = Object.entries(CHARACTER_VOICE_PREFS).find(
+          ([name]) => scenario.clientName.includes(name)
+        )?.[1] ?? [];
+        for (const speakerName of prefs) {
+          const found =
+            tts.speakerStyles.find((s) => s.speakerName === speakerName && s.name === "ノーマル") ??
+            tts.speakerStyles.find((s) => s.speakerName === speakerName);
+          if (found) { tts.setSelectedSpeakerId(found.id); break; }
+        }
+      }
+
       setIsStarting(true);
       setSelectedScenario(scenario);
       setSessionStartTime(new Date().toISOString());
@@ -158,7 +178,7 @@ export default function SessionPage() {
         setIsStarting(false);
       }
     },
-    [streamResponse]
+    [streamResponse, tts]
   );
 
   const sendMessage = () => {

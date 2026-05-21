@@ -13,6 +13,7 @@ export interface Scenario {
   description: string;
   tags: string[];
   icon: string;
+  isCustom?: boolean;
 }
 
 export interface EvaluationScore {

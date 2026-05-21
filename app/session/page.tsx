@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Message, Scenario } from "@/types";
-import { scenarios } from "@/lib/scenarios";
+import { scenarios as builtInScenarios } from "@/lib/scenarios";
 import ChatMessage from "@/components/ChatMessage";
 import TypingIndicator from "@/components/TypingIndicator";
 
@@ -16,8 +16,22 @@ export default function SessionPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState<string | null>(null);
+  const [customScenarios, setCustomScenarios] = useState<Scenario[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("customScenarios");
+    if (stored) setCustomScenarios(JSON.parse(stored));
+  }, []);
+
+  const scenarios = [...builtInScenarios, ...customScenarios];
+
+  const deleteCustomScenario = (id: string) => {
+    const updated = customScenarios.filter((s) => s.id !== id);
+    setCustomScenarios(updated);
+    localStorage.setItem("customScenarios", JSON.stringify(updated));
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -154,7 +168,7 @@ export default function SessionPage() {
     return (
       <main className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-50">
         <div className="max-w-4xl mx-auto px-6 py-12">
-          <div className="mb-10">
+          <div className="mb-8">
             <Link
               href="/"
               className="inline-flex items-center text-sm text-slate-400 hover:text-slate-600 transition-colors mb-6"
@@ -164,52 +178,87 @@ export default function SessionPage() {
               </svg>
               ホームに戻る
             </Link>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">コーチング練習</h1>
-            <p className="text-slate-500">シナリオを選んでセッションを始めましょう</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900 mb-1">コーチング練習</h1>
+                <p className="text-slate-500 text-sm">シナリオを選んでセッションを始めましょう</p>
+              </div>
+              <Link
+                href="/scenario/new"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                シナリオを作成
+              </Link>
+            </div>
           </div>
 
           <div className="grid gap-4">
             {scenarios.map((scenario) => (
-              <button
-                key={scenario.id}
-                onClick={() => startSession(scenario)}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md hover:border-indigo-200 transition-all duration-200 text-left group"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
-                    {scenario.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h2 className="text-lg font-semibold text-slate-800">
-                        {scenario.title}
-                      </h2>
-                      <svg
-                        className="w-5 h-5 text-slate-300 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+              <div key={scenario.id} className="relative group/card">
+                <button
+                  onClick={() => startSession(scenario)}
+                  className="w-full bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md hover:border-indigo-200 transition-all duration-200 text-left group"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-110 transition-transform ${scenario.isCustom ? "bg-violet-50" : "bg-indigo-50"}`}>
+                      {scenario.icon}
                     </div>
-                    <p className="text-sm text-slate-500 mb-3">{scenario.description}</p>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
-                        {scenario.clientName}
-                      </span>
-                      {scenario.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-xs text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full"
-                        >
-                          {tag}
+                    <div className="flex-1 min-w-0 pr-6">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h2 className="text-lg font-semibold text-slate-800">
+                          {scenario.title}
+                        </h2>
+                        {scenario.isCustom && (
+                          <span className="text-xs font-medium text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">
+                            カスタム
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-500 mb-3">{scenario.description}</p>
+                      <div className="flex items-center flex-wrap gap-2">
+                        <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
+                          {scenario.clientName}
                         </span>
-                      ))}
+                        {scenario.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="text-xs text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
+                    <svg
+                      className="w-5 h-5 text-slate-300 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
-                </div>
-              </button>
+                </button>
+                {scenario.isCustom && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm(`「${scenario.title}」を削除しますか？`)) {
+                        deleteCustomScenario(scenario.id);
+                      }
+                    }}
+                    className="absolute top-3 right-3 w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 hover:bg-red-50 hover:text-red-500 hover:border-red-200 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-all"
+                    title="削除"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         </div>

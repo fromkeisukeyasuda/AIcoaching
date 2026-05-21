@@ -23,6 +23,12 @@ export interface EvaluationScore {
   feedback: string;
 }
 
+export interface ImprovementReview {
+  item: string;       // 前回の改善点テキスト
+  addressed: boolean; // 今回のセッションで対応できたか
+  comment: string;    // AIによるコメント
+}
+
 export interface EvaluationResult {
   overallScore: number;
   summary: string;
@@ -30,6 +36,7 @@ export interface EvaluationResult {
   strengths: string[];
   improvements: string[];
   nextSteps: string;
+  previousImprovementsReview?: ImprovementReview[];
 }
 
 export interface SessionData {
@@ -37,4 +44,11 @@ export interface SessionData {
   messages: Message[];
   startedAt: string;
   endedAt: string;
+}
+
+export interface SessionRecord {
+  id: string;          // = session.startedAt（セッション一意キー）
+  session: SessionData;
+  evaluation: EvaluationResult;
+  savedAt: string;
 }

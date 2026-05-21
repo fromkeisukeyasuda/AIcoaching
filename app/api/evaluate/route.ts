@@ -7,18 +7,37 @@ export async function POST(req: Request) {
   const {
     messages,
     scenario,
-  }: { messages: Message[]; scenario: Scenario } = await req.json();
+    previousImprovements = [],
+  }: { messages: Message[]; scenario: Scenario; previousImprovements?: string[] } =
+    await req.json();
 
   const conversation = messages
     .map((m) => `${m.role === "user" ? "コーチ" : scenario.clientName}: ${m.content}`)
     .join("\n\n");
+
+  const hasPrev = previousImprovements.length > 0;
+
+  const prevSection = hasPrev
+    ? `\n【前回セッションの改善点（今回のセッションで対応できたか必ず確認すること）】\n${previousImprovements
+        .map((item, i) => `${i + 1}. ${item}`)
+        .join("\n")}\n`
+    : "";
+
+  const prevJsonField = hasPrev
+    ? `,\n  "previousImprovementsReview": [\n${previousImprovements
+        .map(
+          (item) =>
+            `    { "item": ${JSON.stringify(item)}, "addressed": true, "comment": "今回の対応についての具体的なコメント" }`
+        )
+        .join(",\n")}\n  ]`
+    : "";
 
   const prompt = `以下のコーチングセッションの会話を分析し、コーチのスキルを評価してください。
 
 【セッション情報】
 クライアント: ${scenario.clientName}（${scenario.clientRole}）
 シナリオ: ${scenario.description}
-
+${prevSection}
 【会話内容】
 ${conversation}
 
@@ -42,13 +61,13 @@ ${conversation}
   ],
   "strengths": ["強みの具体例1", "強みの具体例2", "強みの具体例3"],
   "improvements": ["改善点の具体例1", "改善点の具体例2"],
-  "nextSteps": "次の練習に向けた具体的なアドバイス（2〜3文）"
+  "nextSteps": "次の練習に向けた具体的なアドバイス（2〜3文）"${prevJsonField}
 }`;
 
   try {
     const response = await client.messages.create({
       model: "claude-opus-4-7",
-      max_tokens: 1500,
+      max_tokens: 2000,
       messages: [{ role: "user", content: prompt }],
     });
 
@@ -64,7 +83,8 @@ ${conversation}
 
     return Response.json(result);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "評価の取得に失敗しました";
+    const message =
+      error instanceof Error ? error.message : "評価の取得に失敗しました";
     return Response.json({ error: message }, { status: 500 });
   }
 }

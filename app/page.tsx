@@ -21,7 +21,7 @@ export default function Home() {
         </div>
 
         {/* Feature Cards */}
-        <div className="grid sm:grid-cols-2 gap-6">
+        <div className="grid sm:grid-cols-3 gap-6">
           <Link href="/session" className="group">
             <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-md hover:border-indigo-200 transition-all duration-200 h-full">
               <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-2xl mb-5 group-hover:scale-110 transition-transform duration-200">
@@ -41,12 +41,7 @@ export default function Home() {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
             </div>
@@ -71,12 +66,32 @@ export default function Home() {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/history" className="group">
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-md hover:border-violet-200 transition-all duration-200 h-full">
+              <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center text-2xl mb-5 group-hover:scale-110 transition-transform duration-200">
+                📈
+              </div>
+              <h2 className="text-xl font-semibold text-slate-800 mb-2">
+                練習履歴
+              </h2>
+              <p className="text-slate-500 text-sm leading-relaxed mb-6">
+                過去のセッション記録とスコア推移を確認。前回の改善点が今回修正されたかの追跡も自動で行われます。
+              </p>
+              <div className="flex items-center text-violet-600 text-sm font-medium">
+                履歴を見る
+                <svg
+                  className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
             </div>

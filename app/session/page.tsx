@@ -47,6 +47,17 @@ const CHARACTER_VOICE_PREFS: Record<string, string[]> = {
   "鈴木": ["青山龍星", "玄野武宏", "白上虎太郎"],    // 疲れた35歳男性
 };
 
+/* ── 感情検出 ── */
+function detectEmotion(text: string): string {
+  if (/嬉し|うれし|良かった|楽し|わくわく|できてき|うまく|喜び|前向き/.test(text)) return "happy";
+  if (/ありがとう|助かり|少し安心|そうかも|なるほど|ほっ/.test(text)) return "smile";
+  if (/えっ|まさか|驚|びっくり|そんな|信じ/.test(text)) return "surprised";
+  if (/つら|辛い|疲れ|落ち込|しんどい|悲し|もう限界/.test(text)) return "sad";
+  if (/困|悩|迷|どうすれば|うまくいかない|難し|どうしよう|わからない/.test(text)) return "worried";
+  if (/怒|腹が立|嫌だ|ひどい|不満|ムカ/.test(text)) return "angry";
+  return "neutral";
+}
+
 export default function SessionPage() {
   const router = useRouter();
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
@@ -56,7 +67,7 @@ export default function SessionPage() {
   const [isStarting, setIsStarting] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState<string | null>(null);
   const [customScenarios, setCustomScenarios] = useState<Scenario[]>([]);
-  const [showLog, setShowLog] = useState(false);
+  const [emotion, setEmotion] = useState("idle");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -76,9 +87,17 @@ export default function SessionPage() {
     localStorage.setItem("customScenarios", JSON.stringify(updated));
   };
 
+  /* 常にスクロール */
   useEffect(() => {
-    if (showLog) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading, showLog]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
+
+  /* AIの返答が完了したら感情を検出 */
+  useEffect(() => {
+    if (isLoading) return;
+    const lastMsg = messages.filter((m) => m.role === "assistant").at(-1)?.content ?? "";
+    if (lastMsg) setEmotion(detectEmotion(lastMsg));
+  }, [messages, isLoading]);
 
   /* ── Streaming response ── */
   const streamResponse = useCallback(
@@ -207,7 +226,6 @@ export default function SessionPage() {
     router.push("/evaluation");
   };
 
-  const lastAssistantMsg = messages.filter((m) => m.role === "assistant").at(-1)?.content ?? "";
   const userMsgCount = messages.filter((m) => m.role === "user").length;
 
   /* ══════════════════════════════
@@ -295,178 +313,142 @@ export default function SessionPage() {
   }
 
   /* ══════════════════════════════
-     セッション画面
+     セッション画面 — HeyGen 風 2カラムレイアウト
   ══════════════════════════════ */
   return (
     <main className="h-screen flex flex-col bg-[#080810] overflow-hidden">
 
-      {/* ── ヘッダー ── */}
-      <div className="flex-shrink-0 border-b border-white/[0.06] px-4 py-3 bg-[#0a0a14]">
-        <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+      {/* ── ヘッダー（最小限） ── */}
+      <div className="flex-shrink-0 border-b border-white/[0.06] bg-[#0a0a14] px-5 py-3 flex items-center justify-between">
 
-          {/* クライアント情報 */}
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center text-base flex-shrink-0">
-              {selectedScenario.icon}
-            </div>
-            <div className="min-w-0">
-              <p className="text-white text-sm font-medium leading-tight truncate">{selectedScenario.clientName}</p>
-              <p className="text-white/35 text-xs truncate">{selectedScenario.clientRole}</p>
-            </div>
-            <div className="hidden sm:flex items-center gap-1 ml-1 flex-shrink-0">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-xs text-white/25">セッション中</span>
-            </div>
+        {/* 左：クライアント情報 */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-full bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center text-base flex-shrink-0">
+            {selectedScenario.icon}
           </div>
+          <div className="min-w-0">
+            <p className="text-white text-sm font-semibold leading-tight truncate">{selectedScenario.clientName}</p>
+            <p className="text-white/35 text-xs truncate">{selectedScenario.clientRole}</p>
+          </div>
+          <div className="flex items-center gap-1.5 ml-1 flex-shrink-0">
+            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+            <span className="text-xs text-white/25">セッション中</span>
+          </div>
+        </div>
 
-          {/* コントロール */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+        {/* 右：コントロール */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
 
-            {/* VoiceBox スピーカー選択 */}
-            {tts.voiceBoxAvailable && tts.enabled && tts.speakerStyles.length > 0 && (
-              <select
-                value={tts.selectedSpeakerId}
-                onChange={(e) => tts.setSelectedSpeakerId(Number(e.target.value))}
-                className="text-xs text-white/50 bg-white/[0.05] border border-white/[0.08] rounded-lg px-2 py-1.5 outline-none focus:border-indigo-500/50 max-w-[110px]"
-              >
-                {tts.speakerStyles.map((s) => (
-                  <option key={s.id} value={s.id} className="bg-[#1a1a2e]">
-                    {s.speakerName}（{s.name}）
-                  </option>
-                ))}
-              </select>
-            )}
-
-            {/* 読み上げトグル */}
-            <button
-              onClick={tts.toggle}
-              title={tts.enabled ? "読み上げをオフ" : "読み上げをオン"}
-              className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                tts.enabled
-                  ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30"
-                  : "bg-white/[0.05] text-white/25 border border-white/[0.08] hover:text-white/50"
-              }`}
+          {/* VoiceBox スピーカー選択 */}
+          {tts.voiceBoxAvailable && tts.enabled && tts.speakerStyles.length > 0 && (
+            <select
+              value={tts.selectedSpeakerId}
+              onChange={(e) => tts.setSelectedSpeakerId(Number(e.target.value))}
+              className="text-xs text-white/50 bg-white/[0.05] border border-white/[0.08] rounded-lg px-2 py-1.5 outline-none focus:border-indigo-500/50 max-w-[120px]"
             >
-              {tts.speaking ? (
-                <svg className="w-4 h-4 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
-                </svg>
-              ) : tts.enabled ? (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072M12 6v12M8.464 9.536a5 5 0 000 4.928" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                </svg>
-              )}
-              {tts.voiceBoxAvailable && tts.enabled && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-violet-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold" style={{ fontSize: "6px" }}>V</span>
-                </span>
-              )}
-            </button>
+              {tts.speakerStyles.map((s) => (
+                <option key={s.id} value={s.id} className="bg-[#1a1a2e]">
+                  {s.speakerName}（{s.name}）
+                </option>
+              ))}
+            </select>
+          )}
 
-            {/* ログ表示トグル */}
-            <button
-              onClick={() => setShowLog((v) => !v)}
-              title={showLog ? "会話ログを非表示" : "会話ログを表示"}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all border ${
-                showLog
-                  ? "bg-white/10 text-white border-white/20"
-                  : "bg-white/[0.05] text-white/25 border-white/[0.08] hover:text-white/50"
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+          {/* 読み上げトグル */}
+          <button
+            onClick={tts.toggle}
+            title={tts.enabled ? "読み上げをオフ" : "読み上げをオン"}
+            className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+              tts.enabled
+                ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30"
+                : "bg-white/[0.05] text-white/25 border border-white/[0.08] hover:text-white/50"
+            }`}
+          >
+            {tts.speaking ? (
+              <svg className="w-4 h-4 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
               </svg>
-            </button>
+            ) : tts.enabled ? (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072M12 6v12M8.464 9.536a5 5 0 000 4.928" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+              </svg>
+            )}
+            {tts.voiceBoxAvailable && tts.enabled && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-violet-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold" style={{ fontSize: "6px" }}>V</span>
+              </span>
+            )}
+          </button>
 
-            {/* 終了ボタン */}
-            <button
-              onClick={endSession}
-              disabled={messages.length < 2}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white/[0.05] text-white/50 hover:bg-red-500/15 hover:text-red-400 border border-white/[0.08] hover:border-red-500/30 transition-all disabled:opacity-25 disabled:cursor-not-allowed"
-            >
-              終了
-            </button>
-          </div>
+          {/* 終了ボタン */}
+          <button
+            onClick={endSession}
+            disabled={messages.length < 2}
+            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white/[0.05] text-white/50 hover:bg-red-500/15 hover:text-red-400 border border-white/[0.08] hover:border-red-500/30 transition-all disabled:opacity-25 disabled:cursor-not-allowed"
+          >
+            終了
+          </button>
         </div>
       </div>
 
-      {/* ── メインコンテンツ ── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* ── 2カラム ── */}
+      <div className="flex-1 flex overflow-hidden">
 
-        {/* アバターセクション（flex-shrink-0 で固定高さ） */}
-        <div className={`flex-shrink-0 flex flex-col items-center justify-center px-4 transition-all duration-300 ${showLog ? "pt-4 pb-2" : "pt-5 pb-2"}`}>
+        {/* ═══ 左パネル：アバター ═══ */}
+        <div className="w-[340px] flex-shrink-0 flex flex-col items-center justify-center gap-5 bg-[#090912] border-r border-white/[0.06] p-8">
 
           {isStarting ? (
-            <div className="flex flex-col items-center">
+            <>
               <CharacterAvatar
                 clientName={selectedScenario.clientName}
                 speaking={false}
                 loading={true}
+                emotion="idle"
+                size="lg"
               />
-              <p className="text-white/30 text-sm -mt-2">セッションを準備中...</p>
-            </div>
+              <p className="text-white/30 text-sm">セッションを準備中...</p>
+            </>
           ) : (
             <>
-              {/* キャラクターアバター */}
+              {/* アバター（大） */}
               <CharacterAvatar
                 clientName={selectedScenario.clientName}
                 speaking={tts.speaking}
                 loading={isLoading && !tts.speaking}
+                emotion={emotion}
+                size="lg"
               />
 
               {/* 音声波形 */}
-              <div className="mb-2 -mt-2">
-                <SoundWave active={tts.speaking} />
-              </div>
+              <SoundWave active={tts.speaking} />
 
-              {/* クライアント名 */}
+              {/* 名前・役職 */}
               <div className="text-center">
                 <p className="text-white font-semibold text-base">{selectedScenario.clientName}</p>
-                <p className="text-white/35 text-xs mt-0.5">{selectedScenario.clientRole}</p>
+                <p className="text-white/40 text-sm">{selectedScenario.clientRole}</p>
               </div>
+
+              {/* 往復数 */}
+              {userMsgCount > 0 && (
+                <p className="text-white/20 text-xs">{userMsgCount}往復</p>
+              )}
             </>
           )}
         </div>
 
-        {/* メッセージバブル（ログ非表示時）— flex-1 で余白を埋める */}
-        {!showLog && !isStarting && (
-          <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pt-4 pb-2 flex flex-col items-center">
-            <div className="max-w-md w-full">
-              <div className="relative bg-white/[0.05] border border-white/[0.08] rounded-2xl rounded-tl-sm px-4 py-3.5 backdrop-blur-sm">
-                {lastAssistantMsg ? (
-                  <p className="text-white/75 text-sm leading-relaxed">
-                    {lastAssistantMsg.length > 200
-                      ? lastAssistantMsg.slice(0, 200) + "…"
-                      : lastAssistantMsg}
-                  </p>
-                ) : isLoading ? (
-                  <div className="flex gap-1 items-center">
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
-                  </div>
-                ) : (
-                  <p className="text-white/20 text-sm italic">セッション開始を待っています...</p>
-                )}
-              </div>
-              {userMsgCount > 0 && (
-                <p className="text-center text-white/15 text-xs mt-3">{userMsgCount}往復</p>
-              )}
-            </div>
-          </div>
-        )}
+        {/* ═══ 右パネル：チャット ═══ */}
+        <div className="flex-1 flex flex-col overflow-hidden">
 
-        {/* 会話ログ（トグル表示） */}
-        {showLog && (
-          <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pb-3">
+          {/* メッセージ一覧 */}
+          <div className="flex-1 overflow-y-auto scrollbar-hide px-5 py-5">
             <div className="max-w-2xl mx-auto space-y-3">
-              {messages.length === 0 && !isLoading && (
-                <p className="text-center text-white/20 text-sm py-8">会話がここに表示されます</p>
+              {messages.length === 0 && !isLoading && !isStarting && (
+                <p className="text-center text-white/20 text-sm py-16">会話がここに表示されます</p>
               )}
               {messages.map((msg, i) => (
                 <ChatMessage key={i} message={msg} clientName={selectedScenario.clientName} />
@@ -475,84 +457,82 @@ export default function SessionPage() {
               <div ref={messagesEndRef} />
             </div>
           </div>
-        )}
-      </div>
 
-      {/* ── 入力バー ── */}
-      <div className="flex-shrink-0 border-t border-white/[0.06] bg-[#0a0a14] px-4 py-3">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-end gap-2">
+          {/* ── 入力バー ── */}
+          <div className="flex-shrink-0 border-t border-white/[0.06] bg-[#0a0a14] px-5 py-4">
+            <div className="max-w-2xl mx-auto">
+              <div className="flex items-end gap-2">
 
-            {/* 音声入力ボタン */}
-            {voice.status !== "unsupported" && (
-              <button
-                onClick={voice.toggle}
-                disabled={isLoading || isStarting}
-                title={voice.status === "recording" ? "録音を停止" : "音声入力（完了後に自動送信）"}
-                className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                  voice.status === "recording"
-                    ? "bg-red-500 text-white shadow-lg shadow-red-500/30 scale-110"
-                    : "bg-white/[0.06] text-white/35 border border-white/[0.08] hover:bg-white/10 hover:text-white/60 disabled:opacity-30"
-                }`}
-              >
-                {voice.status === "recording" ? (
-                  <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
-                  </span>
-                ) : (
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                  </svg>
+                {/* 音声入力ボタン */}
+                {voice.status !== "unsupported" && (
+                  <button
+                    onClick={voice.toggle}
+                    disabled={isLoading || isStarting}
+                    title={voice.status === "recording" ? "録音を停止" : "音声入力"}
+                    className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                      voice.status === "recording"
+                        ? "bg-red-500 text-white shadow-lg shadow-red-500/30 scale-110"
+                        : "bg-white/[0.06] text-white/35 border border-white/[0.08] hover:bg-white/10 hover:text-white/60 disabled:opacity-30"
+                    }`}
+                  >
+                    {voice.status === "recording" ? (
+                      <span className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
+                      </span>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                      </svg>
+                    )}
+                  </button>
                 )}
-              </button>
-            )}
 
-            {/* テキスト入力 */}
-            <div className={`flex-1 rounded-xl border transition-all ${
-              voice.status === "recording"
-                ? "bg-red-500/5 border-red-500/30"
-                : "bg-white/[0.04] border-white/[0.08] focus-within:border-indigo-500/50 focus-within:bg-white/[0.06]"
-            }`}>
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={handleTextareaChange}
-                onKeyDown={handleKeyDown}
-                placeholder={
+                {/* テキスト入力 */}
+                <div className={`flex-1 rounded-xl border transition-all ${
                   voice.status === "recording"
-                    ? "🎙 聞き取り中... 話し終わると自動で送信されます"
-                    : "メッセージを入力（Enter で送信 / Shift+Enter で改行）"
-                }
-                rows={1}
-                className="w-full bg-transparent px-4 py-3 text-sm text-white/80 placeholder-white/20 resize-none outline-none"
-                disabled={isLoading || isStarting || voice.status === "recording"}
-              />
+                    ? "bg-red-500/5 border-red-500/30"
+                    : "bg-white/[0.04] border-white/[0.08] focus-within:border-indigo-500/50 focus-within:bg-white/[0.06]"
+                }`}>
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={handleTextareaChange}
+                    onKeyDown={handleKeyDown}
+                    placeholder={
+                      voice.status === "recording"
+                        ? "🎙 聞き取り中..."
+                        : "メッセージを入力（Enter で送信 / Shift+Enter で改行）"
+                    }
+                    rows={1}
+                    className="w-full bg-transparent px-4 py-3 text-sm text-white/80 placeholder-white/20 resize-none outline-none"
+                    disabled={isLoading || isStarting || voice.status === "recording"}
+                  />
+                </div>
+
+                {/* 送信ボタン */}
+                <button
+                  onClick={sendMessage}
+                  disabled={!input.trim() || isLoading || isStarting || voice.status === "recording"}
+                  className="flex-shrink-0 w-10 h-10 bg-indigo-600 hover:bg-indigo-500 disabled:bg-white/[0.05] disabled:text-white/15 text-white rounded-xl flex items-center justify-center transition-all"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                </button>
+              </div>
+
+              {voice.errorMsg ? (
+                <p className="text-xs text-red-400 mt-2 px-1 leading-relaxed whitespace-pre-line">{voice.errorMsg}</p>
+              ) : (
+                <p className="text-xs text-white/15 mt-2 px-1">
+                  {voice.status === "recording"
+                    ? "🎙 話し終わると自動送信されます"
+                    : `コーチとして ${selectedScenario.clientName}さんをサポートしてください`}
+                </p>
+              )}
             </div>
-
-            {/* 送信ボタン */}
-            <button
-              onClick={sendMessage}
-              disabled={!input.trim() || isLoading || isStarting || voice.status === "recording"}
-              className="flex-shrink-0 w-10 h-10 bg-indigo-600 hover:bg-indigo-500 disabled:bg-white/[0.05] disabled:text-white/15 text-white rounded-xl flex items-center justify-center transition-all"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
-            </button>
           </div>
-
-          {/* エラー表示 */}
-          {voice.errorMsg && (
-            <p className="text-xs text-red-400 mt-2 px-1 leading-relaxed whitespace-pre-line">{voice.errorMsg}</p>
-          )}
-          {!voice.errorMsg && (
-            <p className="text-xs text-white/15 mt-2 px-1">
-              {voice.status === "recording"
-                ? "🎙 話し終わると自動送信されます"
-                : `コーチとして ${selectedScenario.clientName}さんをサポートしてください`}
-            </p>
-          )}
         </div>
       </div>
     </main>

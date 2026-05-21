@@ -27,25 +27,62 @@ const speakAnim = {
   animation: "speakMouth 0.35s ease-in-out infinite alternate",
 } as React.CSSProperties;
 
-/* ── Portrait character with expression cross-fade ──────────────────────────
-   idle:     src  (always preloaded)
-   speaking: speakingSrc  (cross-fades in when speaking=true AND image loaded)
-   Fallback: if speakingSrc 404s, idle image stays visible; speaking is shown
-             only via the border glow from the outer container rings.
-   To add expressions: place  public/characters/{name}_speaking.png
+/* ── Portrait character with talking animation ───────────────────────────────
+   idle:     idleSrc  (shown when not speaking)
+   speaking: speakingSrcs[]  — cycles through frames every 500ms, creating a
+             natural talking animation via cross-fade (150ms transition).
+             Frames that fail to load (404) are silently skipped.
+             Falls back to idleSrc if NO speaking frames loaded.
 ──────────────────────────────────────────────────────────────────────────── */
 function CharacterImage({
-  src,
-  speakingSrc,
+  idleSrc,
+  speakingSrcs,
   alt,
   speaking,
 }: {
-  src: string;
-  speakingSrc: string;
+  idleSrc: string;
+  speakingSrcs: string[];
   alt: string;
   speaking: boolean;
 }) {
-  const [speakingReady, setSpeakingReady] = React.useState(false);
+  // Track which speaking frames actually loaded
+  const [loaded, setLoaded] = React.useState<boolean[]>(
+    () => speakingSrcs.map(() => false)
+  );
+  // Current speaking frame index
+  const [frameIdx, setFrameIdx] = React.useState(0);
+
+  const markLoaded = React.useCallback((i: number, ok: boolean) => {
+    setLoaded((prev) => {
+      const next = [...prev];
+      next[i] = ok;
+      return next;
+    });
+  }, []);
+
+  // Cycle through loaded speaking frames while speaking
+  React.useEffect(() => {
+    const readyCount = loaded.filter(Boolean).length;
+    if (!speaking || readyCount < 2) {
+      setFrameIdx(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setFrameIdx((i) => {
+        // Advance to next frame, skip unloaded ones
+        let next = (i + 1) % speakingSrcs.length;
+        for (let attempt = 0; attempt < speakingSrcs.length; attempt++) {
+          if (loaded[next]) break;
+          next = (next + 1) % speakingSrcs.length;
+        }
+        return next;
+      });
+    }, 500);
+    return () => clearInterval(id);
+  }, [speaking, loaded, speakingSrcs.length]);
+
+  const anyLoaded = loaded.some(Boolean);
+  const showSpeaking = speaking && anyLoaded;
 
   const imgBase: React.CSSProperties = {
     position: "absolute",
@@ -55,7 +92,7 @@ function CharacterImage({
     objectFit: "contain",
     objectPosition: "center",
     display: "block",
-    transition: "opacity 0.12s ease",
+    transition: "opacity 0.15s ease",
   };
 
   return (
@@ -74,20 +111,26 @@ function CharacterImage({
         transition: "box-shadow 0.5s ease",
       }}
     >
-      {/* Idle expression — hidden when speaking variant is active */}
+      {/* Idle expression */}
       <img
-        src={src}
+        src={idleSrc}
         alt={alt}
-        style={{ ...imgBase, opacity: speaking && speakingReady ? 0 : 1 }}
+        style={{ ...imgBase, opacity: showSpeaking ? 0 : 1 }}
       />
-      {/* Speaking expression — preloaded silently; shown only if file exists */}
-      <img
-        src={speakingSrc}
-        alt={alt}
-        onLoad={() => setSpeakingReady(true)}
-        onError={() => setSpeakingReady(false)}
-        style={{ ...imgBase, opacity: speaking && speakingReady ? 1 : 0 }}
-      />
+      {/* Speaking frames — preloaded silently, cycled when speaking */}
+      {speakingSrcs.map((src, i) => (
+        <img
+          key={src}
+          src={src}
+          alt={alt}
+          onLoad={() => markLoaded(i, true)}
+          onError={() => markLoaded(i, false)}
+          style={{
+            ...imgBase,
+            opacity: showSpeaking && frameIdx === i ? 1 : 0,
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -597,11 +640,39 @@ export default function CharacterAvatar({
         />
       )}
 
-      {/* Character — image types use expression cross-fade; SVG default uses floatStyle */}
+      {/* Character — image types use talking animation; SVG default uses floatStyle */}
       <div style={charType === "default" ? floatStyle : { display: "block" }}>
-        {charType === "tanaka"  && <CharacterImage src="/characters/tanaka.png"  speakingSrc="/characters/tanaka_speaking.png"  alt="田中 誠"   speaking={speaking} />}
-        {charType === "sato"    && <CharacterImage src="/characters/sato.png"    speakingSrc="/characters/sato_speaking.png"    alt="佐藤 美咲" speaking={speaking} />}
-        {charType === "suzuki"  && <CharacterImage src="/characters/suzuki.png"  speakingSrc="/characters/suzuki_speaking.png"  alt="鈴木 健一" speaking={speaking} />}
+        {charType === "tanaka" && (
+          <CharacterImage
+            idleSrc="/characters/tanaka.png"
+            speakingSrcs={[
+              "/characters/tanaka_speaking.png",  // 口を開けた表情
+              "/characters/tanaka_smile.png",     // 穏やかな笑み
+            ]}
+            alt="田中 誠"
+            speaking={speaking}
+          />
+        )}
+        {charType === "sato" && (
+          <CharacterImage
+            idleSrc="/characters/sato.png"
+            speakingSrcs={[
+              "/characters/sato_speaking.png",
+            ]}
+            alt="佐藤 美咲"
+            speaking={speaking}
+          />
+        )}
+        {charType === "suzuki" && (
+          <CharacterImage
+            idleSrc="/characters/suzuki.png"
+            speakingSrcs={[
+              "/characters/suzuki_speaking.png",
+            ]}
+            alt="鈴木 健一"
+            speaking={speaking}
+          />
+        )}
         {charType === "default" && <DefaultCharacter speaking={speaking} />}
       </div>
     </div>

@@ -27,29 +27,35 @@ const speakAnim = {
   animation: "speakMouth 0.35s ease-in-out infinite alternate",
 } as React.CSSProperties;
 
-/* ── Static image character with natural CSS animation (田中・佐藤・鈴木) ── */
+/* ── Portrait character with expression cross-fade ──────────────────────────
+   idle:     src  (always preloaded)
+   speaking: speakingSrc  (cross-fades in when speaking=true AND image loaded)
+   Fallback: if speakingSrc 404s, idle image stays visible; speaking is shown
+             only via the border glow from the outer container rings.
+   To add expressions: place  public/characters/{name}_speaking.png
+──────────────────────────────────────────────────────────────────────────── */
 function CharacterImage({
   src,
+  speakingSrc,
   alt,
   speaking,
 }: {
   src: string;
+  speakingSrc: string;
   alt: string;
   speaking: boolean;
 }) {
-  const imgStyle: React.CSSProperties = {
+  const [speakingReady, setSpeakingReady] = React.useState(false);
+
+  const imgBase: React.CSSProperties = {
+    position: "absolute",
+    inset: 0,
     width: "100%",
     height: "100%",
     objectFit: "contain",
-    objectPosition: "center center",
+    objectPosition: "center",
     display: "block",
-    animation: speaking
-      ? "portraitSpeak 1.2s ease-in-out infinite"
-      : "portraitBreathe 4s ease-in-out infinite",
-    transition: "filter 0.4s ease",
-    filter: speaking
-      ? "drop-shadow(0 0 14px rgba(99,102,241,0.35))"
-      : "none",
+    transition: "opacity 0.12s ease",
   };
 
   return (
@@ -61,13 +67,27 @@ function CharacterImage({
         overflow: "hidden",
         background: "#f0ece4",
         flexShrink: 0,
+        position: "relative",
         boxShadow: speaking
-          ? "0 0 0 2px rgba(99,102,241,0.45), 0 8px 28px rgba(0,0,0,0.45)"
+          ? "0 0 0 2px rgba(99,102,241,0.5), 0 8px 28px rgba(0,0,0,0.45)"
           : "0 4px 20px rgba(0,0,0,0.35)",
         transition: "box-shadow 0.5s ease",
       }}
     >
-      <img src={src} alt={alt} style={imgStyle} />
+      {/* Idle expression — hidden when speaking variant is active */}
+      <img
+        src={src}
+        alt={alt}
+        style={{ ...imgBase, opacity: speaking && speakingReady ? 0 : 1 }}
+      />
+      {/* Speaking expression — preloaded silently; shown only if file exists */}
+      <img
+        src={speakingSrc}
+        alt={alt}
+        onLoad={() => setSpeakingReady(true)}
+        onError={() => setSpeakingReady(false)}
+        style={{ ...imgBase, opacity: speaking && speakingReady ? 1 : 0 }}
+      />
     </div>
   );
 }
@@ -577,11 +597,11 @@ export default function CharacterAvatar({
         />
       )}
 
-      {/* Character — image types self-animate; SVG default uses floatStyle */}
+      {/* Character — image types use expression cross-fade; SVG default uses floatStyle */}
       <div style={charType === "default" ? floatStyle : { display: "block" }}>
-        {charType === "tanaka"  && <CharacterImage src="/characters/tanaka.png" alt="田中 誠"   speaking={speaking} />}
-        {charType === "sato"    && <CharacterImage src="/characters/sato.png"   alt="佐藤 美咲" speaking={speaking} />}
-        {charType === "suzuki"  && <CharacterImage src="/characters/suzuki.png" alt="鈴木 健一" speaking={speaking} />}
+        {charType === "tanaka"  && <CharacterImage src="/characters/tanaka.png"  speakingSrc="/characters/tanaka_speaking.png"  alt="田中 誠"   speaking={speaking} />}
+        {charType === "sato"    && <CharacterImage src="/characters/sato.png"    speakingSrc="/characters/sato_speaking.png"    alt="佐藤 美咲" speaking={speaking} />}
+        {charType === "suzuki"  && <CharacterImage src="/characters/suzuki.png"  speakingSrc="/characters/suzuki_speaking.png"  alt="鈴木 健一" speaking={speaking} />}
         {charType === "default" && <DefaultCharacter speaking={speaking} />}
       </div>
     </div>

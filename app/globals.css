@@ -73,17 +73,6 @@
   100% { transform: scaleY(1); }
 }
 
-/* Portrait image — idle breathing + gentle float */
-@keyframes portraitBreathe {
-  0%, 100% { transform: scale(1)    translateY(0px); }
-  35%      { transform: scale(1.02) translateY(-7px); }
-  65%      { transform: scale(1.015) translateY(-5px); }
-}
-
-/* Portrait image — speaking pulse (livelier, stays near center) */
-@keyframes portraitSpeak {
-  0%, 100% { transform: scale(1)     translateY(0px); }
-  20%      { transform: scale(1.028) translateY(-4px); }
-  50%      { transform: scale(1.014) translateY(-2px); }
-  80%      { transform: scale(1.024) translateY(-5px); }
-}
+/* Portrait characters (田中・佐藤・鈴木) use image cross-fade for expression
+   changes — no CSS movement animations needed here.
+   Place public/characters/{name}_speaking.png to enable expression swap. */

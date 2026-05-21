@@ -646,8 +646,8 @@ export default function CharacterAvatar({
           <CharacterImage
             idleSrc="/characters/tanaka.png"
             speakingSrcs={[
-              "/characters/tanaka_speaking.png",  // 口を開けた表情
-              "/characters/tanaka_smile.png",     // 穏やかな笑み
+              "/characters/tanaka_happy.png",  // 口を開けた笑顔
+              "/characters/tanaka_smile.png",  // 微笑み
             ]}
             alt="田中 誠"
             speaking={speaking}
@@ -657,7 +657,8 @@ export default function CharacterAvatar({
           <CharacterImage
             idleSrc="/characters/sato.png"
             speakingSrcs={[
-              "/characters/sato_speaking.png",
+              "/characters/sato_happy.png",   // 口を開けた笑顔
+              "/characters/sato_smile.png",   // 温かい微笑み
             ]}
             alt="佐藤 美咲"
             speaking={speaking}
@@ -667,7 +668,8 @@ export default function CharacterAvatar({
           <CharacterImage
             idleSrc="/characters/suzuki.png"
             speakingSrcs={[
-              "/characters/suzuki_speaking.png",
+              "/characters/suzuki_happy.png", // 口を開けた笑顔
+              "/characters/suzuki_smile.png", // 微笑み
             ]}
             alt="鈴木 健一"
             speaking={speaking}

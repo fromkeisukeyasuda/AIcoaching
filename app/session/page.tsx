@@ -56,18 +56,33 @@ export default function SessionPage() {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let text = "";
+      let fullText = "";
+      let ttsBuf = "";
 
       setMessages([...msgHistory, { role: "assistant", content: "" }]);
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
-        text += decoder.decode(value);
-        setMessages([...msgHistory, { role: "assistant", content: text }]);
-      }
+        if (done) {
+          // ストリーム終了時に残りバッファを読み上げ
+          const remaining = ttsBuf.trim();
+          if (remaining) tts.pushChunk(remaining);
+          break;
+        }
+        const chunk = decoder.decode(value);
+        fullText += chunk;
+        ttsBuf += chunk;
+        setMessages([...msgHistory, { role: "assistant", content: fullText }]);
 
-      if (text) tts.speak(text);
+        // 句読点（。！？）で区切って即座に読み上げキューへ追加
+        while (true) {
+          const match = ttsBuf.match(/^([\s\S]*?[。！？])/);
+          if (!match) break;
+          const sentence = match[1].trim();
+          if (sentence.length >= 2) tts.pushChunk(sentence);
+          ttsBuf = ttsBuf.slice(match[1].length);
+        }
+      }
     },
     [tts]
   );

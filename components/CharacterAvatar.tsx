@@ -7,7 +7,7 @@ interface CharacterAvatarProps {
   speaking: boolean;
   loading?: boolean;
   emotion?: string;   // idle | neutral | happy | smile | worried | sad | surprised | serious | angry | smirk | warm
-  size?: "md" | "lg"; // md = 148px (default), lg = 240px
+  size?: "md" | "lg" | "xl"; // md = 148px (default), lg = 240px, xl = 400px
 }
 
 /* ── SVG animation styles — DefaultCharacter のみ使用 ── */
@@ -82,10 +82,10 @@ function CharacterImage({
   emotion?: string;
   alt: string;
   speaking: boolean;
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "xl";
 }) {
-  const dim    = size === "lg" ? 240 : 148;
-  const radius = size === "lg" ? 18  : 14;
+  const dim    = size === "xl" ? 400 : size === "lg" ? 240 : 148;
+  const radius = size === "xl" ? 24  : size === "lg" ? 18  : 14;
 
   const map       = EMOTION_MAPS[charType] ?? {};
   const targetSrc = map[emotion] ?? map["idle"] ?? `/characters/${charType}.png`;
@@ -191,11 +191,11 @@ export default function CharacterAvatar({
   const isImage = charType !== "default";
 
   /* コンテナ・リングサイズ */
-  const containerDim = size === "lg" ? 280 : 200;
-  const containerH   = size === "lg" ? 280 : 195;
-  const ring1        = size === "lg" ? 268 : 175;
-  const ring2        = size === "lg" ? 250 : 148;
-  const spinnerDim   = size === "lg" ? 252 : 158;
+  const containerDim = size === "xl" ? 440 : size === "lg" ? 280 : 200;
+  const containerH   = size === "xl" ? 440 : size === "lg" ? 280 : 195;
+  const ring1        = size === "xl" ? 428 : size === "lg" ? 268 : 175;
+  const ring2        = size === "xl" ? 408 : size === "lg" ? 250 : 148;
+  const spinnerDim   = size === "xl" ? 412 : size === "lg" ? 252 : 158;
 
   /* DefaultCharacter 用フロートアニメーション */
   const floatStyle: React.CSSProperties = {

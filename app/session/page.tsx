@@ -69,7 +69,7 @@ export default function SessionPage() {
   const [customScenarios, setCustomScenarios] = useState<Scenario[]>([]);
   const [emotion, setEmotion] = useState("idle");
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const tts = useTextToSpeech();
   const sendWithTextRef = useRef<(text: string) => void>(() => {});
@@ -87,9 +87,11 @@ export default function SessionPage() {
     localStorage.setItem("customScenarios", JSON.stringify(updated));
   };
 
-  /* 常にスクロール */
+  /* チャット欄だけをスムーズスクロール（ページ全体を揺らさない） */
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages, isLoading]);
 
   /* AIの返答が完了したら感情を検出 */
@@ -399,53 +401,40 @@ export default function SessionPage() {
       {/* ── 2カラム ── */}
       <div className="flex-1 flex overflow-hidden">
 
-        {/* ═══ 左パネル：アバター ═══ */}
-        <div className="w-[340px] flex-shrink-0 flex flex-col items-center justify-center gap-5 bg-[#090912] border-r border-white/[0.06] p-8">
+        {/* ═══ 左パネル：アバター（常に同一DOM構造で揺れ防止） ═══ */}
+        <div className="w-1/2 flex-shrink-0 flex flex-col items-center justify-center gap-4 bg-[#090912] border-r border-white/[0.06] p-6">
 
-          {isStarting ? (
-            <>
-              <CharacterAvatar
-                clientName={selectedScenario.clientName}
-                speaking={false}
-                loading={true}
-                emotion="idle"
-                size="lg"
-              />
-              <p className="text-white/30 text-sm">セッションを準備中...</p>
-            </>
-          ) : (
-            <>
-              {/* アバター（大） */}
-              <CharacterAvatar
-                clientName={selectedScenario.clientName}
-                speaking={tts.speaking}
-                loading={isLoading && !tts.speaking}
-                emotion={emotion}
-                size="lg"
-              />
+          {/* アバター（xl サイズ） */}
+          <CharacterAvatar
+            clientName={selectedScenario.clientName}
+            speaking={tts.speaking && !isStarting}
+            loading={(isStarting || isLoading) && !tts.speaking}
+            emotion={isStarting ? "idle" : emotion}
+            size="xl"
+          />
 
-              {/* 音声波形 */}
-              <SoundWave active={tts.speaking} />
+          {/* 音声波形（常に存在、非表示時は点列） */}
+          <SoundWave active={tts.speaking && !isStarting} />
 
-              {/* 名前・役職 */}
-              <div className="text-center">
-                <p className="text-white font-semibold text-base">{selectedScenario.clientName}</p>
-                <p className="text-white/40 text-sm">{selectedScenario.clientRole}</p>
-              </div>
+          {/* 名前・役職 */}
+          <div className="text-center">
+            <p className="text-white font-semibold text-base">{selectedScenario.clientName}</p>
+            <p className="text-white/40 text-sm">{selectedScenario.clientRole}</p>
+          </div>
 
-              {/* 往復数 */}
-              {userMsgCount > 0 && (
-                <p className="text-white/20 text-xs">{userMsgCount}往復</p>
-              )}
-            </>
-          )}
+          {/* ステータス行（固定高さで揺れ防止） */}
+          <div className="h-4 flex items-center justify-center">
+            <p className="text-white/25 text-xs">
+              {isStarting ? "セッションを準備中..." : userMsgCount > 0 ? `${userMsgCount}往復` : ""}
+            </p>
+          </div>
         </div>
 
         {/* ═══ 右パネル：チャット ═══ */}
         <div className="flex-1 flex flex-col overflow-hidden">
 
-          {/* メッセージ一覧 */}
-          <div className="flex-1 overflow-y-auto scrollbar-hide px-5 py-5">
+          {/* メッセージ一覧（このコンテナ内のみスクロール） */}
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto scrollbar-hide px-5 py-5">
             <div className="max-w-2xl mx-auto space-y-3">
               {messages.length === 0 && !isLoading && !isStarting && (
                 <p className="text-center text-white/20 text-sm py-16">会話がここに表示されます</p>
@@ -454,7 +443,6 @@ export default function SessionPage() {
                 <ChatMessage key={i} message={msg} clientName={selectedScenario.clientName} />
               ))}
               {isLoading && <TypingIndicator clientName={selectedScenario.clientName} />}
-              <div ref={messagesEndRef} />
             </div>
           </div>
 

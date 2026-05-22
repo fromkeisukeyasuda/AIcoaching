@@ -87,11 +87,11 @@ export default function SessionPage() {
     localStorage.setItem("customScenarios", JSON.stringify(updated));
   };
 
-  /* 最新メッセージを先頭表示するため、常に scrollTop=0 へスムーズスクロール */
+  /* 新しいメッセージが来たら下へスムーズスクロール */
   useEffect(() => {
     const el = messagesContainerRef.current;
     if (!el) return;
-    el.scrollTo({ top: 0, behavior: "smooth" });
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages, isLoading]);
 
   /* AIの返答が完了したら感情を検出 */
@@ -166,12 +166,14 @@ export default function SessionPage() {
 
   useEffect(() => { sendWithTextRef.current = sendMessageWithText; }, [sendMessageWithText]);
 
-  /* 音声認識結果 → textarea に転記するだけ。自動送信しない（録音完了後にユーザーが Enter） */
+  /* 音声認識結果 → 認識完了後400msで自動送信 */
   const onVoiceResult = useCallback((text: string) => {
-    if (text.trim()) {
-      setInput(text.trim());
-      setTimeout(() => textareaRef.current?.focus(), 50);
-    }
+    if (!text.trim()) return;
+    setInput(text.trim());
+    setTimeout(() => {
+      setInput("");
+      sendWithTextRef.current(text.trim());
+    }, 400);
   }, []);
   const voice = useVoiceInput(onVoiceResult);
 
@@ -439,29 +441,12 @@ export default function SessionPage() {
               {messages.length === 0 && !isLoading && !isStarting && (
                 <p className="text-center text-white/20 text-sm py-16">会話がここに表示されます</p>
               )}
-              {/* 生成中インジケーター（最新 = 先頭） */}
+              {/* 時系列順（私の発言→AI応答 の自然な順序） */}
+              {messages.map((msg, i) => (
+                <ChatMessage key={i} message={msg} clientName={selectedScenario.clientName} />
+              ))}
+              {/* 生成中インジケーター（最下部） */}
               {isLoading && <TypingIndicator clientName={selectedScenario.clientName} />}
-              {/* ペア単位で逆順: 最新の [私の発言 → AI応答] が先頭に来る */}
-              {(() => {
-                const elems: React.ReactNode[] = [];
-                // messages は [user, ai, user, ai, ...] の順
-                // 末尾から2つずつ取り出してユーザー→AI の順でプッシュ
-                for (let i = messages.length - 1; i >= 0; ) {
-                  if (i >= 1 && messages[i].role === "assistant" && messages[i - 1].role === "user") {
-                    elems.push(
-                      <ChatMessage key={i - 1} message={messages[i - 1]} clientName={selectedScenario.clientName} />,
-                      <ChatMessage key={i}     message={messages[i]}     clientName={selectedScenario.clientName} />,
-                    );
-                    i -= 2;
-                  } else {
-                    elems.push(
-                      <ChatMessage key={i} message={messages[i]} clientName={selectedScenario.clientName} />
-                    );
-                    i -= 1;
-                  }
-                }
-                return elems;
-              })()}
             </div>
           </div>
 

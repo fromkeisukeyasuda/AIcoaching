@@ -13,10 +13,10 @@ function formatDate(iso: string) {
 
 function ScoreBadge({ score }: { score: number }) {
   const cls = score >= 80
-    ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/20"
+    ? "bg-emerald-100 text-emerald-700 border-emerald-200"
     : score >= 60
-      ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/20"
-      : "bg-amber-500/15 text-amber-400 border-amber-500/20";
+      ? "bg-blue-100 text-blue-700 border-blue-200"
+      : "bg-amber-100 text-amber-700 border-amber-200";
   return (
     <span className={`text-sm font-bold px-2.5 py-1 rounded-lg border ${cls}`}>
       {score}点
@@ -26,13 +26,13 @@ function ScoreBadge({ score }: { score: number }) {
 
 function MiniBar({ score, maxScore }: { score: number; maxScore: number }) {
   const pct = (score / maxScore) * 100;
-  const color = pct >= 80 ? "bg-emerald-500" : pct >= 60 ? "bg-indigo-500" : pct >= 40 ? "bg-amber-500" : "bg-red-400";
+  const color = pct >= 80 ? "bg-emerald-500" : pct >= 60 ? "bg-blue-500" : pct >= 40 ? "bg-amber-500" : "bg-red-400";
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+      <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-xs text-white/30 w-7 text-right">{score}/{maxScore}</span>
+      <span className="text-xs text-slate-400 w-7 text-right">{score}/{maxScore}</span>
     </div>
   );
 }
@@ -74,63 +74,61 @@ export default function HistoryPage() {
   if (!loaded) return null;
 
   return (
-    <main className="min-h-screen bg-[#080810]">
-      {/* 背景グロー */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-[400px] h-[300px] bg-violet-600/5 rounded-full blur-[100px]" />
-      </div>
+    <main className="min-h-screen bg-slate-50">
 
-      <div className="relative max-w-3xl mx-auto px-6 py-12">
-
-        {/* ヘッダー */}
-        <div className="mb-8">
-          <Link href="/" className="flex items-center gap-1.5 text-sm text-white/35 hover:text-white/70 transition-colors mb-6">
+      {/* ヘッダー */}
+      <div className="bg-white border-b border-slate-200 shadow-sm px-6 py-4 sticky top-0 z-10">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 transition-colors font-medium">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             ホームに戻る
           </Link>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-1">練習履歴</h1>
-              <p className="text-white/30 text-sm">
-                {records.length > 0 ? `${records.length}件のセッション記録` : "まだ記録がありません"}
-              </p>
-            </div>
-            {records.length > 0 && (
-              <button onClick={clearAll} className="text-sm text-white/25 hover:text-red-400 transition-colors">
-                全て削除
-              </button>
-            )}
-          </div>
+          {records.length > 0 && (
+            <button onClick={clearAll} className="text-sm text-slate-400 hover:text-red-500 transition-colors">
+              全て削除
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto px-6 py-8">
+
+        {/* タイトル */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">練習履歴</h1>
+          <p className="text-slate-400 text-sm">
+            {records.length > 0 ? `${records.length}件のセッション記録` : "まだ記録がありません"}
+          </p>
         </div>
 
         {/* 統計カード */}
         {records.length > 0 && (
-          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 mb-6">
-            <div className="grid grid-cols-3 divide-x divide-white/[0.06]">
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-6 shadow-sm">
+            <div className="grid grid-cols-3 divide-x divide-slate-100">
               <div className="text-center px-4">
-                <p className="text-2xl font-bold text-white">{records.length}</p>
-                <p className="text-xs text-white/30 mt-0.5">セッション数</p>
+                <p className="text-2xl font-bold text-slate-800">{records.length}</p>
+                <p className="text-xs text-slate-400 mt-0.5">セッション数</p>
               </div>
               <div className="text-center px-4">
-                <p className={`text-2xl font-bold ${avgScore >= 80 ? "text-emerald-400" : avgScore >= 60 ? "text-indigo-400" : "text-amber-400"}`}>
+                <p className={`text-2xl font-bold ${avgScore >= 80 ? "text-emerald-600" : avgScore >= 60 ? "text-blue-600" : "text-amber-600"}`}>
                   {avgScore}
                 </p>
-                <p className="text-xs text-white/30 mt-0.5">平均スコア</p>
+                <p className="text-xs text-slate-400 mt-0.5">平均スコア</p>
               </div>
               <div className="text-center px-4">
-                <p className={`text-2xl font-bold ${records[0].evaluation.overallScore >= 80 ? "text-emerald-400" : records[0].evaluation.overallScore >= 60 ? "text-indigo-400" : "text-amber-400"}`}>
+                <p className={`text-2xl font-bold ${records[0].evaluation.overallScore >= 80 ? "text-emerald-600" : records[0].evaluation.overallScore >= 60 ? "text-blue-600" : "text-amber-600"}`}>
                   {records[0].evaluation.overallScore}
                 </p>
-                <p className="text-xs text-white/30 mt-0.5">最新スコア</p>
+                <p className="text-xs text-slate-400 mt-0.5">最新スコア</p>
               </div>
             </div>
 
             {/* スコア推移 */}
             {records.length >= 2 && (
-              <div className="mt-5 pt-4 border-t border-white/[0.06]">
-                <p className="text-xs text-white/20 mb-3">スコア推移（新しい順 →）</p>
+              <div className="mt-5 pt-4 border-t border-slate-100">
+                <p className="text-xs text-slate-400 mb-3">スコア推移（新しい順 →）</p>
                 <div className="flex items-end gap-1 h-10">
                   {[...records].slice(0, 12).reverse().map((r, i, arr) => {
                     const pct = r.evaluation.overallScore / 100;
@@ -138,7 +136,7 @@ export default function HistoryPage() {
                     return (
                       <div key={r.id} className="flex-1 flex flex-col items-center" title={`${r.evaluation.overallScore}点`}>
                         <div
-                          className={`w-full rounded-t transition-all ${isLatest ? "bg-indigo-500" : "bg-white/15"}`}
+                          className={`w-full rounded-t transition-all ${isLatest ? "bg-blue-500" : "bg-slate-200"}`}
                           style={{ height: `${Math.max(pct * 100, 8)}%` }}
                         />
                       </div>
@@ -153,14 +151,14 @@ export default function HistoryPage() {
         {/* 空の状態 */}
         {records.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-16 h-16 bg-white/[0.04] border border-white/[0.08] rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
+            <div className="w-16 h-16 bg-white border border-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-sm">
               📋
             </div>
-            <h2 className="text-lg font-semibold text-white/60 mb-2">まだ練習記録がありません</h2>
-            <p className="text-sm text-white/25 mb-6 leading-relaxed">
+            <h2 className="text-lg font-semibold text-slate-600 mb-2">まだ練習記録がありません</h2>
+            <p className="text-sm text-slate-400 mb-6 leading-relaxed">
               セッションを終了して評価を受けると<br />自動的にここに記録されます
             </p>
-            <Link href="/session" className="inline-flex items-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-colors">
+            <Link href="/session" className="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm">
               セッションを開始する
             </Link>
           </div>
@@ -176,33 +174,33 @@ export default function HistoryPage() {
               const totalPrev = record.evaluation.previousImprovementsReview?.length ?? 0;
 
               return (
-                <div key={record.id} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden">
+                <div key={record.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
 
                   {/* カードヘッダー */}
                   <button
                     onClick={() => toggleExpand(record.id)}
-                    className="w-full px-5 py-4 flex items-center gap-4 text-left hover:bg-white/[0.03] transition-colors"
+                    className="w-full px-5 py-4 flex items-center gap-4 text-left hover:bg-slate-50 transition-colors"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/15 flex items-center justify-center text-xl flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-xl flex-shrink-0">
                       {record.session.scenario.icon}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <p className="font-semibold text-white/80 text-sm truncate">{record.session.scenario.title}</p>
+                        <p className="font-semibold text-slate-700 text-sm truncate">{record.session.scenario.title}</p>
                         {index === 0 && (
-                          <span className="text-xs font-medium text-indigo-400 bg-indigo-400/10 px-2 py-0.5 rounded-full flex-shrink-0">最新</span>
+                          <span className="text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full flex-shrink-0">最新</span>
                         )}
                       </div>
-                      <p className="text-xs text-white/30">{formatDate(record.savedAt)}・{msgCount}往復</p>
+                      <p className="text-xs text-slate-400">{formatDate(record.savedAt)}・{msgCount}往復</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <ScoreBadge score={record.evaluation.overallScore} />
                       {scoreDiff !== null && (
-                        <span className={`text-xs font-semibold ${scoreDiff > 0 ? "text-emerald-400" : scoreDiff < 0 ? "text-red-400" : "text-white/25"}`}>
+                        <span className={`text-xs font-semibold ${scoreDiff > 0 ? "text-emerald-600" : scoreDiff < 0 ? "text-red-500" : "text-slate-400"}`}>
                           {scoreDiff > 0 ? `▲${scoreDiff}` : scoreDiff < 0 ? `▼${Math.abs(scoreDiff)}` : "±0"}
                         </span>
                       )}
-                      <svg className={`w-4 h-4 text-white/25 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
@@ -210,17 +208,17 @@ export default function HistoryPage() {
 
                   {/* 展開コンテンツ */}
                   {isExpanded && (
-                    <div className="border-t border-white/[0.06] px-5 py-5 space-y-5">
-                      <p className="text-sm text-white/50 leading-relaxed">{record.evaluation.summary}</p>
+                    <div className="border-t border-slate-100 px-5 py-5 space-y-5">
+                      <p className="text-sm text-slate-600 leading-relaxed">{record.evaluation.summary}</p>
 
                       {/* スコア詳細 */}
                       <div>
-                        <h3 className="text-xs font-semibold text-white/25 uppercase tracking-wider mb-3">評価スコア</h3>
+                        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">評価スコア</h3>
                         <div className="space-y-2.5">
                           {record.evaluation.scores.map((s) => (
                             <div key={s.category}>
                               <div className="flex justify-between mb-1">
-                                <span className="text-xs font-medium text-white/45">{s.category}</span>
+                                <span className="text-xs font-medium text-slate-500">{s.category}</span>
                               </div>
                               <MiniBar score={s.score} maxScore={s.maxScore} />
                             </div>
@@ -230,19 +228,19 @@ export default function HistoryPage() {
 
                       {/* 強み・改善点 */}
                       <div className="grid sm:grid-cols-2 gap-3">
-                        <div className="bg-emerald-500/[0.06] border border-emerald-500/10 rounded-xl p-3.5">
-                          <h3 className="text-xs font-semibold text-emerald-400/70 mb-2">強み</h3>
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5">
+                          <h3 className="text-xs font-semibold text-emerald-700 mb-2">強み</h3>
                           <ul className="space-y-1">
                             {record.evaluation.strengths.map((item, i) => (
-                              <li key={i} className="text-xs text-white/45 leading-relaxed">・{item}</li>
+                              <li key={i} className="text-xs text-emerald-800 leading-relaxed">・{item}</li>
                             ))}
                           </ul>
                         </div>
-                        <div className="bg-amber-500/[0.06] border border-amber-500/10 rounded-xl p-3.5">
-                          <h3 className="text-xs font-semibold text-amber-400/70 mb-2">改善点</h3>
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5">
+                          <h3 className="text-xs font-semibold text-amber-700 mb-2">改善点</h3>
                           <ul className="space-y-1">
                             {record.evaluation.improvements.map((item, i) => (
-                              <li key={i} className="text-xs text-white/45 leading-relaxed">・{item}</li>
+                              <li key={i} className="text-xs text-amber-800 leading-relaxed">・{item}</li>
                             ))}
                           </ul>
                         </div>
@@ -252,13 +250,13 @@ export default function HistoryPage() {
                       {hasPrevReview && (
                         <div>
                           <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-xs font-semibold text-white/25 uppercase tracking-wider">前回の改善点チェック</h3>
+                            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">前回の改善点チェック</h3>
                             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                               addressedCount === totalPrev
-                                ? "bg-emerald-500/15 text-emerald-400"
+                                ? "bg-emerald-100 text-emerald-700"
                                 : addressedCount > 0
-                                  ? "bg-indigo-500/15 text-indigo-400"
-                                  : "bg-white/[0.06] text-white/30"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-slate-100 text-slate-500"
                             }`}>
                               {addressedCount}/{totalPrev} 対応済み
                             </span>
@@ -267,10 +265,10 @@ export default function HistoryPage() {
                             {record.evaluation.previousImprovementsReview!.map((rev, i) => (
                               <div key={i} className={`flex items-start gap-2.5 p-3 rounded-xl border ${
                                 rev.addressed
-                                  ? "bg-emerald-500/[0.07] border-emerald-500/15"
-                                  : "bg-white/[0.03] border-white/[0.06]"
+                                  ? "bg-emerald-50 border-emerald-200"
+                                  : "bg-slate-50 border-slate-200"
                               }`}>
-                                <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${rev.addressed ? "bg-emerald-500" : "bg-white/15"}`}>
+                                <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${rev.addressed ? "bg-emerald-500" : "bg-slate-300"}`}>
                                   <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     {rev.addressed
                                       ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -279,10 +277,10 @@ export default function HistoryPage() {
                                   </svg>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-medium text-white/55">{rev.item}</p>
-                                  <p className="text-xs text-white/30 mt-0.5 leading-relaxed">{rev.comment}</p>
+                                  <p className="text-xs font-medium text-slate-600">{rev.item}</p>
+                                  <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{rev.comment}</p>
                                 </div>
-                                <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${rev.addressed ? "text-emerald-400 bg-emerald-500/15" : "text-white/30 bg-white/[0.06]"}`}>
+                                <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${rev.addressed ? "text-emerald-700 bg-emerald-100" : "text-slate-500 bg-slate-100"}`}>
                                   {rev.addressed ? "✓" : "未"}
                                 </span>
                               </div>
@@ -292,16 +290,16 @@ export default function HistoryPage() {
                       )}
 
                       {/* 次のステップ */}
-                      <div className="bg-indigo-500/[0.07] border border-indigo-500/10 rounded-xl p-3.5">
-                        <h3 className="text-xs font-semibold text-indigo-400/70 mb-1.5">次のステップ</h3>
-                        <p className="text-xs text-white/40 leading-relaxed">{record.evaluation.nextSteps}</p>
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5">
+                        <h3 className="text-xs font-semibold text-blue-700 mb-1.5">次のステップ</h3>
+                        <p className="text-xs text-blue-700 leading-relaxed">{record.evaluation.nextSteps}</p>
                       </div>
 
                       {/* 削除 */}
-                      <div className="pt-1 border-t border-white/[0.06] flex justify-end">
+                      <div className="pt-1 border-t border-slate-100 flex justify-end">
                         <button
                           onClick={() => { if (confirm("この記録を削除しますか？")) deleteRecord(record.id); }}
-                          className="text-xs text-white/20 hover:text-red-400 transition-colors"
+                          className="text-xs text-slate-400 hover:text-red-500 transition-colors"
                         >
                           この記録を削除
                         </button>

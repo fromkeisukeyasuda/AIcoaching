@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AIコーチング練習",
-  description: "AIと対話しながらコーチングスキルを磨くアプリ",
+  title: "AIコーチトレーナー",
+  description: "AIと対話しながらコーチングスキルを磨くトレーニングアプリ",
 };
 
 export default function RootLayout({

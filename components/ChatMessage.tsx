@@ -15,8 +15,8 @@ export default function ChatMessage({ message, clientName }: ChatMessageProps) {
       <div
         className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ${
           isUser
-            ? "bg-indigo-600 text-white"
-            : "bg-white/10 text-white/60"
+            ? "bg-blue-600 text-white"
+            : "bg-slate-200 text-slate-600"
         }`}
       >
         {isUser ? "私" : clientName.charAt(0)}
@@ -25,8 +25,8 @@ export default function ChatMessage({ message, clientName }: ChatMessageProps) {
       <div
         className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
           isUser
-            ? "bg-indigo-600 text-white rounded-tr-sm"
-            : "bg-white/[0.07] text-white/80 border border-white/[0.08] rounded-tl-sm"
+            ? "bg-blue-600 text-white rounded-tr-sm"
+            : "bg-white text-slate-700 border border-slate-200 rounded-tl-sm shadow-sm"
         }`}
       >
         {message.content}

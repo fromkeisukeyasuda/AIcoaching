@@ -87,11 +87,11 @@ export default function SessionPage() {
     localStorage.setItem("customScenarios", JSON.stringify(updated));
   };
 
-  /* チャット欄だけをスムーズスクロール（ページ全体を揺らさない） */
+  /* 最新メッセージを先頭表示するため、常に scrollTop=0 へスムーズスクロール */
   useEffect(() => {
     const el = messagesContainerRef.current;
     if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    el.scrollTo({ top: 0, behavior: "smooth" });
   }, [messages, isLoading]);
 
   /* AIの返答が完了したら感情を検出 */
@@ -166,8 +166,12 @@ export default function SessionPage() {
 
   useEffect(() => { sendWithTextRef.current = sendMessageWithText; }, [sendMessageWithText]);
 
+  /* 音声認識結果 → textarea に転記するだけ。自動送信しない（録音完了後にユーザーが Enter） */
   const onVoiceResult = useCallback((text: string) => {
-    if (text.trim()) sendWithTextRef.current(text.trim());
+    if (text.trim()) {
+      setInput(text.trim());
+      setTimeout(() => textareaRef.current?.focus(), 50);
+    }
   }, []);
   const voice = useVoiceInput(onVoiceResult);
 
@@ -401,48 +405,63 @@ export default function SessionPage() {
       {/* ── 2カラム ── */}
       <div className="flex-1 flex overflow-hidden">
 
-        {/* ═══ 左パネル：アバター（常に同一DOM構造で揺れ防止） ═══ */}
-        <div className="w-1/2 flex-shrink-0 flex flex-col items-center justify-center gap-4 bg-[#090912] border-r border-white/[0.06] p-6">
+        {/* ═══ 左パネル：アバター（fill で上部クリッピングなし、名前は上部ヘッダーのみ） ═══ */}
+        <div className="w-1/2 flex-shrink-0 flex flex-col bg-[#090912] border-r border-white/[0.06] overflow-hidden">
 
-          {/* アバター（xl サイズ） */}
-          <CharacterAvatar
-            clientName={selectedScenario.clientName}
-            speaking={tts.speaking && !isStarting}
-            loading={(isStarting || isLoading) && !tts.speaking}
-            emotion={isStarting ? "idle" : emotion}
-            size="xl"
-          />
-
-          {/* 音声波形（常に存在、非表示時は点列） */}
-          <SoundWave active={tts.speaking && !isStarting} />
-
-          {/* 名前・役職 */}
-          <div className="text-center">
-            <p className="text-white font-semibold text-base">{selectedScenario.clientName}</p>
-            <p className="text-white/40 text-sm">{selectedScenario.clientRole}</p>
+          {/* 画像エリア — flex-1 + min-h-0 で利用可能な高さを全て使う */}
+          <div className="flex-1 min-h-0 p-4 pb-2">
+            <CharacterAvatar
+              clientName={selectedScenario.clientName}
+              speaking={tts.speaking && !isStarting}
+              loading={(isStarting || isLoading) && !tts.speaking}
+              emotion={isStarting ? "idle" : emotion}
+              size="fill"
+            />
           </div>
 
-          {/* ステータス行（固定高さで揺れ防止） */}
-          <div className="h-4 flex items-center justify-center">
-            <p className="text-white/25 text-xs">
-              {isStarting ? "セッションを準備中..." : userMsgCount > 0 ? `${userMsgCount}往復` : ""}
-            </p>
+          {/* 下部バー: 音声波形 + ステータス（固定高さ） */}
+          <div className="flex-shrink-0 flex flex-col items-center gap-1.5 pb-3 px-4">
+            <SoundWave active={tts.speaking && !isStarting} />
+            <div className="h-4 flex items-center justify-center">
+              <p className="text-white/25 text-xs">
+                {isStarting ? "セッションを準備中..." : userMsgCount > 0 ? `${userMsgCount}往復` : ""}
+              </p>
+            </div>
           </div>
         </div>
 
         {/* ═══ 右パネル：チャット ═══ */}
         <div className="flex-1 flex flex-col overflow-hidden">
 
-          {/* メッセージ一覧（このコンテナ内のみスクロール） */}
+          {/* メッセージ一覧（最新が先頭、古いものが下へ） */}
           <div ref={messagesContainerRef} className="flex-1 overflow-y-auto scrollbar-hide px-5 py-5">
             <div className="max-w-2xl mx-auto space-y-3">
               {messages.length === 0 && !isLoading && !isStarting && (
                 <p className="text-center text-white/20 text-sm py-16">会話がここに表示されます</p>
               )}
-              {messages.map((msg, i) => (
-                <ChatMessage key={i} message={msg} clientName={selectedScenario.clientName} />
-              ))}
+              {/* 生成中インジケーター（最新 = 先頭） */}
               {isLoading && <TypingIndicator clientName={selectedScenario.clientName} />}
+              {/* ペア単位で逆順: 最新の [私の発言 → AI応答] が先頭に来る */}
+              {(() => {
+                const elems: React.ReactNode[] = [];
+                // messages は [user, ai, user, ai, ...] の順
+                // 末尾から2つずつ取り出してユーザー→AI の順でプッシュ
+                for (let i = messages.length - 1; i >= 0; ) {
+                  if (i >= 1 && messages[i].role === "assistant" && messages[i - 1].role === "user") {
+                    elems.push(
+                      <ChatMessage key={i - 1} message={messages[i - 1]} clientName={selectedScenario.clientName} />,
+                      <ChatMessage key={i}     message={messages[i]}     clientName={selectedScenario.clientName} />,
+                    );
+                    i -= 2;
+                  } else {
+                    elems.push(
+                      <ChatMessage key={i} message={messages[i]} clientName={selectedScenario.clientName} />
+                    );
+                    i -= 1;
+                  }
+                }
+                return elems;
+              })()}
             </div>
           </div>
 

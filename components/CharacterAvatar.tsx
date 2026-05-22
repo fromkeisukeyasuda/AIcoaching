@@ -7,7 +7,7 @@ interface CharacterAvatarProps {
   speaking: boolean;
   loading?: boolean;
   emotion?: string;   // idle | neutral | happy | smile | worried | sad | surprised | serious | angry | smirk | warm
-  size?: "md" | "lg" | "xl"; // md = 148px (default), lg = 240px, xl = 400px
+  size?: "md" | "lg" | "xl" | "fill"; // md=148px, lg=240px, xl=400px, fill=親要素に合わせる
 }
 
 /* ── SVG animation styles — DefaultCharacter のみ使用 ── */
@@ -82,8 +82,9 @@ function CharacterImage({
   emotion?: string;
   alt: string;
   speaking: boolean;
-  size?: "md" | "lg" | "xl";
+  size?: "md" | "lg" | "xl" | "fill";
 }) {
+  const isFill = size === "fill";
   const dim    = size === "xl" ? 400 : size === "lg" ? 240 : 148;
   const radius = size === "xl" ? 24  : size === "lg" ? 18  : 14;
 
@@ -104,9 +105,21 @@ function CharacterImage({
     return () => clearTimeout(t);
   }, [targetSrc, displaySrc]);
 
-  return (
-    <div
-      style={{
+  /* fill モード: 親コンテナいっぱいに広がる */
+  const containerStyle: React.CSSProperties = isFill
+    ? {
+        width: "100%",
+        height: "100%",
+        borderRadius: 20,
+        overflow: "hidden",
+        background: "#f0ece4",
+        position: "relative",
+        boxShadow: speaking
+          ? "0 0 0 3px rgba(99,102,241,0.55), 0 12px 40px rgba(0,0,0,0.5)"
+          : "0 4px 20px rgba(0,0,0,0.35)",
+        transition: "box-shadow 0.4s ease",
+      }
+    : {
         width: dim,
         height: dim,
         borderRadius: radius,
@@ -118,8 +131,10 @@ function CharacterImage({
           ? "0 0 0 2px rgba(99,102,241,0.55), 0 8px 32px rgba(0,0,0,0.5)"
           : "0 4px 20px rgba(0,0,0,0.35)",
         transition: "box-shadow 0.4s ease",
-      }}
-    >
+      };
+
+  return (
+    <div style={containerStyle}>
       <img
         src={displaySrc}
         alt={alt}
@@ -190,7 +205,34 @@ export default function CharacterAvatar({
 
   const isImage = charType !== "default";
 
-  /* コンテナ・リングサイズ */
+  /* fill モード: 親要素全体を使うシンプルなレイアウト */
+  if (size === "fill" && isImage) {
+    return (
+      <div className="relative w-full h-full">
+        {/* Speaking glow rings (% ベース) */}
+        {speaking && (
+          <>
+            <div className="absolute -inset-3 rounded-[22px] border border-indigo-400/15"
+              style={{ animation: "ping 2s cubic-bezier(0,0,0.2,1) infinite" }} />
+            <div className="absolute -inset-1.5 rounded-[21px] border border-indigo-400/20"
+              style={{ animation: "ping 2s cubic-bezier(0,0,0.2,1) 0.5s infinite" }} />
+          </>
+        )}
+        {/* Loading spinner */}
+        {loading && (
+          <div className="absolute -inset-1 rounded-[21px]"
+            style={{
+              border: "2px solid transparent",
+              borderTopColor: "rgba(99,102,241,0.6)",
+              animation: "spin 1s linear infinite",
+            }} />
+        )}
+        <CharacterImage charType={charType} emotion={emotion} alt={clientName} speaking={speaking} size="fill" />
+      </div>
+    );
+  }
+
+  /* コンテナ・リングサイズ（固定 px モード） */
   const containerDim = size === "xl" ? 440 : size === "lg" ? 280 : 200;
   const containerH   = size === "xl" ? 440 : size === "lg" ? 280 : 195;
   const ring1        = size === "xl" ? 428 : size === "lg" ? 268 : 175;

@@ -317,6 +317,46 @@ export default function EvaluationPage() {
   }, []);
 
   useEffect(() => {
+    // ?demo=1 → API クレジット不要のデモモード
+    const isDemo = new URLSearchParams(window.location.search).get("demo") === "1";
+    if (isDemo) {
+      const demoSession: SessionData = {
+        startedAt: "2026-05-25T10:00:00.000Z",
+        scenario: { id:"s1", title:"部下のモチベーション向上", clientName:"田中 誠", clientProfile:"テスト", challenge:"テスト", goal:"テスト" },
+        messages: [
+          { role:"assistant", content:"こんにちは、今日はよろしくお願いします。" },
+          { role:"user", content:"最近チームの士気が低くて困っています。どうすればよいでしょうか。" },
+          { role:"assistant", content:"そうですか、それは大変ですね。具体的にどんな場面で感じますか？" },
+          { role:"user", content:"朝礼での反応が薄いんです。個別に話を聞くのが良いですか？" },
+          { role:"assistant", content:"いい視点ですね。まずは一対一の場を作ってみましょう。" },
+          { role:"user", content:"具体的にどんな質問をすればいいですか？" },
+        ],
+      };
+      const demoEval: EvaluationResult = {
+        overallScore: 76,
+        scores: [
+          { category:"傾聴力", score:7.5, maxScore:10, comment:"相手の言葉をよく聞いていた" },
+          { category:"共感力", score:8.0, maxScore:10, comment:"感情への配慮が見えた" },
+          { category:"質問力", score:7.0, maxScore:10, comment:"オープンな質問が多かった" },
+          { category:"目標設定支援", score:6.5, maxScore:10, comment:"もう少し具体的に" },
+          { category:"アクション促進", score:6.0, maxScore:10, comment:"次のステップの明確化が必要" },
+        ],
+        strengths: ["積極的な傾聴姿勢が素晴らしい","共感的な言葉かけができている","オープンクエスチョンを効果的に使えている"],
+        improvements: ["より深い質問で本質に迫る","クライアントの感情をより丁寧に確認する","具体的なアクションプランの設定をサポートする"],
+        nextSteps: "次回の練習では、オープンクエスチョンに加えてリフレクションを意識的に使ってみましょう。また、クライアントが自分でアクションを決める支援をより強化してください。",
+        summary: "全体的に良いコーチングができていました。",
+        previousImprovementsReview: [],
+      };
+      const demoHist: SessionRecord[] = [
+        { id:"2026-05-25T10:00:00.000Z", session:demoSession, evaluation:demoEval, savedAt:"2026-05-25T10:30:00.000Z" },
+        { id:"2026-05-24T10:00:00.000Z", session:demoSession, evaluation:{...demoEval,overallScore:70}, savedAt:"2026-05-24T10:30:00.000Z" },
+        { id:"2026-05-23T10:00:00.000Z", session:demoSession, evaluation:{...demoEval,overallScore:63}, savedAt:"2026-05-23T10:30:00.000Z" },
+        { id:"2026-05-22T10:00:00.000Z", session:demoSession, evaluation:{...demoEval,overallScore:58}, savedAt:"2026-05-22T10:30:00.000Z" },
+      ];
+      setSession(demoSession); setResult(demoEval); setHistory(demoHist); setIsLoading(false);
+      return;
+    }
+
     const stored = localStorage.getItem("coachingSession");
     if (!stored) { router.push("/session"); return; }
     const sessionData: SessionData = JSON.parse(stored);

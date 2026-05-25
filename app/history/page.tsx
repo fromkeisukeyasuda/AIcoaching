@@ -4,6 +4,33 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { SessionRecord } from "@/types";
 
+/* ══════════════════════════════════════════════════════════════════════
+   デザイントークン（v2 共通）
+══════════════════════════════════════════════════════════════════════ */
+const V = {
+  blue:       "#4A90E2",
+  blueDeep:   "#2D6CB8",
+  blueLite:   "#E3F2FD",
+  coral:      "#FF6B6B",
+  coralLite:  "#FFE3E3",
+  green:      "#6BCB77",
+  greenLite:  "#E8F5E9",
+  greenDark:  "#2D7A36",
+  orange:     "#FFB347",
+  bg:         "#F8F9FA",
+  surface:    "#FFFFFF",
+  ink:        "#2D3436",
+  ink2:       "#5B6066",
+  ink3:       "#9AA0A6",
+  border:     "#E5E7EB",
+  borderSoft: "#EEF1F4",
+  round: '"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif',
+  sans:  '"Noto Sans JP","Hiragino Sans",system-ui,sans-serif',
+} as const;
+
+/* ══════════════════════════════════════════════════════════════════════
+   ユーティリティ
+══════════════════════════════════════════════════════════════════════ */
 function formatDate(iso: string) {
   return new Intl.DateTimeFormat("ja-JP", {
     year: "numeric", month: "short", day: "numeric",
@@ -11,32 +38,61 @@ function formatDate(iso: string) {
   }).format(new Date(iso));
 }
 
-function ScoreBadge({ score }: { score: number }) {
-  const cls = score >= 80
-    ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-    : score >= 60
-      ? "bg-blue-100 text-blue-700 border-blue-200"
-      : "bg-amber-100 text-amber-700 border-amber-200";
+function scoreColor(s: number) {
+  return s >= 80 ? V.green : s >= 60 ? V.blue : V.orange;
+}
+
+/* ── サイドバースパークライン ── */
+function SidebarSparkline({ scores }: { scores: number[] }) {
+  const n = Math.min(scores.length, 8);
+  const slice = scores.slice(-n);
+  if (slice.length < 2) return (
+    <svg viewBox="0 0 120 36" width="100%" height="36" style={{ display: "block" }}>
+      <path d="M0 28 L120 18" fill="none" stroke={V.blue} strokeWidth="1.5" />
+    </svg>
+  );
+  const pts = slice.map((v, i) => {
+    const px = (i / (n - 1)) * 120;
+    const py = 32 - (v / 100) * 28;
+    return `${px} ${py}`;
+  }).join(" L");
+  const last = slice[slice.length - 1];
+  const lx = 120, ly = 32 - (last / 100) * 28;
   return (
-    <span className={`text-sm font-bold px-2.5 py-1 rounded-lg border ${cls}`}>
-      {score}点
-    </span>
+    <svg viewBox="0 0 120 36" width="100%" height="36" style={{ display: "block" }}>
+      <defs>
+        <linearGradient id="hist-spark" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={V.blue} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={V.blue} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={`M${pts.replace(/ L/g, " L")} L${lx} 36 L0 36 Z`} fill="url(#hist-spark)" />
+      <path d={`M${pts}`} fill="none" stroke={V.blue} strokeWidth="1.5"
+        strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={lx} cy={ly} r="2.5" fill={V.coral} />
+    </svg>
   );
 }
 
+/* ── スコアミニバー ── */
 function MiniBar({ score, maxScore }: { score: number; maxScore: number }) {
   const pct = (score / maxScore) * 100;
-  const color = pct >= 80 ? "bg-emerald-500" : pct >= 60 ? "bg-blue-500" : pct >= 40 ? "bg-amber-500" : "bg-red-400";
+  const color = pct >= 80 ? V.green : pct >= 60 ? V.blue : pct >= 40 ? V.orange : V.coral;
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ flex: 1, height: 4, background: V.bg, borderRadius: 2, overflow: "hidden" }}>
+        <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 2 }} />
       </div>
-      <span className="text-xs text-slate-400 w-7 text-right">{score}/{maxScore}</span>
+      <span style={{ fontFamily: V.round, fontSize: 11, color: V.ink2, fontWeight: 600, width: 36, textAlign: "right" }}>
+        {score}/{maxScore}
+      </span>
     </div>
   );
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   メインページ
+══════════════════════════════════════════════════════════════════════ */
 export default function HistoryPage() {
   const [records, setRecords] = useState<SessionRecord[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -49,7 +105,7 @@ export default function HistoryPage() {
   }, []);
 
   const toggleExpand = (id: string) => {
-    setExpanded((prev) => {
+    setExpanded(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
@@ -57,7 +113,7 @@ export default function HistoryPage() {
   };
 
   const deleteRecord = (id: string) => {
-    const updated = records.filter((r) => r.id !== id);
+    const updated = records.filter(r => r.id !== id);
     setRecords(updated);
     localStorage.setItem("sessionHistory", JSON.stringify(updated));
   };
@@ -71,154 +127,256 @@ export default function HistoryPage() {
   const avgScore = records.length > 0
     ? Math.round(records.reduce((s, r) => s + r.evaluation.overallScore, 0) / records.length) : 0;
 
+  const scores = records.map(r => r.evaluation.overallScore).reverse();
+
+  const streak = (() => {
+    let s = 0;
+    for (let i = 0; i < records.length - 1; i++) {
+      if (records[i].evaluation.overallScore > records[i + 1].evaluation.overallScore) s++;
+      else break;
+    }
+    return s;
+  })();
+
   if (!loaded) return null;
 
-  return (
-    <main className="min-h-screen bg-slate-50">
+  const card: React.CSSProperties = {
+    background: V.surface, border: `1px solid ${V.border}`,
+    borderRadius: 16, boxShadow: "0 1px 2px rgba(45,52,54,0.04)",
+  };
 
-      {/* ヘッダー */}
-      <div className="bg-white border-b border-slate-200 shadow-sm px-6 py-4 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 transition-colors font-medium">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            ホームに戻る
-          </Link>
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "240px 1fr",
+      gridTemplateRows: "64px 1fr",
+      gridTemplateAreas: '"sidebar header" "sidebar main"',
+      height: "100vh",
+      background: V.bg,
+      fontFamily: V.sans,
+    }}>
+
+      {/* ── Sidebar ── */}
+      <aside style={{ gridArea: "sidebar", background: V.surface, borderRight: `1px solid ${V.border}`, display: "flex", flexDirection: "column", padding: "20px 14px 18px", overflow: "hidden" }}>
+        <div style={{ fontFamily: V.sans, fontSize: 10, fontWeight: 600, color: V.ink3, letterSpacing: "0.18em", textTransform: "uppercase", padding: "4px 10px 10px" }}>MENU</div>
+        <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {[
+            { id: "chat",    icon: "💬", label: "練習する",   sub: "AIと対話",                              href: "/session" },
+            { id: "history", icon: "📜", label: "会話履歴",   sub: `${records.length} セッション`,          href: "/history" },
+            { id: "report",  icon: "📊", label: "レポート",   sub: records.length > 0 ? `最新 ${records[0]?.evaluation.overallScore} 点` : "最新の評価", href: "/evaluation" },
+            { id: "home",    icon: "🏠", label: "ホーム",     sub: "",                                      href: "/" },
+          ].map(item => {
+            const active = item.id === "history";
+            return (
+              <Link key={item.id} href={item.href} style={{ display: "flex", alignItems: "center", gap: 12, background: active ? V.blueLite : "transparent", borderRadius: 12, padding: "12px 12px", textDecoration: "none", position: "relative" }}>
+                <div style={{ width: 32, height: 32, borderRadius: 10, background: active ? V.blue : V.bg, color: active ? "#fff" : V.ink2, display: "grid", placeItems: "center", fontSize: 15, flexShrink: 0 }}>{item.icon}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: V.round, fontWeight: 600, fontSize: 13.5, color: active ? V.blue : V.ink, lineHeight: 1.2 }}>{item.label}</div>
+                  {item.sub && <div style={{ fontFamily: V.sans, fontSize: 10.5, color: V.ink3, marginTop: 2 }}>{item.sub}</div>}
+                </div>
+                {active && <span style={{ position: "absolute", left: 0, top: 12, bottom: 12, width: 3, background: V.blue, borderRadius: "0 3px 3px 0" }} />}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* 今週の成長 */}
+        <div style={{ marginTop: 22, padding: 14, background: V.bg, borderRadius: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <div style={{ fontFamily: V.round, fontWeight: 600, fontSize: 12, color: V.ink }}>スコア推移</div>
+            <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 13, color: streak > 0 ? V.green : V.ink3 }}>
+              {streak > 0 ? `↑${streak}回連続` : "記録中"}
+            </div>
+          </div>
+          <SidebarSparkline scores={scores} />
+        </div>
+
+        <div style={{ flex: 1 }} />
+
+        {/* CTA */}
+        <Link href="/session" style={{ background: V.coral, color: "#fff", borderRadius: 14, padding: "14px 16px", fontFamily: V.round, fontWeight: 700, fontSize: 14, cursor: "pointer", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: `0 10px 22px -10px ${V.coral}` }}>
+          <div>
+            <div>新しい練習を始める</div>
+            <div style={{ fontFamily: V.sans, fontSize: 10.5, fontWeight: 400, marginTop: 2, opacity: 0.92 }}>3 つのシナリオから</div>
+          </div>
+          <span style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.25)", display: "grid", placeItems: "center", fontSize: 14 }}>→</span>
+        </Link>
+      </aside>
+
+      {/* ── Header ── */}
+      <header style={{ gridArea: "header", height: 64, padding: "0 28px", background: V.surface, borderBottom: `1px solid ${V.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 12, background: V.blue, display: "grid", placeItems: "center", color: "#fff", fontFamily: V.round, fontWeight: 700, fontSize: 18, boxShadow: `0 6px 14px -6px ${V.blue}` }}>聴</div>
+          <div>
+            <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 15, color: V.ink, lineHeight: 1 }}>AIコーチトレーナー</div>
+            <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3, marginTop: 3 }}>安心して、ことばを試せる場所。</div>
+          </div>
+          <div style={{ width: 1, height: 28, background: V.border, margin: "0 8px" }} />
+          <div>
+            <div style={{ fontFamily: V.round, fontWeight: 600, fontSize: 14, color: V.ink, lineHeight: 1 }}>会話履歴</div>
+            <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3, marginTop: 3 }}>
+              {records.length > 0 ? `${records.length} セッションの記録` : "まだ記録がありません"}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {streak > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: V.coralLite, color: V.coral, padding: "6px 12px", borderRadius: 999, fontFamily: V.round, fontWeight: 600, fontSize: 12 }}>
+              <span style={{ fontSize: 14 }}>♥</span>
+              <span>連続 {streak} 日</span>
+            </div>
+          )}
           {records.length > 0 && (
-            <button onClick={clearAll} className="text-sm text-slate-400 hover:text-red-500 transition-colors">
+            <button
+              onClick={clearAll}
+              style={{ fontFamily: V.sans, fontSize: 12, color: V.ink3, background: "transparent", border: `1px solid ${V.border}`, borderRadius: 8, padding: "6px 12px", cursor: "pointer" }}
+            >
               全て削除
             </button>
           )}
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-3xl mx-auto px-6 py-8">
-
-        {/* タイトル */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-900 mb-1">練習履歴</h1>
-          <p className="text-slate-400 text-sm">
-            {records.length > 0 ? `${records.length}件のセッション記録` : "まだ記録がありません"}
-          </p>
-        </div>
+      {/* ── Main ── */}
+      <main style={{ gridArea: "main", padding: "24px 32px 32px", overflow: "auto", minHeight: 0 }}>
 
         {/* 統計カード */}
         {records.length > 0 && (
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-6 shadow-sm">
-            <div className="grid grid-cols-3 divide-x divide-slate-100">
-              <div className="text-center px-4">
-                <p className="text-2xl font-bold text-slate-800">{records.length}</p>
-                <p className="text-xs text-slate-400 mt-0.5">セッション数</p>
+          <div style={{ ...card, padding: "22px 28px", marginBottom: 20 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 2fr", gap: 0, alignItems: "center" }}>
+              {/* セッション数 */}
+              <div style={{ textAlign: "center", padding: "0 20px", borderRight: `1px solid ${V.borderSoft}` }}>
+                <div style={{ fontFamily: V.round, fontSize: 32, fontWeight: 700, color: V.ink }}>{records.length}</div>
+                <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3, marginTop: 4 }}>セッション数</div>
               </div>
-              <div className="text-center px-4">
-                <p className={`text-2xl font-bold ${avgScore >= 80 ? "text-emerald-600" : avgScore >= 60 ? "text-blue-600" : "text-amber-600"}`}>
-                  {avgScore}
-                </p>
-                <p className="text-xs text-slate-400 mt-0.5">平均スコア</p>
+              {/* 平均スコア */}
+              <div style={{ textAlign: "center", padding: "0 20px", borderRight: `1px solid ${V.borderSoft}` }}>
+                <div style={{ fontFamily: V.round, fontSize: 32, fontWeight: 700, color: scoreColor(avgScore) }}>{avgScore}</div>
+                <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3, marginTop: 4 }}>平均スコア</div>
               </div>
-              <div className="text-center px-4">
-                <p className={`text-2xl font-bold ${records[0].evaluation.overallScore >= 80 ? "text-emerald-600" : records[0].evaluation.overallScore >= 60 ? "text-blue-600" : "text-amber-600"}`}>
+              {/* 最新スコア */}
+              <div style={{ textAlign: "center", padding: "0 20px", borderRight: `1px solid ${V.borderSoft}` }}>
+                <div style={{ fontFamily: V.round, fontSize: 32, fontWeight: 700, color: scoreColor(records[0].evaluation.overallScore) }}>
                   {records[0].evaluation.overallScore}
-                </p>
-                <p className="text-xs text-slate-400 mt-0.5">最新スコア</p>
-              </div>
-            </div>
-
-            {/* スコア推移 */}
-            {records.length >= 2 && (
-              <div className="mt-5 pt-4 border-t border-slate-100">
-                <p className="text-xs text-slate-400 mb-3">スコア推移（新しい順 →）</p>
-                <div className="flex items-end gap-1 h-10">
-                  {[...records].slice(0, 12).reverse().map((r, i, arr) => {
-                    const pct = r.evaluation.overallScore / 100;
-                    const isLatest = i === arr.length - 1;
-                    return (
-                      <div key={r.id} className="flex-1 flex flex-col items-center" title={`${r.evaluation.overallScore}点`}>
-                        <div
-                          className={`w-full rounded-t transition-all ${isLatest ? "bg-blue-500" : "bg-slate-200"}`}
-                          style={{ height: `${Math.max(pct * 100, 8)}%` }}
-                        />
-                      </div>
-                    );
-                  })}
                 </div>
+                <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3, marginTop: 4 }}>最新スコア</div>
               </div>
-            )}
+              {/* スパークライン */}
+              {records.length >= 2 && (
+                <div style={{ padding: "0 0 0 24px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                    <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3 }}>スコア推移</div>
+                    {records.length >= 2 && (
+                      <div style={{ fontFamily: V.round, fontSize: 11, fontWeight: 700, color: records[0].evaluation.overallScore >= records[1].evaluation.overallScore ? V.green : V.coral }}>
+                        {records[0].evaluation.overallScore >= records[1].evaluation.overallScore ? "↑" : "↓"} 前回比 {Math.abs(records[0].evaluation.overallScore - records[1].evaluation.overallScore)}点
+                      </div>
+                    )}
+                  </div>
+                  {/* バーチャート（ピクセル高さ固定） */}
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 40 }}>
+                    {[...records].slice(0, 12).reverse().map((r, i, arr) => {
+                      const h = Math.max(Math.round((r.evaluation.overallScore / 100) * 40), 3);
+                      const isLatest = i === arr.length - 1;
+                      return (
+                        <div
+                          key={r.id}
+                          title={`${r.evaluation.overallScore}点`}
+                          style={{
+                            flex: 1,
+                            height: h,
+                            borderRadius: "3px 3px 0 0",
+                            background: isLatest ? V.blue : V.border,
+                            transition: "height 0.3s ease",
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {/* 空の状態 */}
         {records.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 bg-white border border-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-sm">
-              📋
-            </div>
-            <h2 className="text-lg font-semibold text-slate-600 mb-2">まだ練習記録がありません</h2>
-            <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+          <div style={{ textAlign: "center", paddingTop: 80 }}>
+            <div style={{ width: 64, height: 64, background: V.surface, border: `1px solid ${V.border}`, borderRadius: 20, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 28 }}>📋</div>
+            <h2 style={{ fontFamily: V.round, fontSize: 18, fontWeight: 700, color: V.ink, marginBottom: 8 }}>まだ練習記録がありません</h2>
+            <p style={{ fontFamily: V.sans, fontSize: 13, color: V.ink3, marginBottom: 24, lineHeight: 1.8 }}>
               セッションを終了して評価を受けると<br />自動的にここに記録されます
             </p>
-            <Link href="/session" className="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm">
-              セッションを開始する
+            <Link href="/session" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 24px", background: V.blue, color: "#fff", borderRadius: 12, fontFamily: V.round, fontWeight: 700, fontSize: 14, textDecoration: "none", boxShadow: `0 8px 20px -8px ${V.blue}` }}>
+              セッションを開始する →
             </Link>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {records.map((record, index) => {
-              const isExpanded = expanded.has(record.id);
-              const msgCount = record.session.messages.filter((m) => m.role === "user").length;
+              const isOpen = expanded.has(record.id);
+              const msgCount = record.session.messages.filter(m => m.role === "user").length;
               const prevScore = records[index + 1]?.evaluation.overallScore;
               const scoreDiff = prevScore !== undefined ? record.evaluation.overallScore - prevScore : null;
-              const hasPrevReview = record.evaluation.previousImprovementsReview?.length ?? 0 > 0;
-              const addressedCount = record.evaluation.previousImprovementsReview?.filter((r) => r.addressed).length ?? 0;
+              const hasPrevReview = (record.evaluation.previousImprovementsReview?.length ?? 0) > 0;
+              const addressedCount = record.evaluation.previousImprovementsReview?.filter(r => r.addressed).length ?? 0;
               const totalPrev = record.evaluation.previousImprovementsReview?.length ?? 0;
 
               return (
-                <div key={record.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                <div key={record.id} style={{ ...card, overflow: "hidden", border: `1px solid ${isOpen ? V.blue : V.border}`, transition: "border-color 0.15s" }}>
 
-                  {/* カードヘッダー */}
+                  {/* ヘッダー行 */}
                   <button
                     onClick={() => toggleExpand(record.id)}
-                    className="w-full px-5 py-4 flex items-center gap-4 text-left hover:bg-slate-50 transition-colors"
+                    aria-expanded={isOpen}
+                    style={{ width: "100%", background: "transparent", border: "none", padding: "16px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, textAlign: "left" }}
                   >
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-xl flex-shrink-0">
-                      {record.session.scenario.icon}
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: V.blueLite, border: `1px solid ${V.blue}20`, display: "grid", placeItems: "center", fontSize: 20, flexShrink: 0 }}>
+                      {record.session.scenario.icon || "💬"}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="font-semibold text-slate-700 text-sm truncate">{record.session.scenario.title}</p>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                        <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 14, color: V.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {record.session.scenario.title}
+                        </div>
                         {index === 0 && (
-                          <span className="text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full flex-shrink-0">最新</span>
+                          <span style={{ fontFamily: V.sans, fontSize: 10, fontWeight: 600, color: V.blue, background: V.blueLite, border: `1px solid ${V.blue}40`, padding: "1px 8px", borderRadius: 999, flexShrink: 0 }}>最新</span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-400">{formatDate(record.savedAt)}・{msgCount}往復</p>
+                      <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3 }}>
+                        {formatDate(record.savedAt)} ・ {msgCount} 往復
+                        {record.session.scenario.clientName && ` ・ ${record.session.scenario.clientName}さん`}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <ScoreBadge score={record.evaluation.overallScore} />
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                      {/* スコアバッジ */}
+                      <span style={{ fontFamily: V.round, fontWeight: 700, fontSize: 14, color: scoreColor(record.evaluation.overallScore), background: scoreColor(record.evaluation.overallScore) + "18", border: `1px solid ${scoreColor(record.evaluation.overallScore)}30`, padding: "4px 12px", borderRadius: 8 }}>
+                        {record.evaluation.overallScore}点
+                      </span>
+                      {/* 前回比 */}
                       {scoreDiff !== null && (
-                        <span className={`text-xs font-semibold ${scoreDiff > 0 ? "text-emerald-600" : scoreDiff < 0 ? "text-red-500" : "text-slate-400"}`}>
+                        <span style={{ fontFamily: V.round, fontSize: 12, fontWeight: 700, color: scoreDiff > 0 ? V.green : scoreDiff < 0 ? V.coral : V.ink3 }}>
                           {scoreDiff > 0 ? `▲${scoreDiff}` : scoreDiff < 0 ? `▼${Math.abs(scoreDiff)}` : "±0"}
                         </span>
                       )}
-                      <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+                      <span style={{ fontFamily: V.round, fontSize: 16, color: V.ink3, display: "inline-block", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>⌄</span>
                     </div>
                   </button>
 
                   {/* 展開コンテンツ */}
-                  {isExpanded && (
-                    <div className="border-t border-slate-100 px-5 py-5 space-y-5">
-                      <p className="text-sm text-slate-600 leading-relaxed">{record.evaluation.summary}</p>
+                  {isOpen && (
+                    <div style={{ borderTop: `1px solid ${V.borderSoft}`, padding: "18px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
+
+                      {/* サマリー */}
+                      <p style={{ fontFamily: V.sans, fontSize: 13, color: V.ink2, lineHeight: 1.8 }}>{record.evaluation.summary}</p>
 
                       {/* スコア詳細 */}
                       <div>
-                        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">評価スコア</h3>
-                        <div className="space-y-2.5">
-                          {record.evaluation.scores.map((s) => (
+                        <div style={{ fontFamily: V.sans, fontSize: 10, fontWeight: 700, color: V.ink3, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 10 }}>評価スコア</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {record.evaluation.scores.map(s => (
                             <div key={s.category}>
-                              <div className="flex justify-between mb-1">
-                                <span className="text-xs font-medium text-slate-500">{s.category}</span>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                                <span style={{ fontFamily: V.round, fontSize: 12, fontWeight: 600, color: V.ink }}>{s.category}</span>
                               </div>
                               <MiniBar score={s.score} maxScore={s.maxScore} />
                             </div>
@@ -227,20 +385,20 @@ export default function HistoryPage() {
                       </div>
 
                       {/* 強み・改善点 */}
-                      <div className="grid sm:grid-cols-2 gap-3">
-                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5">
-                          <h3 className="text-xs font-semibold text-emerald-700 mb-2">強み</h3>
-                          <ul className="space-y-1">
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                        <div style={{ background: V.greenLite, border: `1px solid ${V.green}30`, borderRadius: 12, padding: "14px 16px" }}>
+                          <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 11, color: V.greenDark, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.1em" }}>✔ 強み</div>
+                          <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
                             {record.evaluation.strengths.map((item, i) => (
-                              <li key={i} className="text-xs text-emerald-800 leading-relaxed">・{item}</li>
+                              <li key={i} style={{ fontFamily: V.sans, fontSize: 12, color: V.greenDark, lineHeight: 1.8 }}>・{item}</li>
                             ))}
                           </ul>
                         </div>
-                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5">
-                          <h3 className="text-xs font-semibold text-amber-700 mb-2">改善点</h3>
-                          <ul className="space-y-1">
+                        <div style={{ background: "#FFF8F0", border: `1px solid ${V.orange}30`, borderRadius: 12, padding: "14px 16px" }}>
+                          <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 11, color: "#B36A00", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.1em" }}>⚠ 改善点</div>
+                          <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
                             {record.evaluation.improvements.map((item, i) => (
-                              <li key={i} className="text-xs text-amber-800 leading-relaxed">・{item}</li>
+                              <li key={i} style={{ fontFamily: V.sans, fontSize: 12, color: "#7A4500", lineHeight: 1.8 }}>・{item}</li>
                             ))}
                           </ul>
                         </div>
@@ -249,40 +407,22 @@ export default function HistoryPage() {
                       {/* 前回の改善点チェック */}
                       {hasPrevReview && (
                         <div>
-                          <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">前回の改善点チェック</h3>
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                              addressedCount === totalPrev
-                                ? "bg-emerald-100 text-emerald-700"
-                                : addressedCount > 0
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-slate-100 text-slate-500"
-                            }`}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                            <div style={{ fontFamily: V.sans, fontSize: 10, fontWeight: 700, color: V.ink3, letterSpacing: "0.16em", textTransform: "uppercase" }}>前回の改善点チェック</div>
+                            <span style={{ fontFamily: V.round, fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 999, background: addressedCount === totalPrev ? V.greenLite : V.blueLite, color: addressedCount === totalPrev ? V.greenDark : V.blue }}>
                               {addressedCount}/{totalPrev} 対応済み
                             </span>
                           </div>
-                          <div className="space-y-2">
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                             {record.evaluation.previousImprovementsReview!.map((rev, i) => (
-                              <div key={i} className={`flex items-start gap-2.5 p-3 rounded-xl border ${
-                                rev.addressed
-                                  ? "bg-emerald-50 border-emerald-200"
-                                  : "bg-slate-50 border-slate-200"
-                              }`}>
-                                <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${rev.addressed ? "bg-emerald-500" : "bg-slate-300"}`}>
-                                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    {rev.addressed
-                                      ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                      : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                                    }
-                                  </svg>
+                              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 14px", borderRadius: 10, background: rev.addressed ? V.greenLite : V.bg, border: `1px solid ${rev.addressed ? V.green + "40" : V.border}` }}>
+                                <div style={{ width: 18, height: 18, borderRadius: "50%", background: rev.addressed ? V.green : V.border, color: "#fff", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 700, flexShrink: 0, marginTop: 2 }}>
+                                  {rev.addressed ? "✓" : "−"}
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-medium text-slate-600">{rev.item}</p>
-                                  <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{rev.comment}</p>
+                                <div>
+                                  <div style={{ fontFamily: V.round, fontSize: 12, fontWeight: 600, color: V.ink }}>{rev.item}</div>
+                                  <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3, marginTop: 2, lineHeight: 1.6 }}>{rev.comment}</div>
                                 </div>
-                                <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${rev.addressed ? "text-emerald-700 bg-emerald-100" : "text-slate-500 bg-slate-100"}`}>
-                                  {rev.addressed ? "✓" : "未"}
-                                </span>
                               </div>
                             ))}
                           </div>
@@ -290,19 +430,22 @@ export default function HistoryPage() {
                       )}
 
                       {/* 次のステップ */}
-                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5">
-                        <h3 className="text-xs font-semibold text-blue-700 mb-1.5">次のステップ</h3>
-                        <p className="text-xs text-blue-700 leading-relaxed">{record.evaluation.nextSteps}</p>
+                      <div style={{ background: V.blueLite, border: `1px solid ${V.blue}30`, borderRadius: 12, padding: "14px 16px" }}>
+                        <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 11, color: V.blueDeep, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.1em" }}>🎯 次のステップ</div>
+                        <p style={{ fontFamily: V.sans, fontSize: 12, color: V.blueDeep, lineHeight: 1.8, margin: 0 }}>{record.evaluation.nextSteps}</p>
                       </div>
 
-                      {/* 削除 */}
-                      <div className="pt-1 border-t border-slate-100 flex justify-end">
+                      {/* アクション行 */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: `1px dashed ${V.borderSoft}` }}>
                         <button
                           onClick={() => { if (confirm("この記録を削除しますか？")) deleteRecord(record.id); }}
-                          className="text-xs text-slate-400 hover:text-red-500 transition-colors"
+                          style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3, background: "transparent", border: "none", cursor: "pointer", padding: "4px 0" }}
                         >
                           この記録を削除
                         </button>
+                        <Link href="/evaluation?demo=1" style={{ fontFamily: V.round, fontSize: 12, fontWeight: 700, color: V.blue, background: V.blueLite, border: `1px solid ${V.blue}30`, borderRadius: 8, padding: "6px 14px", textDecoration: "none" }}>
+                          詳細レポート →
+                        </Link>
                       </div>
                     </div>
                   )}
@@ -311,7 +454,7 @@ export default function HistoryPage() {
             })}
           </div>
         )}
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

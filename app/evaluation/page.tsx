@@ -709,8 +709,8 @@ export default function EvaluationPage() {
               </div>
             </div>
 
-            {/* Row 3: 成長トレンド + 発話バランス */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 200px", gap: 16 }}>
+            {/* Row 3: 成長トレンド + 発話バランス + スキル別 */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 200px 240px", gap: 16 }}>
               {/* 成長トレンド */}
               <div style={{ ...card, padding: "22px 24px" }}>
                 <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
@@ -718,10 +718,8 @@ export default function EvaluationPage() {
                     <div style={{ fontFamily: V.round, fontSize: 15, fontWeight: 700, color: V.navy }}>スコア推移</div>
                     <div style={{ fontSize: 12, color: V.ink3, marginTop: 3 }}>過去 {allScores.length} 回のセッション</div>
                   </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: V.ink }}>
-                      平均: <span style={{ color: V.navy }}>{avgScore} 点</span>
-                    </div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: V.ink }}>
+                    平均: <span style={{ color: V.navy }}>{avgScore} 点</span>
                   </div>
                 </div>
                 <GrowthChart data={allScores} />
@@ -748,6 +746,96 @@ export default function EvaluationPage() {
                   </div>
                 </div>
               </div>
+
+              {/* スキル別バー */}
+              <div style={{ ...card, padding: "22px 20px" }}>
+                <div style={{ fontFamily: V.round, fontSize: 14, fontWeight: 700, color: V.navy, marginBottom: 16 }}>スキル別</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {result.scores.map(s => {
+                    const pct = (s.score / s.maxScore) * 100;
+                    const barColor = pct >= 80 ? V.green : pct >= 60 ? V.navy : V.coral;
+                    return (
+                      <div key={s.category}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                          <span style={{ fontSize: 11, color: V.ink2, fontWeight: 600 }}>{s.category}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: barColor }}>{s.score}/{s.maxScore}</span>
+                        </div>
+                        <div style={{ height: 5, background: V.bg, borderRadius: 3, overflow: "hidden" }}>
+                          <div style={{ width: `${pct}%`, height: "100%", background: barColor, borderRadius: 3, transition: "width 0.6s ease" }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* AIからのひとこと */}
+            <div style={{
+              background: `linear-gradient(135deg, ${V.navy} 0%, #2D4070 100%)`,
+              borderRadius: 16,
+              padding: "22px 28px",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 18,
+            }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: 14,
+                background: "rgba(255,255,255,0.12)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 24, flexShrink: 0,
+              }}>🤖</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: V.round, fontSize: 12, fontWeight: 700, color: V.green, letterSpacing: "0.06em", marginBottom: 8 }}>
+                  AI からのひとこと
+                </div>
+                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.88)", lineHeight: 1.8 }}>
+                  {result.nextSteps}
+                </div>
+              </div>
+            </div>
+
+            {/* アクションボタン */}
+            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => alert("ダウンロード機能は準備中です")}
+                style={{
+                  padding: "12px 22px",
+                  borderRadius: 12,
+                  border: `1px solid ${V.border}`,
+                  background: V.surface,
+                  color: V.ink2,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontFamily: V.sans,
+                }}
+              >
+                ⬇ レポートをダウンロード
+              </button>
+              <button
+                onClick={() => setActiveTab("review")}
+                style={{
+                  padding: "12px 26px",
+                  borderRadius: 12,
+                  border: "none",
+                  background: V.navy,
+                  color: "white",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  boxShadow: `0 8px 20px -8px ${V.navy}`,
+                  fontFamily: V.sans,
+                }}
+              >
+                💬 ふりかえりを見る
+              </button>
             </div>
           </div>
         )}
@@ -758,103 +846,150 @@ export default function EvaluationPage() {
         {activeTab === "review" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-            {/* セッション情報ピル */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              {[
-                { icon: "📅", label: dateStr },
-                { icon: "🎭", label: session.scenario.title },
-                { icon: "👤", label: session.scenario.clientName + "さん" },
-                { icon: "⏱", label: duration },
-                { icon: "💬", label: `${totalMsgCount} メッセージ` },
-              ].map((pill) => (
-                <div key={pill.label} style={{ display: "flex", alignItems: "center", gap: 7, background: V.surface, border: `1px solid ${V.border}`, borderRadius: 100, padding: "7px 14px", fontSize: 12, color: V.ink2, fontWeight: 500 }}>
-                  <span>{pill.icon}</span> {pill.label}
-                </div>
-              ))}
-            </div>
-
-            {/* 所見 (サマリー) */}
-            <div style={{ ...card, padding: "22px 24px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                <div style={{ width: 36, height: 36, background: V.navyLt, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📝</div>
-                <div style={{ fontFamily: V.round, fontSize: 16, fontWeight: 700, color: V.navy }}>所見</div>
+            {/* ─ 3 stat pills ─ */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.4fr", gap: 14 }}>
+              <div style={{ ...card, padding: "18px 20px", textAlign: "center" }}>
+                <div style={{ fontFamily: V.round, fontSize: 34, fontWeight: 800, color: V.navy, lineHeight: 1 }}>{score}</div>
+                <div style={{ fontSize: 11, color: V.ink3, marginTop: 6, fontWeight: 600 }}>スコア</div>
               </div>
-              <p style={{ fontSize: 14, color: V.ink2, lineHeight: 1.8, marginBottom: 16 }}>{result.summary}</p>
-
-              {/* アコーディオン */}
-              {reviewGroups.map(group => {
-                const open = expandedGroup === group.id;
-                return (
-                  <div key={group.id} style={{ marginBottom: 10, borderRadius: 14, background: group.colorLt, border: `1px solid ${open ? group.color : "transparent"}`, overflow: "hidden", transition: "border-color 0.15s" }}>
-                    <button
-                      onClick={() => toggleGroup(group.id)}
-                      style={{ width: "100%", border: "none", background: "transparent", padding: "14px 18px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}
-                    >
-                      <span style={{ width: 28, height: 28, borderRadius: 8, background: "#fff", display: "grid", placeItems: "center", fontSize: 15, flexShrink: 0 }}>{group.icon}</span>
-                      <span style={{ fontFamily: V.round, fontWeight: 700, fontSize: 14, color: group.colorDk, flex: 1 }}>
-                        {group.label}
-                        <span style={{ marginLeft: 8, fontSize: 12, color: group.color }}>{group.count} 件</span>
-                      </span>
-                      <span style={{ fontWeight: 700, color: group.colorDk, display: "inline-block", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", fontSize: 16 }}>⌄</span>
-                    </button>
-                    {open && (
-                      <div>
-                        {group.items.map((item, i) => (
-                          <div key={i} style={{ display: "flex", gap: 12, padding: "10px 18px", borderTop: `1px dashed ${V.border}` }}>
-                            <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#fff", color: group.colorDk, display: "grid", placeItems: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{i+1}</span>
-                            <div style={{ fontSize: 13, color: V.ink, lineHeight: 1.6 }}>{item}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              <div style={{ ...card, padding: "18px 20px", textAlign: "center" }}>
+                <div style={{ fontFamily: V.round, fontSize: 34, fontWeight: 800, lineHeight: 1, color: scoreDiff !== null && scoreDiff >= 0 ? V.green : V.coral }}>
+                  {scoreDiff !== null ? `${scoreDiff >= 0 ? "+" : ""}${scoreDiff}` : "—"}
+                </div>
+                <div style={{ fontSize: 11, color: V.ink3, marginTop: 6, fontWeight: 600 }}>前回比</div>
+              </div>
+              <div style={{ ...card, padding: "18px 20px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ fontFamily: V.round, fontSize: 15, fontWeight: 800, color: V.navy, lineHeight: 1.2, marginBottom: 6 }}>
+                  {session.scenario.tags?.[0] ?? "マネジメント"}
+                </div>
+                <div style={{ fontSize: 11, color: V.ink3, fontWeight: 600 }}>注目テーマ</div>
+              </div>
             </div>
 
-            {/* 次の練習で意識すること */}
+            {/* ─ 2-column: 所見 | 次の練習 ─ */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              {/* 左: 所見 + アコーディオン */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ ...card, padding: "22px 24px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                    <div style={{ width: 34, height: 34, background: V.navyLt, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>📝</div>
+                    <div style={{ fontFamily: V.round, fontSize: 15, fontWeight: 700, color: V.navy }}>所見</div>
+                  </div>
+                  <p style={{ fontSize: 13, color: V.ink2, lineHeight: 1.8, marginBottom: 14 }}>{result.summary}</p>
+
+                  {reviewGroups.map(group => {
+                    const open = expandedGroup === group.id;
+                    return (
+                      <div key={group.id} style={{ marginBottom: 8, borderRadius: 12, background: group.colorLt, border: `1px solid ${open ? group.color : "transparent"}`, overflow: "hidden", transition: "border-color 0.15s" }}>
+                        <button
+                          onClick={() => toggleGroup(group.id)}
+                          style={{ width: "100%", border: "none", background: "transparent", padding: "12px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}
+                        >
+                          <span style={{ width: 26, height: 26, borderRadius: 7, background: "#fff", display: "grid", placeItems: "center", fontSize: 14, flexShrink: 0 }}>{group.icon}</span>
+                          <span style={{ fontFamily: V.round, fontWeight: 700, fontSize: 13, color: group.colorDk, flex: 1 }}>
+                            {group.label} <span style={{ fontSize: 11, color: group.color }}>{group.count} 件</span>
+                          </span>
+                          <span style={{ fontWeight: 700, color: group.colorDk, display: "inline-block", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", fontSize: 15 }}>⌄</span>
+                        </button>
+                        {open && (
+                          <div>
+                            {group.items.map((item, i) => (
+                              <div key={i} style={{ display: "flex", gap: 10, padding: "9px 16px", borderTop: `1px dashed ${V.border}` }}>
+                                <span style={{ width: 20, height: 20, borderRadius: "50%", background: "#fff", color: group.colorDk, display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700, flexShrink: 0 }}>{i+1}</span>
+                                <div style={{ fontSize: 12, color: V.ink, lineHeight: 1.6 }}>{item}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 右: 次の練習 */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ ...card, padding: "22px 24px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                    <div style={{ width: 34, height: 34, background: V.navyLt, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>🎯</div>
+                    <div style={{ fontFamily: V.round, fontSize: 15, fontWeight: 700, color: V.navy }}>次の練習で意識すること</div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {nextItems.map((item, i) => (
+                      <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                        <div style={{ width: 30, height: 30, borderRadius: 9, background: V.navy, color: "white", display: "grid", placeItems: "center", fontFamily: V.round, fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                          {i + 1}
+                        </div>
+                        <div style={{ fontSize: 13, color: V.ink, lineHeight: 1.7, paddingTop: 5 }}>{item}。</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* AI からのフィードバック */}
+                <div style={{ ...card, padding: "22px 24px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                    <div style={{ width: 34, height: 34, background: "#F0F4FF", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>🤖</div>
+                    <div style={{ fontFamily: V.round, fontSize: 15, fontWeight: 700, color: V.navy }}>AI からのフィードバック</div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {result.scores.map((s) => {
+                      const pct = (s.score / s.maxScore) * 100;
+                      const color = pct >= 80 ? V.green : pct >= 60 ? V.amber : V.coral;
+                      return (
+                        <div key={s.category} style={{ background: V.bg, borderRadius: 10, padding: "12px 14px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                            <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 12, color: V.navy }}>{s.category}</div>
+                            <div style={{ fontFamily: V.round, fontSize: 13, fontWeight: 800, color }}>{s.score.toFixed(1)}<span style={{ fontSize: 9, color: V.ink3, fontWeight: 400 }}>/{s.maxScore}</span></div>
+                          </div>
+                          <div style={{ height: 3, background: V.border, borderRadius: 2, overflow: "hidden", marginBottom: 6 }}>
+                            <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 2 }} />
+                          </div>
+                          <div style={{ fontSize: 11, color: V.ink2, lineHeight: 1.6 }}>{s.feedback}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ─ 印象に残ったやり取り ─ */}
             <div style={{ ...card, padding: "22px 24px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                <div style={{ width: 36, height: 36, background: V.navyLt, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🎯</div>
-                <div style={{ fontFamily: V.round, fontSize: 16, fontWeight: 700, color: V.navy }}>次の練習で意識すること</div>
+                <div style={{ width: 34, height: 34, background: V.amberLt, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>💬</div>
+                <div style={{ fontFamily: V.round, fontSize: 15, fontWeight: 700, color: V.navy }}>印象に残ったやり取り</div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {nextItems.map((item, i) => (
-                  <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 10, background: V.navy, color: "white", display: "grid", placeItems: "center", fontFamily: V.round, fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
-                      {i + 1}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {session.messages.filter(m => m.content.length > 15).slice(0, 4).map((m, i) => (
+                  <div key={i} style={{
+                    display: "flex",
+                    gap: 12,
+                    alignItems: "flex-start",
+                    flexDirection: m.role === "user" ? "row" : "row-reverse",
+                  }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: "50%",
+                      background: m.role === "user" ? V.navy : V.greenLt,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 14, flexShrink: 0, color: m.role === "user" ? "white" : V.greenDk,
+                      fontWeight: 700,
+                    }}>
+                      {m.role === "user" ? "C" : "A"}
                     </div>
-                    <div style={{ fontSize: 14, color: V.ink, lineHeight: 1.7, paddingTop: 7 }}>{item}。</div>
+                    <div style={{
+                      background: m.role === "user" ? V.navyLt : V.greenLt,
+                      borderRadius: 12,
+                      padding: "10px 14px",
+                      fontSize: 12,
+                      color: V.ink,
+                      lineHeight: 1.6,
+                      maxWidth: "75%",
+                    }}>
+                      {m.content}
+                    </div>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* AIからのフィードバック (各軸) */}
-            <div style={{ ...card, padding: "22px 24px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                <div style={{ width: 36, height: 36, background: "#F0F4FF", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🤖</div>
-                <div style={{ fontFamily: V.round, fontSize: 16, fontWeight: 700, color: V.navy }}>AI からのフィードバック</div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
-                {result.scores.map((s) => {
-                  const pct = (s.score / s.maxScore) * 100;
-                  const color = pct >= 80 ? V.green : pct >= 60 ? V.amber : V.coral;
-                  return (
-                    <div key={s.category} style={{ background: V.bg, borderRadius: 12, padding: "14px 16px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                        <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 13, color: V.navy }}>{s.category}</div>
-                        <div style={{ fontFamily: V.round, fontSize: 14, fontWeight: 800, color }}>
-                          {s.score.toFixed(1)}<span style={{ fontSize: 10, color: V.ink3, fontWeight: 400 }}>/{s.maxScore}</span>
-                        </div>
-                      </div>
-                      <div style={{ height: 4, background: V.border, borderRadius: 2, overflow: "hidden", marginBottom: 8 }}>
-                        <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 2 }} />
-                      </div>
-                      <div style={{ fontSize: 12, color: V.ink2, lineHeight: 1.6 }}>{s.feedback}</div>
-                    </div>
-                  );
-                })}
               </div>
             </div>
 

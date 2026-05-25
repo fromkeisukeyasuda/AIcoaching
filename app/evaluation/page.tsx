@@ -336,11 +336,11 @@ export default function EvaluationPage() {
       const demoEval: EvaluationResult = {
         overallScore: 76,
         scores: [
-          { category:"傾聴力", score:7.5, maxScore:10, comment:"相手の言葉をよく聞いていた" },
-          { category:"共感力", score:8.0, maxScore:10, comment:"感情への配慮が見えた" },
-          { category:"質問力", score:7.0, maxScore:10, comment:"オープンな質問が多かった" },
-          { category:"目標設定支援", score:6.5, maxScore:10, comment:"もう少し具体的に" },
-          { category:"アクション促進", score:6.0, maxScore:10, comment:"次のステップの明確化が必要" },
+          { category:"傾聴力", score:7.5, maxScore:10, feedback:"相手の言葉をよく聞いていた" },
+          { category:"共感力", score:8.0, maxScore:10, feedback:"感情への配慮が見えた" },
+          { category:"質問力", score:7.0, maxScore:10, feedback:"オープンな質問が多かった" },
+          { category:"目標設定支援", score:6.5, maxScore:10, feedback:"もう少し具体的に" },
+          { category:"アクション促進", score:6.0, maxScore:10, feedback:"次のステップの明確化が必要" },
         ],
         strengths: ["積極的な傾聴姿勢が素晴らしい","共感的な言葉かけができている","オープンクエスチョンを効果的に使えている"],
         improvements: ["より深い質問で本質に迫る","クライアントの感情をより丁寧に確認する","具体的なアクションプランの設定をサポートする"],

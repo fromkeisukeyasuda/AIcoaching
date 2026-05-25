@@ -322,7 +322,8 @@ export default function EvaluationPage() {
     if (isDemo) {
       const demoSession: SessionData = {
         startedAt: "2026-05-25T10:00:00.000Z",
-        scenario: { id:"s1", title:"部下のモチベーション向上", clientName:"田中 誠", clientProfile:"テスト", challenge:"テスト", goal:"テスト" },
+        endedAt:   "2026-05-25T10:28:00.000Z",
+        scenario: { id:"s1", title:"部下のモチベーション向上", clientName:"田中 誠", clientRole:"チームリーダー（30代）", situation:"昇進後のチーム運営に悩む", emotion:"不安・焦り", description:"チームメンバーへの接し方", tags:["マネジメント"], icon:"👥" },
         messages: [
           { role:"assistant", content:"こんにちは、今日はよろしくお願いします。" },
           { role:"user", content:"最近チームの士気が低くて困っています。どうすればよいでしょうか。" },

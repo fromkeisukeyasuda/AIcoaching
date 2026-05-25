@@ -134,6 +134,14 @@ export default function SessionPage() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
+          // エラー応答を検知してユーザーフレンドリーなメッセージに変換
+          if (fullText.startsWith("[ERROR]:")) {
+            setMessages([...msgHistory, {
+              role: "assistant",
+              content: "申し訳ありません、現在 AI に接続できません。APIクレジットをご確認いただくか、しばらくしてから再度お試しください。",
+            }]);
+            return;
+          }
           const remaining = ttsBuf.trim();
           if (remaining) tts.pushChunk(remaining);
           break;
@@ -141,14 +149,16 @@ export default function SessionPage() {
         const chunk = decoder.decode(value);
         fullText += chunk;
         ttsBuf += chunk;
-        setMessages([...msgHistory, { role: "assistant", content: fullText }]);
-
-        while (true) {
-          const match = ttsBuf.match(/^([\s\S]*?[。！？])/);
-          if (!match) break;
-          const sentence = match[1].trim();
-          if (sentence.length >= 2) tts.pushChunk(sentence);
-          ttsBuf = ttsBuf.slice(match[1].length);
+        // エラーが確定する前は暫定テキストとして表示しない
+        if (!fullText.startsWith("[ERROR]:")) {
+          setMessages([...msgHistory, { role: "assistant", content: fullText }]);
+          while (true) {
+            const match = ttsBuf.match(/^([\s\S]*?[。！？])/);
+            if (!match) break;
+            const sentence = match[1].trim();
+            if (sentence.length >= 2) tts.pushChunk(sentence);
+            ttsBuf = ttsBuf.slice(match[1].length);
+          }
         }
       }
     },

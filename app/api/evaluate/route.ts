@@ -83,8 +83,19 @@ ${conversation}
 
     return Response.json(result);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "評価の取得に失敗しました";
+    let message = "評価の取得に失敗しました";
+    if (error instanceof Error) {
+      const raw = error.message;
+      if (raw.includes("credit balance is too low") || raw.includes("credit_balance")) {
+        message = "APIクレジットが不足しています。Anthropic コンソールでクレジットを追加してください。";
+      } else if (raw.includes("invalid_request_error") || raw.includes("authentication")) {
+        message = "API キーまたはリクエストに問題があります。設定を確認してください。";
+      } else if (raw.includes("rate_limit")) {
+        message = "リクエストが多すぎます。少し時間をおいてから再度お試しください。";
+      } else {
+        message = raw.replace(/^\d{3}\s*\{.*?\}\s*/s, "").trim() || raw;
+      }
+    }
     return Response.json({ error: message }, { status: 500 });
   }
 }

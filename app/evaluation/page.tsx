@@ -404,22 +404,38 @@ export default function EvaluationPage() {
 
   if (isLoading) return <LoadingScreen />;
 
-  if (error) return (
-    <div style={{ minHeight: "100vh", background: V.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
-      <div style={{ textAlign: "center", maxWidth: 360 }}>
-        <div style={{ width: 52, height: 52, background: "#FEE2E2", border: "1px solid #FECACA", borderRadius: "50%", display: "grid", placeItems: "center", margin: "0 auto 16px" }}>
-          <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#EF4444">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
+  if (error) {
+    const isCredit = error.includes("クレジット") || error.includes("credit");
+    return (
+      <div style={{ minHeight: "100vh", background: V.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
+        <div style={{ textAlign: "center", maxWidth: 400 }}>
+          <div style={{ width: 56, height: 56, background: "#FEE2E2", border: "1px solid #FECACA", borderRadius: "50%", display: "grid", placeItems: "center", margin: "0 auto 20px" }}>
+            <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="#EF4444">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 style={{ fontFamily: V.round, fontSize: 18, fontWeight: 700, color: V.ink, marginBottom: 10 }}>
+            {isCredit ? "APIクレジットが不足しています" : "評価の取得に失敗しました"}
+          </h2>
+          <p style={{ fontFamily: V.sans, fontSize: 13, color: V.ink2, lineHeight: 1.8, marginBottom: 24 }}>
+            {isCredit
+              ? <>Anthropic コンソールでクレジットを追加すると評価が利用できます。<br />デモモードでレポート画面のデザインを確認できます。</>
+              : error}
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
+            {isCredit && (
+              <Link href="/evaluation?demo=1" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 24px", background: V.blue, color: "#fff", borderRadius: 12, fontFamily: V.round, fontWeight: 700, fontSize: 14, textDecoration: "none", boxShadow: `0 8px 20px -8px ${V.blue}` }}>
+                📊 デモモードで確認する
+              </Link>
+            )}
+            <Link href="/session" style={{ display: "inline-block", padding: "10px 20px", background: "transparent", color: V.ink2, border: `1px solid ${V.border}`, borderRadius: 10, fontFamily: V.round, fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
+              ← セッションに戻る
+            </Link>
+          </div>
         </div>
-        <h2 style={{ fontFamily: V.round, fontSize: 18, fontWeight: 700, color: V.ink, marginBottom: 8 }}>エラーが発生しました</h2>
-        <p style={{ fontFamily: V.sans, fontSize: 13, color: V.ink3, marginBottom: 20 }}>{error}</p>
-        <Link href="/session" style={{ display: "inline-block", padding: "10px 20px", background: V.blue, color: "#fff", borderRadius: 10, fontFamily: V.round, fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
-          セッションに戻る
-        </Link>
       </div>
-    </div>
-  );
+    );
+  }
 
   if (!result || !session) return null;
 

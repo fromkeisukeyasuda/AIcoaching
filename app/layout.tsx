@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import NavWrapper from "@/components/NavWrapper";
 
 export const metadata: Metadata = {
   title: "AIコーチトレーナー",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body>
+        <NavWrapper />
+        {children}
+      </body>
     </html>
   );
 }

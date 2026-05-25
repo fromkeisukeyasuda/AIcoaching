@@ -274,7 +274,7 @@ export default function SessionPage() {
               </svg>
               ホーム
             </Link>
-            <Link href="/scenario/new" className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors shadow-sm">
+            <Link href="/scenario/new" className="inline-flex items-center gap-1.5 px-3.5 py-2 text-white text-xs font-medium rounded-lg transition-colors shadow-sm" style={{ background: "#1C2B4A" }}>
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
@@ -294,7 +294,10 @@ export default function SessionPage() {
               <div key={scenario.id} className="relative group/card">
                 <button
                   onClick={() => startSession(scenario)}
-                  className="w-full bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-400 rounded-2xl p-5 text-left transition-all duration-200 group shadow-sm hover:shadow-md"
+                  className="w-full bg-white border border-slate-200 rounded-2xl p-5 text-left transition-all duration-200 group shadow-sm hover:shadow-md"
+                  style={{ ["--tw-border-opacity" as string]: "1" }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = "#1C2B4A")}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = "")}
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -545,7 +548,8 @@ export default function SessionPage() {
                 <button
                   onClick={sendMessage}
                   disabled={!input.trim() || isLoading || isStarting || voice.status === "recording"}
-                  className="flex-shrink-0 w-10 h-10 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl flex items-center justify-center transition-all shadow-sm"
+                  className="flex-shrink-0 w-10 h-10 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl flex items-center justify-center transition-all shadow-sm"
+                  style={{ background: !input.trim() || isLoading || isStarting || voice.status === "recording" ? undefined : "#1C2B4A" }}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

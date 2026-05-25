@@ -9,6 +9,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        /* ── v3 デザインシステム ── */
+        "navy":  { DEFAULT: "#1C2B4A", light: "#2D3F61" },
+        "sage":  { DEFAULT: "#4DB689", light: "#EBF8F3", dark: "#2E8B63" },
+        "coral3":{ DEFAULT: "#F07268", light: "#FEF3F2", dark: "#C0453A" },
+        "ui-bg": "#F4F7FA",
+        "ui-border": "#E8ECF0",
+        "ui-ink": {
+          DEFAULT: "#1A2332",
+          2:       "#4A5568",
+          3:       "#8A9BAB",
+        },
+        /* ── legacy v2 (keep for session/history) ── */
         "v2-blue": {
           DEFAULT: "#4A90E2",
           deep:    "#2D6CB8",

@@ -1,133 +1,566 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { SessionRecord } from "@/types";
 
-export default function Home() {
+/* ── デザイントークン ── */
+const V = {
+  navy:    "#1C2B4A",
+  green:   "#4DB689",
+  greenLt: "#EBF8F3",
+  coral:   "#F07268",
+  coralLt: "#FEF3F2",
+  amber:   "#F59E0B",
+  amberLt: "#FFFBEB",
+  bg:      "#F4F7FA",
+  surface: "#FFFFFF",
+  ink:     "#1A2332",
+  ink2:    "#4A5568",
+  ink3:    "#8A9BAB",
+  border:  "#E8ECF0",
+} as const;
+
+const card: React.CSSProperties = {
+  background: V.surface,
+  border: `1px solid ${V.border}`,
+  borderRadius: 16,
+  boxShadow: "0 1px 3px rgba(26,35,50,0.05)",
+};
+
+/* ── 今週の練習回数 ── */
+function weekCount(history: SessionRecord[]) {
+  const cutoff = Date.now() - 7 * 24 * 3600 * 1000;
+  return history.filter((r) => new Date(r.savedAt).getTime() > cutoff).length;
+}
+
+/* ── 今日のテーマ（曜日ローテーション） ── */
+const DAILY_THEMES = [
+  "深い傾聴を意識する",
+  "オープン質問で掘り下げる",
+  "感情に寄り添う",
+  "目標を一緒に描く",
+  "具体的なアクションへ導く",
+  "沈黙を味方にする",
+  "視点を広げる質問をする",
+];
+
+export default function HomePage() {
+  const [history, setHistory] = useState<SessionRecord[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    try {
+      const raw = localStorage.getItem("sessionHistory");
+      if (raw) setHistory(JSON.parse(raw));
+    } catch { /* ignore */ }
+  }, []);
+
+  const lastSession   = history[0] ?? null;
+  const lastScore     = lastSession?.evaluation.overallScore ?? null;
+  const prevScore     = history[1]?.evaluation.overallScore ?? null;
+  const scoreDiff     = lastScore !== null && prevScore !== null ? lastScore - prevScore : null;
+  const wCount        = weekCount(history);
+  const todayTheme    = DAILY_THEMES[new Date().getDay()];
+
   return (
-    <main className="h-screen flex flex-col bg-slate-50 overflow-hidden">
+    <main
+      style={{
+        minHeight: "calc(100vh - 60px)",
+        background: V.bg,
+        padding: "32px 24px 64px",
+      }}
+    >
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
 
-      {/* ナビゲーション */}
-      <nav className="flex-shrink-0 bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-          </div>
-          <span className="text-slate-800 font-bold text-base tracking-tight">AIコーチトレーナー</span>
-        </div>
-        <Link
-          href="/history"
-          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 transition-colors font-medium"
+        {/* ═══════════════════════════════════
+            ヒーローカード
+        ═══════════════════════════════════ */}
+        <div
+          style={{
+            background: V.navy,
+            borderRadius: 20,
+            padding: "36px 40px",
+            marginBottom: 24,
+            display: "flex",
+            alignItems: "center",
+            gap: 32,
+            overflow: "hidden",
+            position: "relative",
+          }}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          練習履歴
-        </Link>
-      </nav>
+          {/* 背景装飾 */}
+          <div
+            style={{
+              position: "absolute",
+              right: -20,
+              top: -30,
+              width: 260,
+              height: 260,
+              borderRadius: "50%",
+              background: "rgba(77,182,137,0.06)",
+              pointerEvents: "none",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              right: 60,
+              bottom: -60,
+              width: 180,
+              height: 180,
+              borderRadius: "50%",
+              background: "rgba(77,182,137,0.04)",
+              pointerEvents: "none",
+            }}
+          />
 
-      {/* メインコンテンツ（全画面内に収まる） */}
-      <div className="flex-1 flex flex-col justify-center overflow-hidden">
-        <div className="max-w-4xl mx-auto px-6 w-full py-6">
-
-          {/* ヒーロー */}
-          <div className="text-center mb-7">
-            <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold px-4 py-1.5 rounded-full mb-5">
-              <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
-              AI搭載コーチングトレーニングシステム
+          {/* テキスト */}
+          <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                background: "rgba(77,182,137,0.15)",
+                border: "1px solid rgba(77,182,137,0.3)",
+                borderRadius: 100,
+                padding: "4px 12px",
+                marginBottom: 18,
+              }}
+            >
+              <div
+                style={{
+                  width: 6,
+                  height: 6,
+                  background: V.green,
+                  borderRadius: "50%",
+                  animation: "pulse 2s infinite",
+                }}
+              />
+              <span style={{ color: V.green, fontSize: 12, fontWeight: 600 }}>
+                AIコーチングトレーナー
+              </span>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-3 tracking-tight leading-[1.15]">
-              コーチングスキルを<br />
-              <span className="text-blue-600">AIで磨く</span>
+
+            <h1
+              style={{
+                color: "white",
+                fontSize: 30,
+                fontWeight: 800,
+                lineHeight: 1.25,
+                marginBottom: 10,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              コーチングスキルを
+              <br />
+              <span style={{ color: V.green }}>AIで磨く</span>
             </h1>
-            <p className="text-slate-500 text-[15px] max-w-sm mx-auto leading-relaxed">
-              AIクライアントとの本格的な対話を通じて、<br />
+
+            <p
+              style={{
+                color: "rgba(255,255,255,0.58)",
+                fontSize: 14,
+                lineHeight: 1.75,
+                marginBottom: 28,
+              }}
+            >
+              AIクライアントとのリアルな対話を通じて、
+              <br />
               プロのコーチングスキルを安心して身につけましょう。
             </p>
-          </div>
 
-          {/* フィーチャーカード */}
-          <div className="grid sm:grid-cols-3 gap-4 mb-7">
-            {[
-              {
-                href: "/session",
-                emoji: "💬",
-                bg: "bg-blue-50",
-                border: "border-blue-200",
-                hoverBorder: "hover:border-blue-400",
-                title: "コーチング練習",
-                desc: "AIが演じるクライアントとリアルなセッションを体験。音声入力で自然なコーチングを練習できます。",
-                action: "セッションを開始する",
-                actionColor: "text-blue-600",
-              },
-              {
-                href: "/evaluation",
-                emoji: "📊",
-                bg: "bg-emerald-50",
-                border: "border-emerald-200",
-                hoverBorder: "hover:border-emerald-400",
-                title: "セッション評価",
-                desc: "傾聴力・質問力・共感力など5軸でAIが詳細に分析。弱点と強みを具体的に把握できます。",
-                action: "評価を確認する",
-                actionColor: "text-emerald-600",
-              },
-              {
-                href: "/history",
-                emoji: "📈",
-                bg: "bg-violet-50",
-                border: "border-violet-200",
-                hoverBorder: "hover:border-violet-400",
-                title: "練習履歴",
-                desc: "スコア推移を可視化し、前回の改善点が今回のセッションで対応できたかを自動追跡します。",
-                action: "履歴を見る",
-                actionColor: "text-violet-600",
-              },
-            ].map((card) => (
-              <Link key={card.href} href={card.href} className="group">
-                <div className={`bg-white border ${card.border} ${card.hoverBorder} rounded-2xl p-5 transition-all duration-200 h-full flex flex-col shadow-sm hover:shadow-md`}>
-                  <div className={`w-10 h-10 ${card.bg} border ${card.border} rounded-xl flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform duration-200`}>
-                    {card.emoji}
-                  </div>
-                  <h2 className="text-slate-800 font-semibold mb-1.5 text-sm">{card.title}</h2>
-                  <p className="text-slate-400 text-xs leading-relaxed mb-4 flex-1">
-                    {card.desc}
-                  </p>
-                  <div className={`flex items-center ${card.actionColor} text-xs font-semibold`}>
-                    {card.action}
-                    <svg className="ml-1.5 w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <Link
+                href="/session"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  background: V.green,
+                  color: "white",
+                  padding: "13px 26px",
+                  borderRadius: 12,
+                  fontWeight: 700,
+                  fontSize: 15,
+                  textDecoration: "none",
+                  boxShadow: "0 8px 24px -8px rgba(77,182,137,0.5)",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                ▶ はじめる
               </Link>
-            ))}
-          </div>
 
-          {/* 使い方（コンパクト横並び） */}
-          <div className="bg-white border border-slate-200 rounded-2xl px-6 py-4 shadow-sm">
-            <div className="flex items-center justify-center gap-0">
-              {[
-                { step: "01", title: "シナリオを選ぶ", desc: "3種類の内蔵シナリオからスタート" },
-                { step: "02", title: "セッションを実施", desc: "音声 or テキストでAIとコーチング" },
-                { step: "03", title: "成長を追跡する", desc: "評価で強み・弱点を把握" },
-              ].map((item, i) => (
-                <div key={item.step} className="flex items-center">
-                  <div className="text-center px-6">
-                    <div className="text-xs font-bold text-slate-300 font-mono mb-1">{item.step}</div>
-                    <div className="text-xs font-semibold text-slate-600 mb-0.5">{item.title}</div>
-                    <div className="text-xs text-slate-400">{item.desc}</div>
-                  </div>
-                  {i < 2 && (
-                    <svg className="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  )}
-                </div>
-              ))}
+              {mounted && lastSession && (
+                <Link
+                  href="/session"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    background: "rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.18)",
+                    color: "rgba(255,255,255,0.85)",
+                    padding: "13px 24px",
+                    borderRadius: 12,
+                    fontWeight: 600,
+                    fontSize: 14,
+                    textDecoration: "none",
+                  }}
+                >
+                  前回の続き →
+                </Link>
+              )}
             </div>
           </div>
 
+          {/* キャラクター */}
+          <div
+            style={{
+              flexShrink: 0,
+              width: 150,
+              height: 150,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 96,
+                filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.25))",
+                animation: "float 4s ease-in-out infinite",
+              }}
+            >
+              🧑‍💼
+            </div>
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════
+            3 枚のスタットカード
+        ═══════════════════════════════════ */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3,1fr)",
+            gap: 16,
+            marginBottom: 20,
+          }}
+        >
+          {/* 今週の一歩 */}
+          <div style={{ ...card, padding: "22px 24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  background: V.greenLt,
+                  borderRadius: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 18,
+                }}
+              >
+                📅
+              </div>
+              <span style={{ color: V.ink2, fontSize: 12, fontWeight: 600 }}>今週の一歩</span>
+            </div>
+            <div
+              style={{
+                fontSize: 40,
+                fontWeight: 800,
+                color: V.navy,
+                lineHeight: 1,
+                marginBottom: 4,
+              }}
+            >
+              {mounted ? wCount : 0}
+            </div>
+            <div style={{ color: V.ink3, fontSize: 12, marginBottom: 14 }}>セッション完了</div>
+            <div>
+              <div
+                style={{
+                  background: V.greenLt,
+                  borderRadius: 6,
+                  height: 5,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    background: V.green,
+                    height: "100%",
+                    width: `${Math.min((mounted ? wCount : 0) / 5 * 100, 100)}%`,
+                    borderRadius: 6,
+                    transition: "width 0.8s ease",
+                  }}
+                />
+              </div>
+              <div style={{ color: V.ink3, fontSize: 11, marginTop: 5 }}>目標: 5 セッション/週</div>
+            </div>
+          </div>
+
+          {/* 今日のテーマ */}
+          <div style={{ ...card, padding: "22px 24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  background: "#FEF3F2",
+                  borderRadius: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 18,
+                }}
+              >
+                🎯
+              </div>
+              <span style={{ color: V.ink2, fontSize: 12, fontWeight: 600 }}>今日のテーマ</span>
+            </div>
+            <div
+              style={{
+                fontSize: 17,
+                fontWeight: 700,
+                color: V.navy,
+                lineHeight: 1.4,
+                marginBottom: 12,
+              }}
+            >
+              {todayTheme}
+            </div>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                background: "#FEF3F2",
+                borderRadius: 100,
+                padding: "5px 10px",
+              }}
+            >
+              <div
+                style={{
+                  width: 6,
+                  height: 6,
+                  background: V.coral,
+                  borderRadius: "50%",
+                }}
+              />
+              <span style={{ color: V.coral, fontSize: 11, fontWeight: 600 }}>
+                今日のおすすめ練習
+              </span>
+            </div>
+          </div>
+
+          {/* 前回より良くなったこと */}
+          <div style={{ ...card, padding: "22px 24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  background: "#EBF4FF",
+                  borderRadius: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 18,
+                }}
+              >
+                📈
+              </div>
+              <span style={{ color: V.ink2, fontSize: 12, fontWeight: 600 }}>
+                前回より良くなったこと
+              </span>
+            </div>
+
+            {mounted && scoreDiff !== null ? (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: 4,
+                    marginBottom: 10,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 34,
+                      fontWeight: 800,
+                      color: scoreDiff >= 0 ? V.green : V.coral,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {scoreDiff >= 0 ? "+" : ""}
+                    {scoreDiff.toFixed(0)}
+                  </span>
+                  <span style={{ color: V.ink3, fontSize: 13 }}>点</span>
+                </div>
+                {lastSession?.evaluation.improvements[0] && (
+                  <div
+                    style={{
+                      color: V.ink2,
+                      fontSize: 12,
+                      lineHeight: 1.6,
+                      borderLeft: `2px solid ${V.green}`,
+                      paddingLeft: 10,
+                    }}
+                  >
+                    {lastSession.evaluation.improvements[0]}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ color: V.ink3, fontSize: 13, lineHeight: 1.7 }}>
+                セッションを完了すると
+                <br />
+                成長の記録が表示されます
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════
+            クイックナビゲーション
+        ═══════════════════════════════════ */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3,1fr)",
+            gap: 12,
+            marginBottom: 20,
+          }}
+        >
+          {[
+            {
+              href: "/session",
+              icon: "💬",
+              bg: V.greenLt,
+              iconBg: V.green,
+              title: "コーチング練習",
+              desc: "AIクライアントとリアルなセッション",
+              action: "セッション開始",
+              actionColor: V.green,
+            },
+            {
+              href: "/history",
+              icon: "📊",
+              bg: "#EBF4FF",
+              iconBg: "#3B82F6",
+              title: "ふりかえり",
+              desc: "スコア推移と成長を確認する",
+              action: "履歴を見る",
+              actionColor: "#3B82F6",
+            },
+            {
+              href: "/mypage",
+              icon: "⚙️",
+              bg: "#F5F3FF",
+              iconBg: "#7C3AED",
+              title: "マイページ",
+              desc: "目標・設定・テーマを管理",
+              action: "設定する",
+              actionColor: "#7C3AED",
+            },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              style={{ textDecoration: "none" }}
+            >
+              <div
+                style={{
+                  ...card,
+                  padding: "18px 20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                  transition: "transform 0.15s, box-shadow 0.15s",
+                  cursor: "pointer",
+                }}
+              >
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    background: item.bg,
+                    borderRadius: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 20,
+                  }}
+                >
+                  {item.icon}
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 14,
+                      color: V.navy,
+                      marginBottom: 4,
+                    }}
+                  >
+                    {item.title}
+                  </div>
+                  <div style={{ fontSize: 12, color: V.ink3 }}>{item.desc}</div>
+                </div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: item.actionColor,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
+                  {item.action} →
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* ═══════════════════════════════════
+            プライバシー注記
+        ═══════════════════════════════════ */}
+        <div
+          style={{
+            ...card,
+            padding: "14px 20px",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            borderRadius: 12,
+          }}
+        >
+          <span style={{ fontSize: 16, flexShrink: 0 }}>🔒</span>
+          <span style={{ color: V.ink3, fontSize: 12, lineHeight: 1.5 }}>
+            会話データはブラウザのローカルストレージにのみ保存されます。外部サーバーへの個人データ送信はありません。
+          </span>
         </div>
       </div>
+
+      <style>{`
+        @keyframes float {
+          0%,100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+        @keyframes pulse {
+          0%,100% { opacity:1; transform:scale(1); }
+          50% { opacity:0.6; transform:scale(0.9); }
+        }
+      `}</style>
     </main>
   );
 }

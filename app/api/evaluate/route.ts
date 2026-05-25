@@ -93,7 +93,7 @@ ${conversation}
       } else if (raw.includes("rate_limit")) {
         message = "リクエストが多すぎます。少し時間をおいてから再度お試しください。";
       } else {
-        message = raw.replace(/^\d{3}\s*\{.*?\}\s*/s, "").trim() || raw;
+        message = raw.replace(/^\d{3}\s*\{[\s\S]*?\}\s*/, "").trim() || raw;
       }
     }
     return Response.json({ error: message }, { status: 500 });

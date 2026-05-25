@@ -6,34 +6,43 @@ import { useRouter } from "next/navigation";
 import { SessionData, SessionRecord, EvaluationResult } from "@/types";
 
 /* ══════════════════════════════════════════════════════════════════════
-   デザイントークン（v2-shell と同一）
+   デザイントークン（v3）
 ══════════════════════════════════════════════════════════════════════ */
 const V = {
-  blue:       "#4A90E2",
-  blueDeep:   "#2D6CB8",
-  blueLite:   "#E3F2FD",
-  coral:      "#FF6B6B",
-  coralLite:  "#FFE3E3",
-  green:      "#6BCB77",
-  greenLite:  "#E8F5E9",
-  greenDark:  "#2D7A36",
-  orange:     "#FFB347",
-  bg:         "#F8F9FA",
-  surface:    "#FFFFFF",
-  ink:        "#2D3436",
-  ink2:       "#5B6066",
-  ink3:       "#9AA0A6",
-  border:     "#E5E7EB",
-  borderSoft: "#EEF1F4",
-  round: '"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif',
+  navy:    "#1C2B4A",
+  navyLt:  "#EBF0FA",
+  green:   "#4DB689",
+  greenLt: "#EBF8F3",
+  greenDk: "#2E8B63",
+  coral:   "#F07268",
+  coralLt: "#FEF3F2",
+  amber:   "#F59E0B",
+  amberLt: "#FFFBEB",
+  blue:    "#3B82F6",
+  blueLt:  "#EBF4FF",
+  bg:      "#F4F7FA",
+  surface: "#FFFFFF",
+  ink:     "#1A2332",
+  ink2:    "#4A5568",
+  ink3:    "#8A9BAB",
+  border:  "#E8ECF0",
+  borderSoft: "#F0F4F8",
   sans:  '"Noto Sans JP","Hiragino Sans",system-ui,sans-serif',
+  round: '"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif',
 } as const;
 
 /* ══════════════════════════════════════════════════════════════════════
-   ユーティリティ型・定数
+   型
 ══════════════════════════════════════════════════════════════════════ */
-interface AxisData { key: string; label: string; short: string; ai: number; max: number; }
-type GroupId = "good" | "fix" | "next";
+interface AxisData { key: string; label: string; short: string; ai: number; target: number; max: number; }
+type TabId = "report" | "review";
+
+const card: React.CSSProperties = {
+  background: V.surface,
+  border: `1px solid ${V.border}`,
+  borderRadius: 16,
+  boxShadow: "0 1px 3px rgba(26,35,50,0.05)",
+};
 
 /* ══════════════════════════════════════════════════════════════════════
    hooks
@@ -54,25 +63,34 @@ function useCountUp(to: number, ms = 900) {
   return n;
 }
 
+function CountUpDisplay({ value }: { value: number }) {
+  const n = useCountUp(value);
+  return (
+    <span style={{ fontFamily: V.round, fontSize: 58, fontWeight: 800, color: V.navy, lineHeight: 1 }}>
+      {n}
+    </span>
+  );
+}
+
 /* ══════════════════════════════════════════════════════════════════════
-   SVG コンポーネント群
+   SVG コンポーネント
 ══════════════════════════════════════════════════════════════════════ */
 
 /* 円形ゲージ */
 function RadialGauge({ value }: { value: number }) {
-  const size = 168, stroke = 14, r = (size - stroke) / 2;
+  const size = 160, stroke = 14, r = (size - stroke) / 2;
   const c = 2 * Math.PI * r, dash = c * (value / 100);
-  const color = value >= 80 ? V.green : value >= 50 ? V.orange : V.coral;
+  const color = value >= 80 ? V.green : value >= 50 ? V.amber : V.coral;
   return (
     <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
       <defs>
-        <linearGradient id="ev-gauge" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={V.blue} />
+        <linearGradient id="ev-gauge3" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={V.navy} />
           <stop offset="100%" stopColor={color} />
         </linearGradient>
       </defs>
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={V.bg} strokeWidth={stroke} />
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="url(#ev-gauge)"
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="url(#ev-gauge3)"
         strokeWidth={stroke} strokeLinecap="round"
         strokeDasharray={`${dash} ${c - dash}`}
         transform={`rotate(-90 ${size/2} ${size/2})`} />
@@ -80,9 +98,30 @@ function RadialGauge({ value }: { value: number }) {
   );
 }
 
-/* レーダーチャート（AI 評価のみ） */
-function RadarChart({ axes, size = 300 }: { axes: AxisData[]; size?: number }) {
-  const cx = size / 2, cy = size / 2, r = size * 0.36, n = axes.length;
+/* 発話バランスドーナツ */
+function DonutChart({ coachPct }: { coachPct: number }) {
+  const r = 44, cx = 60, cy = 60, sw = 18;
+  const c2 = 2 * Math.PI * r;
+  const coach = c2 * (coachPct / 100);
+  const client = c2 * ((100 - coachPct) / 100);
+  return (
+    <svg viewBox="0 0 120 120" width={120} height={120}>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={V.green} strokeWidth={sw}
+        strokeDasharray={`${client} ${coach}`}
+        transform={`rotate(-90 ${cx} ${cy})`} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={V.navy} strokeWidth={sw}
+        strokeDasharray={`${coach} ${client}`}
+        strokeDashoffset={-client}
+        transform={`rotate(-90 ${cx} ${cy})`} />
+      <text x={cx} y={cy-5} textAnchor="middle" fontFamily={V.round} fontSize={18} fontWeight={800} fill={V.navy}>{coachPct}%</text>
+      <text x={cx} y={cy+13} textAnchor="middle" fontFamily={V.sans} fontSize={9} fill={V.ink3}>コーチ</text>
+    </svg>
+  );
+}
+
+/* デュアルポリゴンレーダー（AI評価 + Lv-Up目標） */
+function RadarChart({ axes, size = 290 }: { axes: AxisData[]; size?: number }) {
+  const cx = size / 2, cy = size / 2, r = size * 0.35, n = axes.length;
   const angle = (i: number) => -Math.PI / 2 + (i * 2 * Math.PI) / n;
   const pt = (i: number, v: number, max: number): [number, number] => {
     const a = angle(i), rad = (v / max) * r;
@@ -91,28 +130,46 @@ function RadarChart({ axes, size = 300 }: { axes: AxisData[]; size?: number }) {
   const poly = (vals: number[]) => vals.map((v, i) => pt(i, v, axes[i].max).join(",")).join(" ");
 
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}
-      role="img" aria-label="6軸のAI評価レーダーチャート">
+    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} role="img" aria-label="AI評価レーダーチャート">
+      {/* グリッド */}
       {[0.25, 0.5, 0.75, 1].map(g => (
         <polygon key={g}
           points={axes.map((_, i) => {
             const a = angle(i);
             return [cx + Math.cos(a) * r * g, cy + Math.sin(a) * r * g].join(",");
           }).join(" ")}
-          fill="none" stroke={V.border} strokeWidth="1" />
+          fill={g === 1 ? "none" : "none"}
+          stroke={V.border} strokeWidth="1" />
       ))}
       {axes.map((_, i) => {
         const [x, y] = pt(i, 1, 1);
         return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke={V.border} strokeWidth="1" />;
       })}
-      <polygon points={poly(axes.map(a => a.ai))}
-        fill={V.blue} fillOpacity="0.22" stroke={V.blue} strokeWidth="2" strokeLinejoin="round" />
+
+      {/* AI評価（塗りつぶし・ネイビー） */}
+      <polygon
+        points={poly(axes.map(a => a.ai))}
+        fill={V.navy} fillOpacity="0.15"
+        stroke={V.navy} strokeWidth="2.5" strokeLinejoin="round"
+      />
+
+      {/* Lv-Up目標（破線・コーラル） */}
+      <polygon
+        points={poly(axes.map(a => a.target))}
+        fill="none"
+        stroke={V.coral} strokeWidth="1.5"
+        strokeDasharray="5 3" strokeLinejoin="round"
+      />
+
+      {/* ドット */}
       {axes.map((a, i) => {
         const [x, y] = pt(i, a.ai, a.max);
-        return <circle key={i} cx={x} cy={y} r={4} fill={V.blue} stroke="#fff" strokeWidth="1.5" />;
+        return <circle key={i} cx={x} cy={y} r={4.5} fill={V.navy} stroke="#fff" strokeWidth="2" />;
       })}
+
+      {/* ラベル */}
       {axes.map((a, i) => {
-        const [lx, ly] = pt(i, 1.18, 1);
+        const [lx, ly] = pt(i, 1.22, 1);
         const cos = Math.cos(angle(i));
         const anchor = Math.abs(cos) < 0.2 ? "middle" : cos > 0 ? "start" : "end";
         return (
@@ -120,7 +177,7 @@ function RadarChart({ axes, size = 300 }: { axes: AxisData[]; size?: number }) {
             <text x="0" y="0" textAnchor={anchor} fontFamily={V.round} fontSize="12"
               fontWeight="700" fill={V.ink} dominantBaseline="middle">{a.label}</text>
             <text x="0" y="14" textAnchor={anchor} fontFamily={V.sans} fontSize="9"
-              fill={V.ink3} dominantBaseline="middle">{a.ai}</text>
+              fill={V.ink3} dominantBaseline="middle">{a.ai}/{a.max}</text>
           </g>
         );
       })}
@@ -130,112 +187,72 @@ function RadarChart({ axes, size = 300 }: { axes: AxisData[]; size?: number }) {
 
 /* 成長トレンドチャート */
 function GrowthChart({ data }: { data: number[] }) {
-  const W = 560, H = 180, pL = 28, pR = 24, pT = 18, pB = 26;
+  const W = 640, H = 170, pL = 28, pR = 24, pT = 16, pB = 24;
   const iW = W - pL - pR, iH = H - pT - pB, n = data.length;
   const x = (i: number) => pL + (i / Math.max(n - 1, 1)) * iW;
   const y = (v: number) => pT + (1 - v / 100) * iH;
   const pts = data.map((v, i) => `${x(i)},${y(v)}`).join(" ");
-  const area = `${x(0)},${y(0)} ${pts} ${x(n - 1)},${y(0)}`;
+  const area = `${x(0)},${y(data[0] ?? 0)} ${pts} ${x(n - 1)},${H - pB}`;
   const diff = n >= 2 ? data[n - 1] - data[n - 2] : 0;
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, display: "block" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: "block" }}>
       <defs>
-        <linearGradient id="ev-growth" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={V.blue} stopOpacity="0.18" />
-          <stop offset="100%" stopColor={V.blue} stopOpacity="0" />
+        <linearGradient id="ev-growth3" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={V.navy} stopOpacity="0.15" />
+          <stop offset="100%" stopColor={V.navy} stopOpacity="0" />
         </linearGradient>
       </defs>
       {[0, 25, 50, 75, 100].map(g => (
         <g key={g}>
           <line x1={pL} y1={y(g)} x2={W - pR} y2={y(g)} stroke={V.borderSoft} strokeWidth="1" />
-          <text x={pL - 6} y={y(g) + 3} textAnchor="end" fontSize="10"
-            fontFamily={V.sans} fill={V.ink3}>{g}</text>
+          <text x={pL - 5} y={y(g) + 3} textAnchor="end" fontSize="10" fontFamily={V.sans} fill={V.ink3}>{g}</text>
         </g>
       ))}
       {data.map((_, i) => (
-        <text key={i} x={x(i)} y={H - 6} textAnchor="middle"
-          fontFamily={V.sans} fontSize="10" fill={V.ink3}>{i + 1}</text>
+        <text key={i} x={x(i)} y={H - 5} textAnchor="middle" fontFamily={V.sans} fontSize="10" fill={V.ink3}>{i + 1}</text>
       ))}
-      <polygon points={area} fill="url(#ev-growth)" />
-      <polyline points={pts} fill="none" stroke={V.blue} strokeWidth="2.5"
-        strokeLinejoin="round" strokeLinecap="round" />
+      <polygon points={area} fill="url(#ev-growth3)" />
+      <polyline points={pts} fill="none" stroke={V.navy} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
       {data.map((v, i) => {
         const last = i === n - 1;
         return (
           <g key={i}>
             <circle cx={x(i)} cy={y(v)} r={last ? 6 : 3.5}
               fill={last ? V.coral : V.surface}
-              stroke={last ? "#fff" : V.blue} strokeWidth={last ? 3 : 2} />
+              stroke={last ? "#fff" : V.navy} strokeWidth={last ? 3 : 2} />
             {last && (
               <>
-                <rect x={x(i) - 26} y={y(v) - 32} width="52" height="22" rx="6" fill={V.ink} />
-                <text x={x(i)} y={y(v) - 17} textAnchor="middle"
-                  fontFamily={V.round} fontSize="12" fontWeight="700" fill="#fff">{v} 点</text>
+                <rect x={x(i) - 26} y={y(v) - 30} width="52" height="22" rx="6" fill={V.navy} />
+                <text x={x(i)} y={y(v) - 15} textAnchor="middle" fontFamily={V.round} fontSize="12" fontWeight="700" fill="#fff">{v} 点</text>
               </>
             )}
           </g>
         );
       })}
       {n >= 2 && (
-        <g transform={`translate(${W - pR - 12},${pT + 2})`}>
-          <text textAnchor="end" fontFamily={V.round} fontSize="10" fontWeight="700"
-            fill={diff >= 0 ? V.green : V.coral}>
-            {diff >= 0 ? `↑ 前回比 +${diff}` : `↓ 前回比 ${diff}`}
-          </text>
-        </g>
+        <text x={W - pR} y={pT + 10} textAnchor="end" fontFamily={V.round} fontSize="11" fontWeight="700"
+          fill={diff >= 0 ? V.green : V.coral}>
+          {diff >= 0 ? `↑ +${diff} pt` : `↓ ${diff} pt`}
+        </text>
       )}
     </svg>
   );
 }
 
-/* サイドバー内スパークライン */
-function SidebarSparkline({ scores }: { scores: number[] }) {
-  const n = Math.min(scores.length, 8);
-  const slice = scores.slice(-n);
-  if (slice.length < 2) return (
-    <svg viewBox="0 0 120 36" width="100%" height="36" style={{ display: "block" }}>
-      <path d="M0 28 L120 18" fill="none" stroke={V.blue} strokeWidth="1.5" />
-    </svg>
-  );
-  const pts = slice.map((v, i) => {
-    const px = (i / (n - 1)) * 120;
-    const py = 32 - (v / 100) * 28;
-    return `${px} ${py}`;
-  }).join(" L");
-  const last = slice[slice.length - 1];
-  const lx = 120, ly = 32 - (last / 100) * 28;
-
-  return (
-    <svg viewBox="0 0 120 36" width="100%" height="36" style={{ display: "block" }}>
-      <defs>
-        <linearGradient id="ev-spark" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={V.blue} stopOpacity="0.25" />
-          <stop offset="100%" stopColor={V.blue} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={`M${pts.replace(/ L/g, " L")} L${lx} 36 L0 36 Z`}
-        fill="url(#ev-spark)" />
-      <path d={`M${pts}`} fill="none" stroke={V.blue} strokeWidth="1.5"
-        strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={lx} cy={ly} r="2.5" fill={V.coral} />
-    </svg>
-  );
-}
-
 /* ══════════════════════════════════════════════════════════════════════
-   ローディング・エラー画面
+   ローディング・エラー
 ══════════════════════════════════════════════════════════════════════ */
 function LoadingScreen() {
   return (
-    <div style={{ minHeight: "100vh", background: V.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ minHeight: "calc(100vh - 60px)", background: V.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center" }}>
         <div style={{
           width: 52, height: 52, borderRadius: "50%",
-          border: `3px solid ${V.border}`, borderTopColor: V.blue,
+          border: `3px solid ${V.border}`, borderTopColor: V.navy,
           animation: "spin 1s linear infinite", margin: "0 auto 20px",
         }} />
-        <p style={{ fontFamily: V.round, fontSize: 15, color: V.ink, fontWeight: 600 }}>セッションを分析中…</p>
+        <p style={{ fontFamily: V.round, fontSize: 15, color: V.ink, fontWeight: 700 }}>セッションを分析中…</p>
         <p style={{ fontFamily: V.sans, fontSize: 12, color: V.ink3, marginTop: 6 }}>AIがコーチングを評価しています</p>
       </div>
     </div>
@@ -243,61 +260,79 @@ function LoadingScreen() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   データ変換ヘルパー
+   データ変換
 ══════════════════════════════════════════════════════════════════════ */
 function buildAxes(result: EvaluationResult): AxisData[] {
   const scoreMap: Record<string, number> = {};
-  for (const s of result.scores) {
-    scoreMap[s.category] = Math.round((s.score / s.maxScore) * 20);
-  }
+  for (const s of result.scores) scoreMap[s.category] = Math.round((s.score / s.maxScore) * 20);
   const presence = Math.round(result.overallScore / 5);
+  const mk = (key: string, label: string, short: string, ai: number): AxisData => ({
+    key, label, short, ai, target: Math.min(ai + 3, 20), max: 20,
+  });
   return [
-    { key: "listen",   label: "傾聴",     short: "Listen",   ai: scoreMap["傾聴力"]       ?? 15, max: 20 },
-    { key: "empathy",  label: "共感",     short: "Empathy",  ai: scoreMap["共感力"]       ?? 15, max: 20 },
-    { key: "question", label: "質問力",   short: "Inquiry",  ai: scoreMap["質問力"]       ?? 14, max: 20 },
-    { key: "words",    label: "言語整理", short: "Clarity",  ai: scoreMap["目標設定支援"] ?? 14, max: 20 },
-    { key: "assert",   label: "主張力",   short: "Assert",   ai: scoreMap["アクション促進"] ?? 13, max: 20 },
-    { key: "presence", label: "Presence", short: "Presence", ai: presence,                        max: 20 },
+    mk("listen",   "傾聴",     "Listen",   scoreMap["傾聴力"]         ?? 14),
+    mk("empathy",  "共感",     "Empathy",  scoreMap["共感力"]         ?? 14),
+    mk("question", "質問力",   "Inquiry",  scoreMap["質問力"]         ?? 13),
+    mk("goal",     "目標設定", "Goal",     scoreMap["目標設定支援"]   ?? 12),
+    mk("action",   "行動促進", "Action",   scoreMap["アクション促進"] ?? 12),
+    mk("presence", "存在感",   "Presence", presence),
   ];
 }
 
-function gapColor(gap: number) {
-  if (Math.abs(gap) >= 3) return V.coral;
-  if (Math.abs(gap) >= 2) return V.orange;
-  return V.green;
-}
-
-function buildStrongestAxes(axes: AxisData[], n: number) {
-  return [...axes].sort((a, b) => b.ai - a.ai).slice(0, n);
-}
-function buildWeakestAxes(axes: AxisData[], n: number) {
-  return [...axes].sort((a, b) => a.ai - b.ai).slice(0, n);
-}
-
-function durationFromMessages(msgs: { role: string; content: string }[]) {
-  const words = msgs.reduce((s, m) => s + m.content.length, 0);
-  const secs = Math.round(words * 0.3);
+function durationStr(msgs: { role: string; content: string }[]) {
+  const chars = msgs.reduce((s, m) => s + m.content.length, 0);
+  const secs = Math.round(chars * 0.3);
   const m = Math.floor(secs / 60), s = secs % 60;
   return `${m} 分 ${s} 秒`;
 }
 
-function countStreak(history: SessionRecord[]): number {
+function countStreak(history: SessionRecord[]) {
   let streak = 0;
   for (let i = 0; i < history.length - 1; i++) {
-    if (history[i].evaluation.overallScore > history[i + 1].evaluation.overallScore) {
-      streak++;
-    } else { break; }
+    if (history[i].evaluation.overallScore > history[i + 1].evaluation.overallScore) streak++;
+    else break;
   }
   return streak;
 }
 
-function practiceFreq(history: SessionRecord[]): string {
-  if (history.length < 2) return "初回";
-  const newest = new Date(history[0].savedAt);
-  const oldest = new Date(history[history.length - 1].savedAt);
-  const weeks = Math.max(1, (newest.getTime() - oldest.getTime()) / (7 * 24 * 3600 * 1000));
-  return `週 ${(history.length / weeks).toFixed(1)} 回`;
-}
+/* ══════════════════════════════════════════════════════════════════════
+   デモデータ
+══════════════════════════════════════════════════════════════════════ */
+const DEMO_SESSION: SessionData = {
+  startedAt: "2026-05-25T10:00:00.000Z",
+  endedAt:   "2026-05-25T10:28:00.000Z",
+  scenario: {
+    id: "s1", title: "部下のモチベーション向上", clientName: "田中 誠",
+    clientRole: "チームリーダー（30代）", situation: "昇進後のチーム運営に悩む",
+    emotion: "不安・焦り", description: "チームメンバーへの接し方",
+    tags: ["マネジメント"], icon: "👥",
+  },
+  messages: [
+    { role:"assistant", content:"こんにちは。今日はよろしくお願いします。" },
+    { role:"user",      content:"最近チームの士気が低くて困っています。どうすればよいでしょうか。" },
+    { role:"assistant", content:"それは大変ですね。具体的にどんな場面で感じますか？" },
+    { role:"user",      content:"朝礼での反応が薄いんです。個別に話を聞くのが良いですか？" },
+    { role:"assistant", content:"いい視点ですね。まずは一対一の場を作ってみましょう。" },
+    { role:"user",      content:"具体的にどんな質問をすればいいですか？" },
+    { role:"assistant", content:"「最近の仕事で充実感を感じたことはありますか？」から始めると自然です。" },
+    { role:"user",      content:"なるほど、やってみます。ありがとうございます。" },
+  ],
+};
+const DEMO_EVAL: EvaluationResult = {
+  overallScore: 76,
+  scores: [
+    { category:"傾聴力",       score:7.5, maxScore:10, feedback:"相手の言葉をよく聞いていた" },
+    { category:"共感力",       score:8.0, maxScore:10, feedback:"感情への配慮が見えた" },
+    { category:"質問力",       score:7.0, maxScore:10, feedback:"オープンな質問が多かった" },
+    { category:"目標設定支援", score:6.5, maxScore:10, feedback:"もう少し具体的に" },
+    { category:"アクション促進",score:6.0, maxScore:10, feedback:"次のステップの明確化が必要" },
+  ],
+  strengths: ["積極的な傾聴姿勢が素晴らしい", "共感的な言葉かけができている", "オープンクエスチョンを効果的に使えている"],
+  improvements: ["より深い質問で本質に迫る", "クライアントの感情をより丁寧に確認する", "具体的なアクションプランの設定をサポートする"],
+  nextSteps: "次回の練習では、オープンクエスチョンに加えてリフレクションを意識的に使ってみましょう。また、クライアントが自分でアクションを決める支援をより強化してください。",
+  summary: "全体的に良いコーチングができていました。傾聴と共感は高水準で安定しており、次のステップは質問の深掘りとアクションプランの明確化です。",
+  previousImprovementsReview: [],
+};
 
 /* ══════════════════════════════════════════════════════════════════════
    メインページ
@@ -309,52 +344,21 @@ export default function EvaluationPage() {
   const [history, setHistory] = useState<SessionRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [expanded, setExpanded] = useState<GroupId | null>("next");
-  const [trendPeriod, setTrendPeriod] = useState(0); // 0=10回, 1=30回, 2=全期間
+  const [activeTab, setActiveTab] = useState<TabId>("report");
+  const [expandedGroup, setExpandedGroup] = useState<string | null>("good");
 
-  const toggle = useCallback((id: GroupId) => {
-    setExpanded(prev => prev === id ? null : id);
-  }, []);
+  const toggleGroup = useCallback((id: string) => setExpandedGroup(p => p === id ? null : id), []);
 
   useEffect(() => {
-    // ?demo=1 → API クレジット不要のデモモード
     const isDemo = new URLSearchParams(window.location.search).get("demo") === "1";
     if (isDemo) {
-      const demoSession: SessionData = {
-        startedAt: "2026-05-25T10:00:00.000Z",
-        endedAt:   "2026-05-25T10:28:00.000Z",
-        scenario: { id:"s1", title:"部下のモチベーション向上", clientName:"田中 誠", clientRole:"チームリーダー（30代）", situation:"昇進後のチーム運営に悩む", emotion:"不安・焦り", description:"チームメンバーへの接し方", tags:["マネジメント"], icon:"👥" },
-        messages: [
-          { role:"assistant", content:"こんにちは、今日はよろしくお願いします。" },
-          { role:"user", content:"最近チームの士気が低くて困っています。どうすればよいでしょうか。" },
-          { role:"assistant", content:"そうですか、それは大変ですね。具体的にどんな場面で感じますか？" },
-          { role:"user", content:"朝礼での反応が薄いんです。個別に話を聞くのが良いですか？" },
-          { role:"assistant", content:"いい視点ですね。まずは一対一の場を作ってみましょう。" },
-          { role:"user", content:"具体的にどんな質問をすればいいですか？" },
-        ],
-      };
-      const demoEval: EvaluationResult = {
-        overallScore: 76,
-        scores: [
-          { category:"傾聴力", score:7.5, maxScore:10, feedback:"相手の言葉をよく聞いていた" },
-          { category:"共感力", score:8.0, maxScore:10, feedback:"感情への配慮が見えた" },
-          { category:"質問力", score:7.0, maxScore:10, feedback:"オープンな質問が多かった" },
-          { category:"目標設定支援", score:6.5, maxScore:10, feedback:"もう少し具体的に" },
-          { category:"アクション促進", score:6.0, maxScore:10, feedback:"次のステップの明確化が必要" },
-        ],
-        strengths: ["積極的な傾聴姿勢が素晴らしい","共感的な言葉かけができている","オープンクエスチョンを効果的に使えている"],
-        improvements: ["より深い質問で本質に迫る","クライアントの感情をより丁寧に確認する","具体的なアクションプランの設定をサポートする"],
-        nextSteps: "次回の練習では、オープンクエスチョンに加えてリフレクションを意識的に使ってみましょう。また、クライアントが自分でアクションを決める支援をより強化してください。",
-        summary: "全体的に良いコーチングができていました。",
-        previousImprovementsReview: [],
-      };
-      const demoHist: SessionRecord[] = [
-        { id:"2026-05-25T10:00:00.000Z", session:demoSession, evaluation:demoEval, savedAt:"2026-05-25T10:30:00.000Z" },
-        { id:"2026-05-24T10:00:00.000Z", session:demoSession, evaluation:{...demoEval,overallScore:70}, savedAt:"2026-05-24T10:30:00.000Z" },
-        { id:"2026-05-23T10:00:00.000Z", session:demoSession, evaluation:{...demoEval,overallScore:63}, savedAt:"2026-05-23T10:30:00.000Z" },
-        { id:"2026-05-22T10:00:00.000Z", session:demoSession, evaluation:{...demoEval,overallScore:58}, savedAt:"2026-05-22T10:30:00.000Z" },
+      const demoHistory: SessionRecord[] = [
+        { id:"2026-05-25T10:00:00.000Z", session:DEMO_SESSION, evaluation:DEMO_EVAL, savedAt:"2026-05-25T10:30:00.000Z" },
+        { id:"2026-05-24T10:00:00.000Z", session:DEMO_SESSION, evaluation:{...DEMO_EVAL,overallScore:70}, savedAt:"2026-05-24T10:30:00.000Z" },
+        { id:"2026-05-23T10:00:00.000Z", session:DEMO_SESSION, evaluation:{...DEMO_EVAL,overallScore:63}, savedAt:"2026-05-23T10:30:00.000Z" },
+        { id:"2026-05-22T10:00:00.000Z", session:DEMO_SESSION, evaluation:{...DEMO_EVAL,overallScore:58}, savedAt:"2026-05-22T10:30:00.000Z" },
       ];
-      setSession(demoSession); setResult(demoEval); setHistory(demoHist); setIsLoading(false);
+      setSession(DEMO_SESSION); setResult(DEMO_EVAL); setHistory(demoHistory); setIsLoading(false);
       return;
     }
 
@@ -402,33 +406,33 @@ export default function EvaluationPage() {
       .catch((err: Error) => { setError(err.message); setIsLoading(false); });
   }, [router]);
 
+  /* ── ローディング ── */
   if (isLoading) return <LoadingScreen />;
 
+  /* ── エラー ── */
   if (error) {
     const isCredit = error.includes("クレジット") || error.includes("credit");
     return (
-      <div style={{ minHeight: "100vh", background: V.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
-        <div style={{ textAlign: "center", maxWidth: 400 }}>
-          <div style={{ width: 56, height: 56, background: "#FEE2E2", border: "1px solid #FECACA", borderRadius: "50%", display: "grid", placeItems: "center", margin: "0 auto 20px" }}>
-            <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="#EF4444">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+      <div style={{ minHeight: "calc(100vh - 60px)", background: V.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
+        <div style={{ textAlign: "center", maxWidth: 420 }}>
+          <div style={{ width: 60, height: 60, background: "#FEE2E2", border: "1px solid #FECACA", borderRadius: "50%", display: "grid", placeItems: "center", margin: "0 auto 20px" }}>
+            <span style={{ fontSize: 28 }}>⚠️</span>
           </div>
-          <h2 style={{ fontFamily: V.round, fontSize: 18, fontWeight: 700, color: V.ink, marginBottom: 10 }}>
+          <h2 style={{ fontFamily: V.round, fontSize: 19, fontWeight: 700, color: V.ink, marginBottom: 10 }}>
             {isCredit ? "APIクレジットが不足しています" : "評価の取得に失敗しました"}
           </h2>
           <p style={{ fontFamily: V.sans, fontSize: 13, color: V.ink2, lineHeight: 1.8, marginBottom: 24 }}>
             {isCredit
-              ? <>Anthropic コンソールでクレジットを追加すると評価が利用できます。<br />デモモードでレポート画面のデザインを確認できます。</>
+              ? "Anthropic コンソールでクレジットを追加すると評価が利用できます。デモモードでレポート画面を確認できます。"
               : error}
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
             {isCredit && (
-              <Link href="/evaluation?demo=1" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 24px", background: V.blue, color: "#fff", borderRadius: 12, fontFamily: V.round, fontWeight: 700, fontSize: 14, textDecoration: "none", boxShadow: `0 8px 20px -8px ${V.blue}` }}>
+              <Link href="/evaluation?demo=1" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 26px", background: V.navy, color: "#fff", borderRadius: 12, fontFamily: V.round, fontWeight: 700, fontSize: 14, textDecoration: "none", boxShadow: `0 8px 20px -8px ${V.navy}` }}>
                 📊 デモモードで確認する
               </Link>
             )}
-            <Link href="/session" style={{ display: "inline-block", padding: "10px 20px", background: "transparent", color: V.ink2, border: `1px solid ${V.border}`, borderRadius: 10, fontFamily: V.round, fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
+            <Link href="/session" style={{ display: "inline-block", padding: "11px 22px", color: V.ink2, border: `1px solid ${V.border}`, borderRadius: 10, fontFamily: V.round, fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
               ← セッションに戻る
             </Link>
           </div>
@@ -442,435 +446,432 @@ export default function EvaluationPage() {
   /* ── データ加工 ── */
   const axes = buildAxes(result);
   const score = result.overallScore;
-  const strongest = buildStrongestAxes(axes, 3);
-  const weakest   = buildWeakestAxes(axes, 2);
   const allScores: number[] = history.map(r => r.evaluation.overallScore).reverse().slice(-10);
   if (allScores.length === 0) allScores.push(score);
   const streak = countStreak(history);
-  const practiceNo = history.length;
-  const freq = practiceFreq(history);
-  const avgScore = history.length > 0
-    ? Math.round(history.reduce((s, r) => s + r.evaluation.overallScore, 0) / history.length) : score;
-  const userMsgs  = session.messages.filter(m => m.role === "user").length;
-  const totalMsgs = session.messages.length;
-  const duration  = durationFromMessages(session.messages);
+  const practiceNo = history.length || 1;
+  const userMsgCount = session.messages.filter(m => m.role === "user").length;
+  const totalMsgCount = session.messages.length;
+  const coachPct = Math.round((userMsgCount / Math.max(totalMsgCount, 1)) * 100);
+  const duration = durationStr(session.messages);
+  const prevScore = history.length >= 2 ? history[1].evaluation.overallScore : null;
+  const scoreDiff = prevScore !== null ? score - prevScore : null;
   const today = new Date(session.startedAt ?? Date.now());
   const dateStr = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,"0")}.${String(today.getDate()).padStart(2,"0")}`;
-  const weekdays = ["日","月","火","水","木","金","土"];
+  const avgScore = history.length > 0
+    ? Math.round(history.reduce((s, r) => s + r.evaluation.overallScore, 0) / history.length) : score;
   const hasPrevReview = (result.previousImprovementsReview?.length ?? 0) > 0;
 
-  /* フィードバックグループ */
-  const groups = [
+  /* ── ふりかえりグループ ── */
+  const reviewGroups = [
     {
-      id: "good" as GroupId,
-      icon: "✅", color: V.green, bg: V.greenLite, dark: V.greenDark,
-      title: "良かった点", count: result.strengths.length,
-      items: result.strengths.map((t, i) => ({ title: t, detail: "" })),
+      id: "good",
+      icon: "✅",
+      label: "良かった点",
+      count: result.strengths.length,
+      color: V.green, colorLt: V.greenLt, colorDk: V.greenDk,
+      items: result.strengths,
     },
     {
-      id: "fix" as GroupId,
-      icon: "📈", color: V.coral, bg: V.coralLite, dark: "#B3433F",
-      title: "改善できる点", count: result.improvements.length,
-      items: result.improvements.map((t) => ({ title: t, detail: "" })),
-    },
-    {
-      id: "next" as GroupId,
-      icon: "🎯", color: V.blue, bg: V.blueLite, dark: V.blueDeep,
-      title: "次の練習で意識すること", count: 3,
-      items: result.nextSteps
-        .split(/。|。\s+/)
-        .filter(s => s.trim().length > 2)
-        .slice(0, 3)
-        .map(t => ({ title: t.trim() + (t.trim().endsWith("。") ? "" : ""), detail: "" })),
+      id: "fix",
+      icon: "📈",
+      label: "改善できる点",
+      count: result.improvements.length,
+      color: V.coral, colorLt: V.coralLt, colorDk: "#C0453A",
+      items: result.improvements,
     },
   ];
 
-  /* ── スタイル定数 ── */
-  const card: React.CSSProperties = {
-    background: V.surface, border: `1px solid ${V.border}`,
-    borderRadius: 16, boxShadow: "0 1px 2px rgba(45,52,54,0.04)",
-  };
+  const nextItems = result.nextSteps
+    .split(/。\s*/)
+    .filter(s => s.trim().length > 3)
+    .slice(0, 3);
 
-  /* ══════════════════════════════════════════════════════════════════
+  /* ══════════════════════════════════════════════════════════════
      レンダリング
-  ══════════════════════════════════════════════════════════════════ */
+  ══════════════════════════════════════════════════════════════ */
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gridTemplateRows: "64px 1fr", gridTemplateAreas: '"sidebar header" "sidebar main"', height: "100vh", background: V.bg, fontFamily: V.sans }}>
+    <div style={{ minHeight: "calc(100vh - 60px)", background: V.bg, fontFamily: V.sans }}>
 
-      {/* ── Sidebar ── */}
-      <aside style={{ gridArea: "sidebar", background: V.surface, borderRight: `1px solid ${V.border}`, display: "flex", flexDirection: "column", padding: "20px 14px 18px", overflow: "hidden" }}>
-        <div style={{ fontFamily: V.sans, fontSize: 10, fontWeight: 600, color: V.ink3, letterSpacing: "0.18em", textTransform: "uppercase", padding: "4px 10px 10px" }}>MENU</div>
-        <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {[
-            { id: "chat",    icon: "💬", label: "練習する",   sub: "AIと対話",          href: "/session" },
-            { id: "history", icon: "📜", label: "会話履歴",   sub: `${history.length} セッション`, href: "/history" },
-            { id: "report",  icon: "📊", label: "レポート",   sub: streak > 0 ? `前回 +${score - (history[1]?.evaluation.overallScore ?? score)} 点` : "最新の評価", href: "/evaluation" },
-            { id: "home",    icon: "🏠", label: "ホーム",     sub: "",                  href: "/" },
-          ].map(item => {
-            const active = item.id === "report";
-            return (
-              <Link key={item.id} href={item.href} style={{ display: "flex", alignItems: "center", gap: 12, background: active ? V.blueLite : "transparent", borderRadius: 12, padding: "12px 12px", textDecoration: "none", position: "relative" }}>
-                <div style={{ width: 32, height: 32, borderRadius: 10, background: active ? V.blue : V.bg, color: active ? "#fff" : V.ink2, display: "grid", placeItems: "center", fontSize: 15, flexShrink: 0 }}>{item.icon}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: V.round, fontWeight: 600, fontSize: 13.5, color: active ? V.blue : V.ink, lineHeight: 1.2 }}>{item.label}</div>
-                  {item.sub && <div style={{ fontFamily: V.sans, fontSize: 10.5, color: V.ink3, marginTop: 2 }}>{item.sub}</div>}
-                </div>
-                {active && <span style={{ position: "absolute", left: 0, top: 12, bottom: 12, width: 3, background: V.blue, borderRadius: "0 3px 3px 0" }} />}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* 今週の成長 */}
-        <div style={{ marginTop: 22, padding: 14, background: V.bg, borderRadius: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-            <div style={{ fontFamily: V.round, fontWeight: 600, fontSize: 12, color: V.ink }}>今週の成長</div>
-            <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 13, color: V.green }}>
-              {streak > 0 ? `+${streak * 5}%` : "記録中"}
-            </div>
-          </div>
-          <SidebarSparkline scores={history.map(r => r.evaluation.overallScore).reverse()} />
-        </div>
-
-        <div style={{ flex: 1 }} />
-
-        {/* CTA */}
-        <Link href="/session" style={{ background: V.coral, color: "#fff", border: "none", borderRadius: 14, padding: "14px 16px", fontFamily: V.round, fontWeight: 700, fontSize: 14, cursor: "pointer", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: `0 10px 22px -10px ${V.coral}` }}>
-          <div>
-            <div>新しい練習を始める</div>
-            <div style={{ fontFamily: V.sans, fontSize: 10.5, fontWeight: 400, marginTop: 2, opacity: 0.92 }}>3 つのシナリオから</div>
-          </div>
-          <span style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.25)", display: "grid", placeItems: "center", fontSize: 14 }}>→</span>
-        </Link>
-      </aside>
-
-      {/* ── Header ── */}
-      <header style={{ gridArea: "header", height: 64, padding: "0 28px", background: V.surface, borderBottom: `1px solid ${V.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ width: 38, height: 38, borderRadius: 12, background: V.blue, display: "grid", placeItems: "center", color: "#fff", fontFamily: V.round, fontWeight: 700, fontSize: 18, boxShadow: `0 6px 14px -6px ${V.blue}` }}>聴</div>
-          <div>
-            <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 15, color: V.ink, lineHeight: 1 }}>AIコーチトレーナー</div>
-            <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3, marginTop: 3 }}>安心して、ことばを試せる場所。</div>
-          </div>
-          <div style={{ width: 1, height: 28, background: V.border, margin: "0 8px" }} />
-          <div>
-            <div style={{ fontFamily: V.round, fontWeight: 600, fontSize: 14, color: V.ink, lineHeight: 1 }}>評価レポート</div>
-            <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3, marginTop: 3 }}>練習 #{practiceNo} ・ {dateStr}</div>
-          </div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          {streak > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, background: V.coralLite, color: V.coral, padding: "6px 12px", borderRadius: 999, fontFamily: V.round, fontWeight: 600, fontSize: 12 }}>
-              <span style={{ fontSize: 14 }}>♥</span>
-              <span>連続 {streak} 日</span>
-            </div>
-          )}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: `linear-gradient(135deg, ${V.blue}, ${V.blueDeep})`, color: "#fff", display: "grid", placeItems: "center", fontFamily: V.round, fontWeight: 700, fontSize: 13 }}>
-              {session.scenario.clientName.charAt(0)}
-            </div>
+      {/* ─── ページヘッダー ─── */}
+      <div style={{ background: V.surface, borderBottom: `1px solid ${V.border}`, padding: "0 32px" }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto" }}>
+          {/* タイトル行 */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0 0" }}>
             <div>
-              <div style={{ fontFamily: V.round, fontWeight: 600, fontSize: 13, color: V.ink, lineHeight: 1 }}>コーチ</div>
-              <div style={{ fontFamily: V.sans, fontSize: 10, color: V.ink3, marginTop: 2 }}>練習 #{practiceNo}</div>
+              <div style={{ fontSize: 11, color: V.ink3, marginBottom: 5 }}>
+                練習 #{practiceNo} ・ {dateStr} ・ {session.scenario.clientName}さん
+              </div>
+              <h1 style={{ fontSize: 22, fontWeight: 800, color: V.navy, margin: 0, letterSpacing: "-0.02em" }}>
+                {session.scenario.title}
+              </h1>
+            </div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              {streak > 0 && (
+                <div style={{ display: "flex", alignItems: "center", gap: 6, background: V.amberLt, color: V.amber, padding: "6px 12px", borderRadius: 100, fontSize: 12, fontWeight: 600 }}>
+                  🔥 {streak} 回連続上昇中
+                </div>
+              )}
+              <Link href="/session" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px", background: V.navy, color: "white", borderRadius: 12, fontWeight: 700, fontSize: 13, textDecoration: "none", boxShadow: `0 6px 16px -6px ${V.navy}` }}>
+                ▶ もう一度練習する
+              </Link>
             </div>
           </div>
+
+          {/* タブ */}
+          <div style={{ display: "flex", gap: 2, paddingTop: 16, borderBottom: "none" }}>
+            {([
+              { id: "report" as TabId, label: "📊 評価レポート" },
+              { id: "review" as TabId, label: "💬 ふりかえり" },
+            ] as const).map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: "10px 10px 0 0",
+                  border: "none",
+                  borderBottom: activeTab === tab.id ? `3px solid ${V.navy}` : "3px solid transparent",
+                  background: activeTab === tab.id ? V.navyLt : "transparent",
+                  color: activeTab === tab.id ? V.navy : V.ink3,
+                  fontWeight: activeTab === tab.id ? 700 : 400,
+                  fontSize: 14,
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                  fontFamily: V.round,
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </header>
+      </div>
 
-      {/* ── Main ── */}
-      <main style={{ gridArea: "main", padding: "24px 32px 32px", overflow: "auto", minHeight: 0 }}>
+      {/* ─── タブコンテンツ ─── */}
+      <div style={{ maxWidth: 1120, margin: "0 auto", padding: "24px 32px 40px" }}>
 
-        {/* Row 1: 総合スコア ＋ 360°パフォーマンス */}
-        <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 18, marginBottom: 18 }}>
+        {/* ════════════════════════════════════
+            TAB 1: 評価レポート
+        ════════════════════════════════════ */}
+        {activeTab === "report" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-          {/* 総合スコアカード */}
-          <div style={{ ...card, padding: "22px 24px", display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-              <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 13, color: V.ink }}>総合スコア</div>
-              <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3 }}>練習 #{practiceNo}</div>
-            </div>
+            {/* Row 1: スコアカード + レーダー */}
+            <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 20 }}>
 
-            <div style={{ position: "relative", margin: "14px auto", width: 168, height: 168 }}>
-              <RadialGauge value={score} />
-              <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", textAlign: "center" }}>
-                <div>
-                  <CountUpDisplay value={score} />
-                  <div style={{ fontFamily: V.round, fontSize: 11, color: V.ink3, marginTop: 6, fontWeight: 600 }}>/ 100 点</div>
+              {/* スコアカード */}
+              <div style={{ ...card, padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: V.ink3, letterSpacing: "0.08em", marginBottom: 16, textTransform: "uppercase" }}>
+                  総合スコア
+                </div>
+                <div style={{ position: "relative", width: 160, height: 160, marginBottom: 10 }}>
+                  <RadialGauge value={score} />
+                  <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
+                    <div>
+                      <CountUpDisplay value={score} />
+                      <div style={{ fontSize: 11, color: V.ink3, fontWeight: 600 }}>/ 100</div>
+                    </div>
+                  </div>
+                </div>
+
+                {scoreDiff !== null && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, background: scoreDiff >= 0 ? V.greenLt : V.coralLt, padding: "7px 14px", borderRadius: 100, marginBottom: 14 }}>
+                    <span style={{ fontSize: 14 }}>{scoreDiff >= 0 ? "↑" : "↓"}</span>
+                    <span style={{ color: scoreDiff >= 0 ? V.greenDk : V.coral, fontSize: 13, fontWeight: 700 }}>
+                      前回比 {scoreDiff >= 0 ? "+" : ""}{scoreDiff} 点
+                    </span>
+                  </div>
+                )}
+
+                <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {[
+                    ["対話時間", duration],
+                    ["発話数", `コーチ ${userMsgCount} / クライアント ${totalMsgCount - userMsgCount}`],
+                    ["平均スコア", `${avgScore} 点 (${history.length}回)`],
+                  ].map(([k, v]) => (
+                    <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, paddingBottom: 7, borderBottom: `1px dashed ${V.borderSoft}` }}>
+                      <span style={{ color: V.ink3 }}>{k}</span>
+                      <span style={{ color: V.ink, fontWeight: 600 }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* レーダー + 軸ブレークダウン */}
+              <div style={{ ...card, padding: "24px" }}>
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontFamily: V.round, fontSize: 16, fontWeight: 700, color: V.navy }}>360° パフォーマンス</div>
+                    <div style={{ fontSize: 12, color: V.ink3, marginTop: 3 }}>6 軸で AI がコーチングスキルを評価</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: 2, background: V.navy }} />
+                      <span style={{ fontSize: 11, color: V.ink2 }}>AI 評価</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <svg width="18" height="6"><line x1="0" y1="3" x2="18" y2="3" stroke={V.coral} strokeWidth="1.5" strokeDasharray="4 2" /></svg>
+                      <span style={{ fontSize: 11, color: V.ink2 }}>Lv-Up 目標</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 24, alignItems: "center" }}>
+                  <RadarChart axes={axes} size={270} />
+                  {/* 軸テーブル */}
+                  <div>
+                    <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 40px 36px", gap: "6px 10px", alignItems: "center", marginBottom: 10, fontSize: 10, color: V.ink3, fontWeight: 600, textTransform: "uppercase" }}>
+                      <span>スキル</span><span>バー</span><span style={{ textAlign: "right" }}>スコア</span><span style={{ textAlign: "right" }}>GAP</span>
+                    </div>
+                    {axes.map(a => {
+                      const gap = a.target - a.ai;
+                      return (
+                        <div key={a.key} style={{ display: "grid", gridTemplateColumns: "80px 1fr 40px 36px", gap: "6px 10px", alignItems: "center", padding: "6px 0", borderBottom: `1px dashed ${V.borderSoft}` }}>
+                          <div>
+                            <div style={{ fontFamily: V.round, fontSize: 12, fontWeight: 700, color: V.ink }}>{a.label}</div>
+                            <div style={{ fontSize: 9, color: V.ink3 }}>{a.short}</div>
+                          </div>
+                          <div style={{ height: 5, background: V.bg, borderRadius: 3, overflow: "hidden" }}>
+                            <div style={{ width: `${(a.ai / a.max) * 100}%`, height: "100%", background: V.navy, borderRadius: 3 }} />
+                          </div>
+                          <div style={{ textAlign: "right", fontFamily: V.round, fontSize: 13, fontWeight: 700, color: V.navy }}>
+                            {a.ai}<span style={{ fontSize: 9, color: V.ink3 }}>/20</span>
+                          </div>
+                          <div style={{ textAlign: "right", fontSize: 11, fontWeight: 700, color: gap > 0 ? V.coral : V.green }}>
+                            {gap > 0 ? `+${gap}` : "✓"}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* 進捗ドット */}
-            <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 14 }}>
-              {Array.from({ length: 10 }, (_, i) => (
-                <span key={i} style={{ width: 9, height: 9, borderRadius: "50%", background: i < Math.floor(score / 10) ? V.blue : V.border }} />
-              ))}
-            </div>
-
-            {/* 前回比リボン */}
-            {history.length >= 2 && (
-              <div style={{ background: V.greenLite, borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                <div style={{ fontFamily: V.sans, fontSize: 12, color: V.greenDark }}>
-                  前回より <b style={{ fontFamily: V.round, fontSize: 14 }}>
-                    {score - history[1].evaluation.overallScore >= 0
-                      ? `+${score - history[1].evaluation.overallScore} 点`
-                      : `${score - history[1].evaluation.overallScore} 点`}
-                  </b>
+            {/* Row 2: 3 カード */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+              {/* 強み */}
+              <div style={{ ...card, padding: "20px", borderTop: `3px solid ${V.green}` }}>
+                <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 14, color: V.greenDk, marginBottom: 12 }}>✅ 強み</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {result.strengths.map((s, i) => (
+                    <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, color: V.ink2, lineHeight: 1.5 }}>
+                      <span style={{ width: 18, height: 18, borderRadius: "50%", background: V.greenLt, color: V.greenDk, display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{i+1}</span>
+                      {s}
+                    </div>
+                  ))}
                 </div>
-                {streak > 0 && (
-                  <div style={{ fontFamily: V.sans, fontSize: 11, color: "#3A8542" }}>↑ 連続 {streak} 回上昇中</div>
+              </div>
+
+              {/* 伸びしろ */}
+              <div style={{ ...card, padding: "20px", borderTop: `3px solid ${V.coral}` }}>
+                <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 14, color: "#C0453A", marginBottom: 12 }}>📈 伸びしろ</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {result.improvements.map((s, i) => (
+                    <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, color: V.ink2, lineHeight: 1.5 }}>
+                      <span style={{ width: 18, height: 18, borderRadius: "50%", background: V.coralLt, color: "#C0453A", display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{i+1}</span>
+                      {s}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 前回からの変化 */}
+              <div style={{ ...card, padding: "20px", borderTop: `3px solid ${V.navy}` }}>
+                <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 14, color: V.navy, marginBottom: 12 }}>📊 前回からの変化</div>
+                {hasPrevReview ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {result.previousImprovementsReview!.map((r, i) => (
+                      <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, color: V.ink2, lineHeight: 1.5 }}>
+                        <span style={{ width: 18, height: 18, borderRadius: "50%", background: r.addressed ? V.greenLt : V.coralLt, color: r.addressed ? V.greenDk : V.coral, display: "grid", placeItems: "center", fontSize: 10, flexShrink: 0, marginTop: 1 }}>
+                          {r.addressed ? "✓" : "−"}
+                        </span>
+                        {r.item}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div>
+                    {scoreDiff !== null ? (
+                      <div style={{ textAlign: "center", padding: "10px 0" }}>
+                        <div style={{ fontSize: 36, fontWeight: 800, color: scoreDiff >= 0 ? V.green : V.coral, lineHeight: 1 }}>
+                          {scoreDiff >= 0 ? "+" : ""}{scoreDiff}
+                        </div>
+                        <div style={{ fontSize: 12, color: V.ink3, marginTop: 4 }}>点（前回比）</div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 12, color: V.ink3, lineHeight: 1.7 }}>
+                        次回のセッション後、<br />前回との比較が表示されます。
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
+            </div>
 
-            {/* メタリスト */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, fontFamily: V.sans, fontSize: 12 }}>
+            {/* Row 3: 成長トレンド + 発話バランス */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 200px", gap: 16 }}>
+              {/* 成長トレンド */}
+              <div style={{ ...card, padding: "22px 24px" }}>
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
+                  <div>
+                    <div style={{ fontFamily: V.round, fontSize: 15, fontWeight: 700, color: V.navy }}>スコア推移</div>
+                    <div style={{ fontSize: 12, color: V.ink3, marginTop: 3 }}>過去 {allScores.length} 回のセッション</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: V.ink }}>
+                      平均: <span style={{ color: V.navy }}>{avgScore} 点</span>
+                    </div>
+                  </div>
+                </div>
+                <GrowthChart data={allScores} />
+              </div>
+
+              {/* 発話バランス */}
+              <div style={{ ...card, padding: "22px 20px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+                <div style={{ fontFamily: V.round, fontSize: 14, fontWeight: 700, color: V.navy, marginBottom: 12 }}>発話バランス</div>
+                <DonutChart coachPct={coachPct} />
+                <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: 2, background: V.navy }} />
+                      <span style={{ color: V.ink2 }}>コーチ</span>
+                    </div>
+                    <span style={{ fontWeight: 700, color: V.navy }}>{coachPct}%</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: 2, background: V.green }} />
+                      <span style={{ color: V.ink2 }}>クライアント</span>
+                    </div>
+                    <span style={{ fontWeight: 700, color: V.green }}>{100 - coachPct}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ════════════════════════════════════
+            TAB 2: ふりかえり
+        ════════════════════════════════════ */}
+        {activeTab === "review" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+            {/* セッション情報ピル */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
               {[
-                ["練習日",       `${dateStr} ・ ${weekdays[today.getDay()]}`],
-                ["シナリオ",     session.scenario.title],
-                ["クライアント", session.scenario.clientName + "さん"],
-                ["対話時間",     duration],
-                ["発話数",       `${totalMsgs} ／ ${session.scenario.clientName.split(" ")[0]} ${totalMsgs - userMsgs} ・ あなた ${userMsgs}`],
-              ].map(([k, v]) => (
-                <div key={k} style={{ display: "flex", justifyContent: "space-between", paddingBottom: 8, borderBottom: `1px dashed ${V.borderSoft}` }}>
-                  <span style={{ color: V.ink3 }}>{k}</span>
-                  <span style={{ color: V.ink, fontWeight: 500 }}>{v}</span>
+                { icon: "📅", label: dateStr },
+                { icon: "🎭", label: session.scenario.title },
+                { icon: "👤", label: session.scenario.clientName + "さん" },
+                { icon: "⏱", label: duration },
+                { icon: "💬", label: `${totalMsgCount} メッセージ` },
+              ].map((pill) => (
+                <div key={pill.label} style={{ display: "flex", alignItems: "center", gap: 7, background: V.surface, border: `1px solid ${V.border}`, borderRadius: 100, padding: "7px 14px", fontSize: 12, color: V.ink2, fontWeight: 500 }}>
+                  <span>{pill.icon}</span> {pill.label}
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* 360° パフォーマンスカード */}
-          <div style={{ ...card, padding: "22px 24px" }}>
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
-              <div>
-                <div style={{ fontFamily: V.round, fontSize: 16, fontWeight: 700, color: V.ink }}>360° パフォーマンス</div>
-                <div style={{ fontFamily: V.sans, fontSize: 12, color: V.ink3, marginTop: 4 }}>
-                  6 軸で AI がコーチングスキルを評価します。
-                </div>
+            {/* 所見 (サマリー) */}
+            <div style={{ ...card, padding: "22px 24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                <div style={{ width: 36, height: 36, background: V.navyLt, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📝</div>
+                <div style={{ fontFamily: V.round, fontSize: 16, fontWeight: 700, color: V.navy }}>所見</div>
               </div>
-              <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ width: 10, height: 10, borderRadius: "50%", background: V.blue, display: "inline-block" }} />
-                  <span style={{ fontFamily: V.sans, fontSize: 12, color: V.ink2, fontWeight: 500 }}>AI 評価</span>
-                </div>
-              </div>
-            </div>
+              <p style={{ fontSize: 14, color: V.ink2, lineHeight: 1.8, marginBottom: 16 }}>{result.summary}</p>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28, alignItems: "center" }}>
-              <div style={{ display: "grid", placeItems: "center" }}>
-                <RadarChart axes={axes} size={280} />
-              </div>
-              {/* 軸ブレークダウン */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {axes.map(a => {
-                  const aiPct = (a.ai / a.max) * 100;
-                  return (
-                    <div key={a.key} style={{ display: "grid", gridTemplateColumns: "88px 1fr 52px", alignItems: "center", gap: 10, padding: "5px 0", borderBottom: `1px dashed ${V.borderSoft}` }}>
+              {/* アコーディオン */}
+              {reviewGroups.map(group => {
+                const open = expandedGroup === group.id;
+                return (
+                  <div key={group.id} style={{ marginBottom: 10, borderRadius: 14, background: group.colorLt, border: `1px solid ${open ? group.color : "transparent"}`, overflow: "hidden", transition: "border-color 0.15s" }}>
+                    <button
+                      onClick={() => toggleGroup(group.id)}
+                      style={{ width: "100%", border: "none", background: "transparent", padding: "14px 18px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}
+                    >
+                      <span style={{ width: 28, height: 28, borderRadius: 8, background: "#fff", display: "grid", placeItems: "center", fontSize: 15, flexShrink: 0 }}>{group.icon}</span>
+                      <span style={{ fontFamily: V.round, fontWeight: 700, fontSize: 14, color: group.colorDk, flex: 1 }}>
+                        {group.label}
+                        <span style={{ marginLeft: 8, fontSize: 12, color: group.color }}>{group.count} 件</span>
+                      </span>
+                      <span style={{ fontWeight: 700, color: group.colorDk, display: "inline-block", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", fontSize: 16 }}>⌄</span>
+                    </button>
+                    {open && (
                       <div>
-                        <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 13, color: V.ink }}>{a.label}</div>
-                        <div style={{ fontFamily: V.sans, fontSize: 10, color: V.ink3 }}>{a.short}</div>
-                      </div>
-                      <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 0 }}>
-                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: V.blue, flexShrink: 0 }} />
-                          <div style={{ flex: 1, height: 5, background: V.bg, borderRadius: 3, overflow: "hidden" }}>
-                            <div style={{ width: `${aiPct}%`, height: "100%", background: V.blue }} />
+                        {group.items.map((item, i) => (
+                          <div key={i} style={{ display: "flex", gap: 12, padding: "10px 18px", borderTop: `1px dashed ${V.border}` }}>
+                            <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#fff", color: group.colorDk, display: "grid", placeItems: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{i+1}</span>
+                            <div style={{ fontSize: 13, color: V.ink, lineHeight: 1.6 }}>{item}</div>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                      <div style={{ textAlign: "right", fontFamily: V.round, fontWeight: 700, fontSize: 12, color: V.ink }}>
-                        {a.ai}
-                        <div style={{ fontFamily: V.sans, fontSize: 9, color: V.ink3, fontWeight: 400 }}>/20</div>
-                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 次の練習で意識すること */}
+            <div style={{ ...card, padding: "22px 24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                <div style={{ width: 36, height: 36, background: V.navyLt, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🎯</div>
+                <div style={{ fontFamily: V.round, fontSize: 16, fontWeight: 700, color: V.navy }}>次の練習で意識すること</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {nextItems.map((item, i) => (
+                  <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 10, background: V.navy, color: "white", display: "grid", placeItems: "center", fontFamily: V.round, fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+                      {i + 1}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Row 2: 詳細分析 ＋ ふりかえり */}
-        <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 18, marginBottom: 18 }}>
-
-          {/* 詳細分析カード */}
-          <div style={{ ...card, padding: "22px 24px" }}>
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontFamily: V.round, fontSize: 16, fontWeight: 700, color: V.ink }}>詳細分析</div>
-              <div style={{ fontFamily: V.sans, fontSize: 12, color: V.ink3, marginTop: 4 }}>今回の練習からの所見</div>
-            </div>
-
-            {/* 強みカード */}
-            <div style={{ background: V.greenLite, borderRadius: 12, padding: "14px 16px", marginBottom: 12 }}>
-              <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 12, color: V.greenDark, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                <span>✔</span> 強み
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {strongest.map(a => (
-                  <div key={a.key} style={{ fontFamily: V.sans, fontSize: 13, color: V.ink, display: "flex", justifyContent: "space-between" }}>
-                    <span>{a.label}</span>
-                    <span style={{ fontFamily: V.round, fontSize: 12, fontWeight: 600, color: V.greenDark }}>高水準で安定</span>
+                    <div style={{ fontSize: 14, color: V.ink, lineHeight: 1.7, paddingTop: 7 }}>{item}。</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* 余白カード */}
-            <div style={{ background: V.coralLite, borderRadius: 12, padding: "14px 16px" }}>
-              <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 12, color: "#B3433F", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                <span>⚠</span> 余白
+            {/* AIからのフィードバック (各軸) */}
+            <div style={{ ...card, padding: "22px 24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                <div style={{ width: 36, height: 36, background: "#F0F4FF", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🤖</div>
+                <div style={{ fontFamily: V.round, fontSize: 16, fontWeight: 700, color: V.navy }}>AI からのフィードバック</div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {weakest.map(a => {
-                  const potential = 20 - a.ai;
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
+                {result.scores.map((s) => {
+                  const pct = (s.score / s.maxScore) * 100;
+                  const color = pct >= 80 ? V.green : pct >= 60 ? V.amber : V.coral;
                   return (
-                    <div key={a.key} style={{ fontFamily: V.sans, fontSize: 13, color: V.ink, display: "flex", justifyContent: "space-between" }}>
-                      <span>{a.label}</span>
-                      <span style={{ fontFamily: V.round, fontSize: 12, fontWeight: 600, color: "#B3433F" }}>+{potential} を狙いたい</span>
+                    <div key={s.category} style={{ background: V.bg, borderRadius: 12, padding: "14px 16px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 13, color: V.navy }}>{s.category}</div>
+                        <div style={{ fontFamily: V.round, fontSize: 14, fontWeight: 800, color }}>
+                          {s.score.toFixed(1)}<span style={{ fontSize: 10, color: V.ink3, fontWeight: 400 }}>/{s.maxScore}</span>
+                        </div>
+                      </div>
+                      <div style={{ height: 4, background: V.border, borderRadius: 2, overflow: "hidden", marginBottom: 8 }}>
+                        <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 2 }} />
+                      </div>
+                      <div style={{ fontSize: 12, color: V.ink2, lineHeight: 1.6 }}>{s.feedback}</div>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* 前回の宿題 */}
-            {hasPrevReview && (
-              <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${V.borderSoft}` }}>
-                <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 12, color: V.ink3, letterSpacing: "0.1em", marginBottom: 10, textTransform: "uppercase" }}>
-                  前回の宿題 ／ REVIEW
-                </div>
-                {result.previousImprovementsReview!.map((r, i) => (
-                  <div key={i} style={{ display: "flex", gap: 10, marginBottom: 10, alignItems: "flex-start" }}>
-                    <div style={{ width: 20, height: 20, borderRadius: "50%", background: r.addressed ? V.green : V.surface, border: `1.5px solid ${r.addressed ? V.green : V.coral}`, color: "#fff", display: "grid", placeItems: "center", fontFamily: V.round, fontSize: 10, fontWeight: 700, flexShrink: 0, marginTop: 2 }}>
-                      {r.addressed ? "✓" : "−"}
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: V.sans, fontSize: 12.5, color: V.ink, fontWeight: 500 }}>{r.item}</div>
-                      <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3, marginTop: 2, lineHeight: 1.6 }}>{r.comment}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* ふりかえりカード（アコーディオン） */}
-          <div style={{ ...card, padding: "22px 24px" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
-              <div>
-                <div style={{ fontFamily: V.round, fontSize: 16, fontWeight: 700, color: V.ink }}>ふりかえり</div>
-                <div style={{ fontFamily: V.sans, fontSize: 12, color: V.ink3, marginTop: 4 }}>
-                  今回のセッションを 3 つの観点で分解しました。クリックで展開できます。
-                </div>
-              </div>
-              <div style={{ background: V.blueLite, color: V.blue, padding: "4px 10px", borderRadius: 999, fontFamily: V.round, fontSize: 11, fontWeight: 700, flexShrink: 0, marginLeft: 12 }}>
-                💡 AI からのフィードバック
-              </div>
-            </div>
-
-            {groups.map(group => {
-              const open = expanded === group.id;
-              return (
-                <div key={group.id} style={{ marginBottom: 10, borderRadius: 14, background: group.bg, border: `1px solid ${open ? group.color : "transparent"}`, transition: "all 0.15s", overflow: "hidden" }}>
-                  <button
-                    onClick={() => toggle(group.id)}
-                    aria-expanded={open}
-                    aria-controls={`panel-${group.id}`}
-                    style={{ width: "100%", border: "none", background: "transparent", padding: "14px 18px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ width: 30, height: 30, borderRadius: 10, background: "#fff", color: group.dark, display: "grid", placeItems: "center", fontSize: 16, flexShrink: 0 }}>
-                      {group.icon}
-                    </span>
-                    <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 14, color: group.dark, flex: 1 }}>
-                      {group.title}
-                      <span style={{ marginLeft: 8, color: group.color, fontSize: 12 }}>{group.count} 件</span>
-                    </div>
-                    <span aria-hidden="true" style={{ fontFamily: V.round, fontSize: 14, color: group.dark, fontWeight: 700, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>⌄</span>
-                  </button>
-                  {open && (
-                    <div id={`panel-${group.id}`} role="region">
-                      {group.items.map((it, i) => (
-                        <div key={i} style={{ display: "flex", gap: 12, padding: "10px 18px", borderTop: `1px dashed ${V.border}` }}>
-                          <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#fff", color: group.dark, display: "grid", placeItems: "center", fontFamily: V.round, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{i + 1}</span>
-                          <div>
-                            <div style={{ fontFamily: V.round, fontWeight: 600, fontSize: 13.5, color: V.ink }}>{it.title}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* アクション行 */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 14, borderTop: `1px solid ${V.borderSoft}` }}>
-              <Link href="/history" style={{ background: "transparent", color: V.ink2, border: `1px solid ${V.border}`, borderRadius: 10, padding: "10px 16px", fontFamily: V.round, fontWeight: 600, fontSize: 13, textDecoration: "none", display: "inline-block" }}>
+            {/* アクションボタン */}
+            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+              <Link href="/history" style={{ padding: "12px 22px", border: `1px solid ${V.border}`, borderRadius: 12, color: V.ink2, fontSize: 14, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
                 ← 練習履歴
               </Link>
-              <div style={{ flex: 1 }} />
-              <Link href="/session" style={{ background: V.coral, color: "#fff", border: "none", borderRadius: 10, padding: "12px 22px", fontFamily: V.round, fontWeight: 700, fontSize: 13, cursor: "pointer", boxShadow: `0 10px 22px -10px ${V.coral}`, display: "inline-flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-                次の練習を始める <span style={{ fontSize: 14 }}>▶</span>
+              <Link href="/session" style={{ padding: "12px 26px", background: V.navy, color: "white", borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8, boxShadow: `0 8px 20px -8px ${V.navy}` }}>
+                次の練習を始める ▶
               </Link>
             </div>
           </div>
-        </div>
+        )}
+      </div>
 
-        {/* Row 3: 成長トレンド */}
-        <div style={{ ...card, padding: "22px 24px" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
-            <div>
-              <div style={{ fontFamily: V.round, fontSize: 16, fontWeight: 700, color: V.ink }}>成長トレンド</div>
-              <div style={{ fontFamily: V.sans, fontSize: 12, color: V.ink3, marginTop: 4 }}>
-                過去 {allScores.length} 回のセッションスコア。続けるほど、傾向は確かに登っていきます。
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 6 }} role="group" aria-label="期間切り替え">
-              {["10 回", "30 回", "全期間"].map((t, i) => (
-                <button key={t} onClick={() => setTrendPeriod(i)}
-                  aria-pressed={trendPeriod === i}
-                  style={{ fontFamily: V.round, fontWeight: 600, fontSize: 12, padding: "6px 12px", borderRadius: 8, background: trendPeriod === i ? V.ink : "transparent", color: trendPeriod === i ? "#fff" : V.ink2, border: trendPeriod === i ? "none" : `1px solid ${V.border}`, cursor: "pointer" }}>
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 32, alignItems: "center" }}>
-            <GrowthChart data={allScores} />
-            <div>
-              {[
-                { k: "平均スコア",  v: `${avgScore} 点`,  d: history.length > 0 ? `初回比 +${avgScore - (history[history.length-1]?.evaluation.overallScore ?? avgScore)}` : "初回" },
-                { k: "上昇傾向",    v: `${streak} 回連続`, d: streak > 0 ? "止まらず登る" : "次回に期待" },
-                { k: "練習頻度",    v: freq,               d: "継続中" },
-                { k: "到達まで",    v: `あと ${Math.max(0, 100 - score)} 点`, d: "目標 100 点" },
-              ].map(s => (
-                <div key={s.k} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "12px 0", borderBottom: `1px dashed ${V.borderSoft}` }}>
-                  <div>
-                    <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3 }}>{s.k}</div>
-                    <div style={{ fontFamily: V.round, fontSize: 18, fontWeight: 700, color: V.ink, marginTop: 2 }}>{s.v}</div>
-                  </div>
-                  <div style={{ fontFamily: V.sans, fontSize: 11, color: V.ink3 }}>{s.d}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-      </main>
-
-      {/* スピナーキーフレーム */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
-  );
-}
-
-/* ── CountUp 表示コンポーネント（状態を親から分離） ── */
-function CountUpDisplay({ value }: { value: number }) {
-  const n = useCountUp(value, 900);
-  return (
-    <span style={{ fontFamily: '"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif', fontSize: 56, fontWeight: 700, color: "#2D3436", lineHeight: 1 }}>
-      {n}
-    </span>
   );
 }

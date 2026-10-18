@@ -58,7 +58,7 @@ const NAV_ITEMS: { href: string; label: string; shortLabel?: string; Icon: (p: {
   { href: "/mypage",   label: "マイページ", Icon: UserIcon,     exact: false },
 ];
 
-export default function TopNav({ immersive = false }: { immersive?: boolean }) {
+export default function TopNav() {
   const path = usePathname();
 
   function isActive(href: string, exact: boolean) {
@@ -67,7 +67,6 @@ export default function TopNav({ immersive = false }: { immersive?: boolean }) {
 
   return (
     <>
-    {!immersive && (
     <nav
       className="topnav"
       style={{
@@ -192,7 +191,6 @@ export default function TopNav({ immersive = false }: { immersive?: boolean }) {
         </svg>
       </Link>
     </nav>
-    )}
 
     {/* スマホ用 下部タブバー（CSSで768px以下のときだけ表示） */}
     <nav className="bottom-tabs" aria-label="メインメニュー">

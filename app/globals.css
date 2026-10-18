@@ -163,9 +163,3 @@
 @media (max-width: 768px) {
   .rs-grid-1 svg { max-width: 100%; height: auto; }
 }
-
-/* 上部ナビを出さない全画面ページ（/session）。スマホでは下部タブバーの分だけ引く */
-.screen-full { height: 100vh; height: 100dvh; }
-@media (max-width: 768px) {
-  .screen-full { height: calc(100dvh - 64px - env(safe-area-inset-bottom)); }
-}

@@ -345,7 +345,7 @@ export default function SessionPage() {
      セッション画面 — HeyGen 風 2カラムレイアウト
   ══════════════════════════════ */
   return (
-    <main className="screen-full flex flex-col bg-white overflow-hidden">
+    <main className="screen-h flex flex-col bg-white overflow-hidden">
 
       {/* ── ヘッダー ── */}
       <div className="flex-shrink-0 border-b border-slate-200 bg-white px-5 py-3 flex items-center justify-between shadow-sm">

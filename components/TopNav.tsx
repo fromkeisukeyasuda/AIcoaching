@@ -5,11 +5,12 @@ import { usePathname } from "next/navigation";
 
 /* ── デザイントークン ── */
 const C = {
-  navy:   "#1C2B4A",
-  green:  "#4DB689",
-  ink2:   "#4A5568",
-  ink3:   "#8A9BAB",
-  border: "#E8ECF0",
+  navy:   "#F5F1FF",   // アクティブな文字・アイコン
+  accent: "#F472B6",   // アクセント（ピンク）
+  green:  "#5FD3A0",
+  ink2:   "#CFC9E4",
+  ink3:   "#8F8AA8",
+  border: "rgba(255,255,255,0.10)",
 };
 
 /* ── SVG アイコン ── */
@@ -52,7 +53,7 @@ function DiagnoseIcon({ active }: { active: boolean }) {
 const NAV_ITEMS: { href: string; label: string; shortLabel?: string; Icon: (p: { active: boolean }) => React.JSX.Element; exact: boolean }[] = [
   { href: "/",         label: "ホーム",     Icon: HomeIcon,     exact: true  },
   { href: "/session",  label: "練習",       Icon: ChatIcon,     exact: false },
-  { href: "/talk",     label: "話す",       Icon: ChatIcon,     exact: false },
+  { href: "/talk",     label: "相談",       Icon: ChatIcon,     exact: false },
   { href: "/diagnose", label: "経営者診断", shortLabel: "診断", Icon: DiagnoseIcon, exact: false },
   { href: "/history",  label: "ふりかえり", shortLabel: "記録", Icon: ChartIcon,    exact: false },
   { href: "/mypage",   label: "マイページ", Icon: UserIcon,     exact: false },
@@ -70,7 +71,7 @@ export default function TopNav() {
     <nav
       className="topnav"
       style={{
-        background: "#FFFFFF",
+        background: "#14121f",
         height: 64,
         borderBottom: `1px solid ${C.border}`,
         display: "flex",
@@ -79,7 +80,7 @@ export default function TopNav() {
         position: "sticky",
         top: 0,
         zIndex: 100,
-        boxShadow: "0 1px 4px rgba(26,35,50,0.06)",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
         gap: 0,
       }}
     >
@@ -101,7 +102,7 @@ export default function TopNav() {
             width: 36,
             height: 36,
             borderRadius: "50%",
-            border: `2px solid ${C.navy}`,
+            border: `2px solid ${C.accent}`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -109,7 +110,7 @@ export default function TopNav() {
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" fill={C.navy} />
+            <circle cx="12" cy="12" r="10" fill={C.accent} />
             <path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4" stroke="white" strokeWidth="2" strokeLinecap="round" />
             <circle cx="12" cy="15" r="1.5" fill="white" />
           </svg>
@@ -135,6 +136,7 @@ export default function TopNav() {
             <Link
               key={item.href}
               href={item.href}
+              className={`topnav-link${active ? " is-active" : ""}`}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -144,7 +146,7 @@ export default function TopNav() {
                 color: active ? C.navy : C.ink3,
                 fontWeight: active ? 700 : 400,
                 fontSize: 14,
-                borderBottom: `3px solid ${active ? C.navy : "transparent"}`,
+                borderBottom: `3px solid ${active ? C.accent : "transparent"}`,
                 transition: "all 0.15s",
                 whiteSpace: "nowrap",
                 position: "relative",
@@ -158,38 +160,6 @@ export default function TopNav() {
         })}
       </div>
 
-      {/* ユーザーアバター */}
-      <Link
-        href="/mypage"
-        className="topnav-avatar"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          textDecoration: "none",
-          flexShrink: 0,
-        }}
-      >
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: "50%",
-            background: "#EBF8F3",
-            border: `2px solid ${C.green}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 18,
-            overflow: "hidden",
-          }}
-        >
-          👩
-        </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.ink3} strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </Link>
     </nav>
 
     {/* スマホ用 下部タブバー（CSSで768px以下のときだけ表示） */}

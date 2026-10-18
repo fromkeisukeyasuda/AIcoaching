@@ -5,28 +5,30 @@ import Link from "next/link";
 
 /* ── デザイントークン ── */
 const V = {
-  navy:    "#1C2B4A",
-  green:   "#4DB689",
-  greenLt: "#EBF8F3",
-  greenDk: "#2E8B63",
-  coral:   "#F07268",
-  coralLt: "#FEF3F2",
-  amber:   "#F59E0B",
-  bg:      "#F4F7FA",
-  surface: "#FFFFFF",
-  ink:     "#1A2332",
-  ink2:    "#4A5568",
-  ink3:    "#8A9BAB",
-  border:  "#E8ECF0",
-  sans:    '"Noto Sans JP","Hiragino Sans",system-ui,sans-serif',
-  round:   '"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif',
+  navy:    "#F5F1FF",
+  green:   "#5FD3A0",
+  greenLt: "rgba(95,211,160,0.14)",
+  greenDk: "#7EE0B5",
+  coral:   "#FF8A80",
+  coralLt: "rgba(255,138,128,0.14)",
+  amber:   "#FBBF24",
+  bg:      "rgba(255,255,255,0.05)",
+  surface: "rgba(255,255,255,0.045)",
+  ink:     "#FFFFFF",
+  ink2:    "#CFC9E4",
+  ink3:    "#8F8AA8",
+  border:  "rgba(255,255,255,0.07)",
+  sans:    '"Plus Jakarta Sans","Noto Sans JP","Hiragino Sans",system-ui,sans-serif',
+  round:   '"Plus Jakarta Sans","Noto Sans JP","Hiragino Sans",system-ui,sans-serif',
+  accent:  "linear-gradient(135deg, #F472B6 0%, #D946EF 100%)",
+  accentShadow: "0 8px 20px -8px rgba(217,70,239,0.6)",
 } as const;
 
 const card: React.CSSProperties = {
   background: V.surface,
   border: `1px solid ${V.border}`,
-  borderRadius: 16,
-  boxShadow: "0 1px 3px rgba(26,35,50,0.05)",
+  borderRadius: 22,
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 24px 40px -28px rgba(8,4,24,0.9)", backdropFilter: "blur(14px)",
 };
 
 /* ── 頻度セグメント ── */
@@ -46,90 +48,6 @@ const QUOTES = [
   { text: "人は変化を求めているが、変えられることは望まない。", author: "マーク・トウェイン" },
 ];
 
-/* ── プロフィールイラスト (SVG) ── */
-function ProfileIllustration() {
-  return (
-    <svg viewBox="0 0 260 180" width="260" height="180" aria-hidden="true">
-      {/* 空 */}
-      <defs>
-        <linearGradient id="mp-sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#E8F4FC" />
-          <stop offset="100%" stopColor="#F0F8FF" />
-        </linearGradient>
-        <linearGradient id="mp-hill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#C8E6C9" />
-          <stop offset="100%" stopColor="#A5D6A7" />
-        </linearGradient>
-      </defs>
-      <rect width="260" height="180" fill="url(#mp-sky)" rx="12" />
-      {/* 太陽 */}
-      <circle cx="200" cy="38" r="22" fill="#FDD835" opacity="0.8" />
-      <circle cx="200" cy="38" r="16" fill="#FFF176" />
-      {/* 雲 */}
-      <ellipse cx="60" cy="34" rx="28" ry="12" fill="white" opacity="0.85" />
-      <ellipse cx="80" cy="30" rx="20" ry="10" fill="white" opacity="0.9" />
-      <ellipse cx="42" cy="36" rx="16" ry="8" fill="white" opacity="0.8" />
-      {/* 遠景の丘 */}
-      <ellipse cx="130" cy="140" rx="150" ry="55" fill="#B2DFDB" />
-      <ellipse cx="10" cy="150" rx="80" ry="45" fill="url(#mp-hill)" />
-      <ellipse cx="240" cy="155" rx="80" ry="40" fill="#A5D6A7" />
-      {/* 地面 */}
-      <rect y="142" width="260" height="38" fill="#81C784" rx="0" />
-      {/* 木 */}
-      <rect x="36" y="110" width="6" height="32" fill="#6D4C41" rx="2" />
-      <ellipse cx="39" cy="104" rx="18" ry="20" fill="#4CAF50" />
-      <ellipse cx="39" cy="98" rx="12" ry="14" fill="#66BB6A" />
-      {/* 木2 */}
-      <rect x="210" y="115" width="5" height="27" fill="#6D4C41" rx="2" />
-      <ellipse cx="213" cy="109" rx="15" ry="17" fill="#388E3C" />
-      <ellipse cx="213" cy="104" rx="10" ry="12" fill="#4CAF50" />
-      {/* 人物 (コーチ) */}
-      <circle cx="130" cy="108" r="12" fill="#FFCC80" />
-      <rect x="120" y="119" width="20" height="23" fill={V.navy} rx="4" />
-      <rect x="116" y="121" width="7" height="14" fill={V.navy} rx="3" />
-      <rect x="137" y="121" width="7" height="14" fill={V.navy} rx="3" />
-      {/* 腕を広げてる */}
-      <line x1="116" y1="124" x2="106" y2="132" stroke={V.navy} strokeWidth="4" strokeLinecap="round" />
-      <line x1="144" y1="124" x2="154" y2="132" stroke={V.navy} strokeWidth="4" strokeLinecap="round" />
-      {/* 脚 */}
-      <rect x="123" y="140" width="6" height="18" fill="#37474F" rx="3" />
-      <rect x="131" y="140" width="6" height="18" fill="#37474F" rx="3" />
-      {/* スターバースト */}
-      <circle cx="165" cy="95" r="5" fill={V.green} opacity="0.6" />
-      <circle cx="95" cy="100" r="4" fill={V.amber} opacity="0.5" />
-    </svg>
-  );
-}
-
-/* ── 名言イラスト (SVG) ── */
-function QuoteIllustration() {
-  return (
-    <svg viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
-      <defs>
-        <linearGradient id="qi-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="rgba(77,182,137,0.2)" />
-          <stop offset="100%" stopColor="rgba(77,182,137,0.05)" />
-        </linearGradient>
-      </defs>
-      <circle cx="60" cy="60" r="55" fill="url(#qi-grad)" />
-      {/* 本 */}
-      <rect x="30" y="42" width="60" height="44" fill="white" rx="4" opacity="0.9" />
-      <rect x="30" y="42" width="30" height="44" fill="#E8ECF0" rx="4" />
-      <line x1="60" y1="42" x2="60" y2="86" stroke="#C5CDD6" strokeWidth="1.5" />
-      {/* 文字ライン */}
-      <line x1="36" y1="56" x2="56" y2="56" stroke={V.ink3} strokeWidth="2" strokeLinecap="round" />
-      <line x1="36" y1="62" x2="52" y2="62" stroke={V.ink3} strokeWidth="2" strokeLinecap="round" />
-      <line x1="36" y1="68" x2="54" y2="68" stroke={V.ink3} strokeWidth="2" strokeLinecap="round" />
-      <line x1="64" y1="56" x2="84" y2="56" stroke={V.navy} strokeWidth="2" strokeLinecap="round" />
-      <line x1="64" y1="62" x2="80" y2="62" stroke={V.navy} strokeWidth="2" strokeLinecap="round" />
-      <line x1="64" y1="68" x2="82" y2="68" stroke={V.navy} strokeWidth="2" strokeLinecap="round" />
-      {/* 葉アイコン */}
-      <circle cx="90" cy="32" r="14" fill={V.green} opacity="0.7" />
-      <path d="M84 32 Q90 24 96 32 Q90 36 84 32Z" fill="white" opacity="0.8" />
-    </svg>
-  );
-}
-
 /* ── トグル ── */
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -137,7 +55,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
       onClick={() => onChange(!checked)}
       style={{
         width: 46, height: 26, borderRadius: 13,
-        background: checked ? V.green : "#D1D5DB",
+        background: checked ? V.green : "rgba(255,255,255,0.18)",
         cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0,
       }}
     >
@@ -228,10 +146,10 @@ export default function MyPage() {
   }
 
   return (
-    <main className="screen-minh" style={{ background: V.bg, paddingBottom: 64, fontFamily: V.sans }}>
+    <main className="screen-minh" style={{ background: "transparent", paddingBottom: 64, fontFamily: V.sans }}>
 
       {/* ─── プロフィールカード ─── */}
-      <div className="rs-px" style={{ maxWidth: 860, margin: "0 auto", padding: "28px 24px 0" }}>
+      <div className="rs-px reveal" style={{ maxWidth: 1120, margin: "0 auto", padding: "40px 32px 0" }}>
         <div className="rs-stack rs-pad" style={{
           ...card,
           padding: "28px 32px",
@@ -242,7 +160,7 @@ export default function MyPage() {
           position: "relative",
         }}>
           {/* 左: アバター + 情報 */}
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, position: "relative" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 20 }}>
               <div style={{
                 width: 70, height: 70, borderRadius: "50%",
@@ -260,7 +178,7 @@ export default function MyPage() {
                 }}>
                   <span style={{ color: V.greenDk, fontSize: 11, fontWeight: 700 }}>コーチ見習い</span>
                 </div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: V.navy, fontFamily: V.round }}>
+                <div style={{ fontSize: 34, fontWeight: 800, color: V.navy, fontFamily: V.round, letterSpacing: "-0.03em", lineHeight: 1.15 }}>
                   マイページ
                 </div>
                 <div style={{ fontSize: 12, color: V.ink3, marginTop: 2 }}>
@@ -279,17 +197,15 @@ export default function MyPage() {
           </div>
 
           {/* 右: イラスト */}
-          <div className="rs-hide" style={{ flexShrink: 0 }}>
-            <ProfileIllustration />
-          </div>
+          <div className="rs-hide" aria-hidden style={{ position: "absolute", right: -70, top: -90, width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(closest-side, rgba(217,70,239,0.42), rgba(124,58,237,0.18) 60%, transparent)", filter: "blur(8px)", pointerEvents: "none" }} />
         </div>
       </div>
 
       {/* ─── コンテンツグリッド ─── */}
-      <div className="rs-px" style={{ maxWidth: 860, margin: "0 auto", padding: "20px 24px", display: "grid", gap: 18 }}>
+      <div className="rs-px mypage-grid" style={{ maxWidth: 1120, margin: "0 auto", padding: "18px 32px", display: "grid", gridTemplateColumns: "repeat(12, minmax(0, 1fr))", gap: 18 }}>
 
         {/* サポート設定 */}
-        <div style={{ ...card, padding: "24px 28px" }}>
+        <div className="reveal rs-col-12" style={{ ...card, padding: "28px 30px", gridColumn: "1 / span 7", gridRow: 1, ["--i" as string]: 1 } as React.CSSProperties}>
           <div style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: V.navy, fontFamily: V.round, marginBottom: 3 }}>
               ⚙️ サポート設定
@@ -328,7 +244,7 @@ export default function MyPage() {
         </div>
 
         {/* お気に入りテーマ */}
-        <div style={{ ...card, padding: "24px 28px" }}>
+        <div className="reveal rs-col-12" style={{ ...card, padding: "28px 30px", gridColumn: "1 / span 7", gridRow: 2, ["--i" as string]: 3 } as React.CSSProperties}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: V.navy, fontFamily: V.round, marginBottom: 3 }}>
@@ -355,8 +271,8 @@ export default function MyPage() {
                   onClick={() => toggleTheme(theme)}
                   style={{
                     padding: "7px 14px", borderRadius: 100,
-                    border: `1.5px solid ${active ? V.navy : V.border}`,
-                    background: active ? V.navy : V.surface,
+                    border: `1.5px solid ${active ? "#F472B6" : V.border}`,
+                    background: active ? V.accent : V.surface,
                     color: active ? "white" : V.ink2,
                     fontSize: 13, fontWeight: active ? 600 : 400,
                     cursor: "pointer", transition: "all 0.15s",
@@ -371,29 +287,29 @@ export default function MyPage() {
         </div>
 
         {/* 今日の名言 */}
-        <div style={{
+        <div className="reveal rs-col-12" style={{
           ...card,
-          padding: "24px 28px",
+          padding: "30px",
+          gridColumn: "8 / span 5",
+          gridRow: 1,
           display: "flex",
           alignItems: "center",
           gap: 24,
-          background: `linear-gradient(135deg, #FAFBFF 0%, #F4F7FA 100%)`,
-        }}>
+          background: `linear-gradient(135deg, rgba(244,114,182,0.16) 0%, rgba(124,58,237,0.16) 100%)`,
+          ["--i" as string]: 2,
+        } as React.CSSProperties}>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: V.ink3, letterSpacing: "0.08em", marginBottom: 10 }}>TODAY&apos;S QUOTE</div>
             <div style={{ fontSize: 36, color: V.navy, opacity: 0.15, lineHeight: 0.8, marginBottom: 8, fontFamily: "Georgia, serif" }}>&ldquo;</div>
-            <p style={{ fontSize: 14, color: V.ink, lineHeight: 1.9, marginBottom: 12, fontStyle: "italic" }}>
+            <p style={{ fontSize: 19, fontWeight: 700, color: V.ink, lineHeight: 1.8, marginBottom: 14, letterSpacing: "-0.01em" }}>
               {quote.text}
             </p>
             <div style={{ fontSize: 12, fontWeight: 600, color: V.green }}>— {quote.author}</div>
           </div>
-          <div style={{ flexShrink: 0 }}>
-            <QuoteIllustration />
-          </div>
         </div>
 
         {/* プライバシー */}
-        <div style={{ ...card, padding: "24px 28px" }}>
+        <div className="reveal rs-col-12" style={{ ...card, padding: "28px 30px", gridColumn: "8 / span 5", gridRow: 2, ["--i" as string]: 4 } as React.CSSProperties}>
           <div style={{ fontSize: 15, fontWeight: 700, color: V.navy, fontFamily: V.round, marginBottom: 14 }}>
             🔒 プライバシー
           </div>
@@ -425,11 +341,12 @@ export default function MyPage() {
         </div>
 
         {/* 保存ボタン */}
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+        <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 6 }}>
           <Link
             href="/"
+            className="btn-ghost"
             style={{
-              padding: "12px 22px", borderRadius: 12,
+              padding: "13px 24px", borderRadius: 999,
               border: `1px solid ${V.border}`, background: V.surface,
               color: V.ink2, fontSize: 14, fontWeight: 600,
               textDecoration: "none", display: "inline-flex", alignItems: "center",
@@ -439,17 +356,18 @@ export default function MyPage() {
           </Link>
           <button
             onClick={saveSettings}
+            className="btn-primary"
             style={{
-              padding: "12px 28px", borderRadius: 12,
+              padding: "13px 30px", borderRadius: 999,
               border: "none",
-              background: saved ? V.green : V.navy,
+              background: saved ? V.green : V.accent,
               color: "white", fontSize: 14, fontWeight: 700,
               cursor: "pointer", display: "flex", alignItems: "center",
               gap: 8, transition: "background 0.2s",
               fontFamily: V.sans,
             }}
           >
-            {saved ? "✓ 保存しました！" : "設定を保存する"}
+            {saved ? "✓ 保存しました" : "設定を保存する"}
           </button>
         </div>
       </div>

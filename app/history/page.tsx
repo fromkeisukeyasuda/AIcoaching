@@ -8,24 +8,26 @@ import { SessionRecord } from "@/types";
    デザイントークン（v3）
 ══════════════════════════════════════════════════════════════════════ */
 const V = {
-  navy:    "#1C2B4A",
-  navyLt:  "#EBF0FA",
-  green:   "#4DB689",
-  greenLt: "#EBF8F3",
-  greenDk: "#2E8B63",
-  coral:   "#F07268",
-  coralLt: "#FEF3F2",
-  amber:   "#F59E0B",
-  amberLt: "#FFFBEB",
-  bg:      "#F4F7FA",
-  surface: "#FFFFFF",
-  ink:     "#1A2332",
-  ink2:    "#4A5568",
-  ink3:    "#8A9BAB",
-  border:  "#E8ECF0",
-  borderSoft: "#F0F4F8",
-  sans:  '"Noto Sans JP","Hiragino Sans",system-ui,sans-serif',
-  round: '"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif',
+  navy:    "#F5F1FF",
+  navyLt:  "rgba(244,114,182,0.14)",
+  green:   "#5FD3A0",
+  greenLt: "rgba(95,211,160,0.14)",
+  greenDk: "#7EE0B5",
+  coral:   "#FF8A80",
+  coralLt: "rgba(255,138,128,0.14)",
+  amber:   "#FBBF24",
+  amberLt: "rgba(251,191,36,0.14)",
+  bg:      "rgba(255,255,255,0.05)",
+  surface: "rgba(255,255,255,0.045)",
+  ink:     "#FFFFFF",
+  ink2:    "#CFC9E4",
+  ink3:    "#8F8AA8",
+  border:  "rgba(255,255,255,0.07)",
+  borderSoft: "rgba(255,255,255,0.06)",
+  sans:  '"Plus Jakarta Sans","Noto Sans JP","Hiragino Sans",system-ui,sans-serif',
+  round: '"Plus Jakarta Sans","Noto Sans JP","Hiragino Sans",system-ui,sans-serif',
+  accent:  "linear-gradient(135deg, #F472B6 0%, #D946EF 100%)",
+  accentShadow: "0 8px 20px -8px rgba(217,70,239,0.6)",
 } as const;
 
 /* ── ユーティリティ ── */
@@ -141,19 +143,19 @@ export default function HistoryPage() {
   const card: React.CSSProperties = {
     background: V.surface,
     border: `1px solid ${V.border}`,
-    borderRadius: 16,
-    boxShadow: "0 1px 3px rgba(26,35,50,0.05)",
+    borderRadius: 22,
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 24px 40px -28px rgba(8,4,24,0.9)", backdropFilter: "blur(14px)",
   };
 
   return (
-    <div className="screen-minh" style={{ background: V.bg, fontFamily: V.sans }}>
+    <div className="screen-minh" style={{ background: "transparent", fontFamily: V.sans }}>
 
       {/* ─── ページヘッダー ─── */}
-      <div className="rs-px" style={{ background: V.surface, borderBottom: `1px solid ${V.border}`, padding: "0 32px" }}>
+      <div className="rs-px reveal" style={{ padding: "32px 32px 0" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
           <div className="rs-wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0" }}>
             <div>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: V.navy, margin: 0, letterSpacing: "-0.02em" }}>
+              <h1 className="text-grad" style={{ fontSize: "clamp(30px, 4.4vw, 46px)", fontWeight: 800, margin: 0, letterSpacing: "-0.035em", lineHeight: 1.1 }}>
                 ふりかえり
               </h1>
               <div style={{ fontSize: 13, color: V.ink3, marginTop: 4 }}>
@@ -178,7 +180,7 @@ export default function HistoryPage() {
               )}
               <Link
                 href="/session"
-                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px", background: V.navy, color: "white", borderRadius: 12, fontWeight: 700, fontSize: 13, textDecoration: "none", boxShadow: `0 6px 16px -6px ${V.navy}` }}
+                className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "12px 24px", background: V.accent, color: "white", borderRadius: 999, fontWeight: 700, fontSize: 13, textDecoration: "none", boxShadow: V.accentShadow }}
               >
                 ▶ 練習を始める
               </Link>
@@ -188,7 +190,7 @@ export default function HistoryPage() {
       </div>
 
       {/* ─── コンテンツ ─── */}
-      <div className="rs-px" style={{ maxWidth: 1000, margin: "0 auto", padding: "24px 32px 40px" }}>
+      <div className="rs-px" style={{ maxWidth: 1064, margin: "0 auto", padding: "24px 32px 40px" }}>
 
         {/* 統計カード */}
         {records.length > 0 && (
@@ -232,7 +234,7 @@ export default function HistoryPage() {
             </div>
             <Link
               href="/session"
-              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 26px", background: V.navy, color: "white", borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: "none" }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 26px", background: V.accent, color: "white", borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: "none" }}
             >
               ▶ 最初のセッションを始める
             </Link>
@@ -322,7 +324,7 @@ export default function HistoryPage() {
 
                           {/* 改善点 */}
                           <div style={{ background: V.coralLt, borderRadius: 12, padding: "12px 14px" }}>
-                            <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 12, color: "#C0453A", marginBottom: 8 }}>📈 改善できる点</div>
+                            <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 12, color: V.coral, marginBottom: 8 }}>📈 改善できる点</div>
                             {ev.improvements.slice(0, 2).map((s, i) => (
                               <div key={i} style={{ fontSize: 12, color: V.ink2, lineHeight: 1.6, marginBottom: 4, paddingLeft: 8, borderLeft: `2px solid ${V.coral}` }}>{s}</div>
                             ))}

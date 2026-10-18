@@ -44,12 +44,12 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-start gap-4 mb-5">
-      <div className="w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-fuchsia-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
         {step}
       </div>
       <div>
-        <h2 className="text-base font-semibold text-slate-800">{title}</h2>
-        <p className="text-xs text-slate-400 mt-0.5">{description}</p>
+        <h2 className="text-base font-semibold text-white">{title}</h2>
+        <p className="text-xs text-white/45 mt-0.5">{description}</p>
       </div>
     </div>
   );
@@ -66,11 +66,11 @@ function FieldLabel({
 }) {
   return (
     <div className="mb-1.5">
-      <label className="text-sm font-medium text-slate-700">
+      <label className="text-sm font-medium text-white/90">
         {label}
-        {required && <span className="text-red-400 ml-0.5">*</span>}
+        {required && <span className="text-red-300 ml-0.5">*</span>}
       </label>
-      {hint && <p className="text-xs text-slate-400 mt-0.5">{hint}</p>}
+      {hint && <p className="text-xs text-white/45 mt-0.5">{hint}</p>}
     </div>
   );
 }
@@ -132,36 +132,36 @@ export default function NewScenarioPage() {
   };
 
   const inputBase =
-    "w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white text-slate-700 outline-none transition-all placeholder-slate-300";
-  const inputNormal = "border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100";
-  const inputError = "border-red-300 ring-2 ring-red-100";
+    "w-full px-3.5 py-2.5 text-sm rounded-xl border bg-[#1d1a2e] text-white/90 outline-none transition-all placeholder-white/25";
+  const inputNormal = "border-white/10 focus:border-pink-300 focus:ring-2 focus:ring-pink-300/20";
+  const inputError = "border-red-300/40 ring-2 ring-red-300/30";
 
   const inputClass = (field: keyof FormData) =>
     `${inputBase} ${errors[field] ? inputError : inputNormal}`;
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-50">
-      <div className="max-w-2xl mx-auto px-6 py-12">
+    <main className="screen-minh">
+      <div className="reveal max-w-2xl mx-auto px-5 sm:px-6 py-10 sm:py-14">
 
         {/* ページヘッダー */}
         <div className="mb-10">
           <Link
             href="/session"
-            className="inline-flex items-center text-sm text-slate-400 hover:text-slate-600 transition-colors mb-6"
+            className="inline-flex items-center text-sm text-white/45 hover:text-white transition-colors mb-6"
           >
             <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             シナリオ一覧に戻る
           </Link>
-          <h1 className="text-3xl font-bold text-slate-900 mb-1">シナリオを作成</h1>
-          <p className="text-slate-500 text-sm">4つのステップで練習シナリオを設定できます</p>
+          <h1 className="text-grad mb-2 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">シナリオを作成</h1>
+          <p className="text-white/60 text-sm">4つのステップで練習シナリオを設定できます</p>
         </div>
 
         <div className="space-y-4">
 
           {/* STEP 1: 見た目 */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <div className="bg-[#1d1a2e] rounded-2xl shadow-sm border border-white/5 p-6">
             <SectionHeader
               step="1"
               title="見た目の設定"
@@ -178,8 +178,8 @@ export default function NewScenarioPage() {
                       onClick={() => setForm((prev) => ({ ...prev, icon: emoji }))}
                       className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all ${
                         form.icon === emoji
-                          ? "bg-indigo-100 ring-2 ring-indigo-400 scale-110"
-                          : "bg-slate-50 hover:bg-slate-100 border border-slate-100"
+                          ? "bg-pink-400/15 ring-2 ring-pink-300 scale-110"
+                          : "bg-[#14121f] hover:bg-white/15 border border-white/5"
                       }`}
                     >
                       {emoji}
@@ -202,7 +202,7 @@ export default function NewScenarioPage() {
                   className={inputClass("title")}
                 />
                 {errors.title && (
-                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-red-300 mt-1 flex items-center gap-1">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
@@ -214,7 +214,7 @@ export default function NewScenarioPage() {
           </div>
 
           {/* STEP 2: クライアント情報 */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <div className="bg-[#1d1a2e] rounded-2xl shadow-sm border border-white/5 p-6">
             <SectionHeader
               step="2"
               title="クライアント情報"
@@ -231,7 +231,7 @@ export default function NewScenarioPage() {
                   className={inputClass("clientName")}
                 />
                 {errors.clientName && (
-                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-red-300 mt-1 flex items-center gap-1">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
@@ -250,7 +250,7 @@ export default function NewScenarioPage() {
                   className={inputClass("clientRole")}
                 />
                 {errors.clientRole && (
-                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-red-300 mt-1 flex items-center gap-1">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
@@ -262,7 +262,7 @@ export default function NewScenarioPage() {
           </div>
 
           {/* STEP 3: シナリオの中身 */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <div className="bg-[#1d1a2e] rounded-2xl shadow-sm border border-white/5 p-6">
             <SectionHeader
               step="3"
               title="シナリオの内容"
@@ -283,7 +283,7 @@ export default function NewScenarioPage() {
                   className={`${inputClass("situation")} resize-none`}
                 />
                 {errors.situation && (
-                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-red-300 mt-1 flex items-center gap-1">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
@@ -292,7 +292,7 @@ export default function NewScenarioPage() {
                 )}
               </div>
 
-              <div className="border-t border-slate-100 pt-5">
+              <div className="border-t border-white/5 pt-5">
                 <FieldLabel
                   label="感情・気持ち"
                   hint="クライアントの内面的な状態（不安・焦り・迷いなど）を書いてください"
@@ -306,7 +306,7 @@ export default function NewScenarioPage() {
                   className={`${inputClass("emotion")} resize-none`}
                 />
                 {errors.emotion && (
-                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-red-300 mt-1 flex items-center gap-1">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
@@ -318,7 +318,7 @@ export default function NewScenarioPage() {
           </div>
 
           {/* STEP 4: 一覧表示用 */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <div className="bg-[#1d1a2e] rounded-2xl shadow-sm border border-white/5 p-6">
             <SectionHeader
               step="4"
               title="一覧への表示情報"
@@ -339,7 +339,7 @@ export default function NewScenarioPage() {
                   className={`${inputClass("description")} resize-none`}
                 />
                 {errors.description && (
-                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-red-300 mt-1 flex items-center gap-1">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
@@ -348,7 +348,7 @@ export default function NewScenarioPage() {
                 )}
               </div>
 
-              <div className="border-t border-slate-100 pt-5">
+              <div className="border-t border-white/5 pt-5">
                 <FieldLabel
                   label="タグ（任意）"
                   hint="カンマまたは読点で区切って入力"
@@ -365,7 +365,7 @@ export default function NewScenarioPage() {
                     {form.tags.split(/[,、]/).filter((t) => t.trim()).map((tag, i) => (
                       <span
                         key={i}
-                        className="text-xs text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full"
+                        className="text-xs text-pink-300 bg-pink-400/10 px-2.5 py-1 rounded-full"
                       >
                         {tag.trim()}
                       </span>
@@ -382,7 +382,7 @@ export default function NewScenarioPage() {
           <button
             onClick={handleSave}
             disabled={saved}
-            className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-3 bg-gradient-to-br from-pink-400 to-fuchsia-500 hover:opacity-90 disabled:opacity-40 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
           >
             {saved ? (
               <>
@@ -397,7 +397,7 @@ export default function NewScenarioPage() {
           </button>
           <Link
             href="/session"
-            className="px-5 py-3 bg-white text-slate-600 text-sm font-medium rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
+            className="px-5 py-3 bg-[#1d1a2e] text-white/75 text-sm font-medium rounded-xl border border-white/10 hover:bg-white/5 transition-colors"
           >
             キャンセル
           </Link>

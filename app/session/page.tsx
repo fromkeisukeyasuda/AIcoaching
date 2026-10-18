@@ -8,8 +8,24 @@ import { scenarios as builtInScenarios } from "@/lib/scenarios";
 import ChatMessage from "@/components/ChatMessage";
 import TypingIndicator from "@/components/TypingIndicator";
 import CharacterAvatar from "@/components/CharacterAvatar";
+import { clients } from "@/lib/coaches";
+import { Counseling, addCounselingXp, getCounseling, xpNeeded, XP_PER_COACH_MESSAGE } from "@/lib/talkStore";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
+
+/* ── カウンセリングLv（面談練習でコーチ役として話すほど上がる） ── */
+function LevelBar({ c, flash = false }: { c: Counseling; flash?: boolean }) {
+  const pct = Math.min(100, (c.xp / xpNeeded(c.lv)) * 100);
+  return (
+    <div className={`flex w-full items-center gap-3 rounded-full bg-white/[0.06] px-4 py-2 text-xs transition-shadow ${flash ? "ring-2 ring-pink-300" : ""}`}>
+      <span className="tnum whitespace-nowrap font-bold text-pink-200">カウンセリング Lv.{c.lv}</span>
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+        <div className="h-full rounded-full bg-gradient-to-r from-pink-400 to-fuchsia-500 transition-all duration-700" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="tnum whitespace-nowrap text-white/45">{c.xp}/{xpNeeded(c.lv)}</span>
+    </div>
+  );
+}
 
 /* ── Sound wave bars ── */
 function SoundWave({ active }: { active: boolean }) {
@@ -28,7 +44,7 @@ function SoundWave({ active }: { active: boolean }) {
       {heights.map((h, i) => (
         <div
           key={i}
-          className="w-0.5 rounded-full bg-blue-400"
+          className="w-0.5 rounded-full bg-pink-400"
           style={{
             height: `${h * 24}px`,
             transformOrigin: "center",
@@ -69,6 +85,8 @@ export default function SessionPage() {
   const [customScenarios, setCustomScenarios] = useState<Scenario[]>([]);
   const [emotion, setEmotion] = useState("idle");
   const [levelUpItems, setLevelUpItems] = useState<string[]>([]);
+  const [counseling, setCounseling] = useState<Counseling>({ lv: 1, xp: 0 });
+  const [levelFlash, setLevelFlash] = useState(false);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -76,6 +94,7 @@ export default function SessionPage() {
   const sendWithTextRef = useRef<(text: string) => void>(() => {});
 
   useEffect(() => {
+    setCounseling(getCounseling());
     const stored = localStorage.getItem("customScenarios");
     if (stored) setCustomScenarios(JSON.parse(stored));
   }, []);
@@ -174,6 +193,13 @@ export default function SessionPage() {
       const newMessages = [...messages, userMessage];
       setMessages(newMessages);
       setInput("");
+      /* コーチ役として話すたびに経験値 */
+      const { state, leveledUp } = addCounselingXp(XP_PER_COACH_MESSAGE);
+      setCounseling(state);
+      if (leveledUp) {
+        setLevelFlash(true);
+        setTimeout(() => setLevelFlash(false), 2500);
+      }
       if (textareaRef.current) textareaRef.current.style.height = "auto";
       setIsLoading(true);
       try {
@@ -263,78 +289,81 @@ export default function SessionPage() {
   ══════════════════════════════ */
   if (!selectedScenario) {
     return (
-      <main className="min-h-screen bg-slate-50">
+      <main className="screen-minh px-5 sm:px-8 pb-24 pt-8 sm:pt-12">
+        <div className="mx-auto max-w-[1100px]">
 
-        {/* ヘッダー */}
-        <div className="bg-white border-b border-slate-200 shadow-sm px-6 py-4">
-          <div className="max-w-3xl mx-auto flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-1.5 text-slate-500 hover:text-blue-600 transition-colors text-sm font-medium">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              ホーム
-            </Link>
-            <Link href="/scenario/new" className="inline-flex items-center gap-1.5 px-3.5 py-2 text-white text-xs font-medium rounded-lg transition-colors shadow-sm" style={{ background: "#1C2B4A" }}>
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          {/* ヘッダー */}
+          <div className="reveal flex flex-wrap items-end justify-between gap-4" style={{ ["--i" as string]: 0 }}>
+            <div>
+              <h1 className="text-[34px] font-extrabold leading-tight tracking-tight sm:text-5xl">
+                <span className="text-grad">誰の相談を、聴く？</span>
+              </h1>
+              <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/60">
+                相談者を選ぶと、すぐに面談がはじまります。終わったあとに、AIが聴き方を評価します。
+              </p>
+              <div className="mt-5 max-w-sm"><LevelBar c={counseling} /></div>
+            </div>
+            <Link href="/scenario/new" className="btn-ghost inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white/80" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.16)" }}>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
               シナリオを作成
             </Link>
           </div>
-        </div>
 
-        <div className="max-w-3xl mx-auto px-6 py-10">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-slate-900 mb-1">コーチング練習</h1>
-            <p className="text-slate-400 text-sm">シナリオを選んでセッションを開始してください</p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3">
-            {scenarios.map((scenario) => (
-              <div key={scenario.id} className="relative group/card">
-                <button
-                  onClick={() => startSession(scenario)}
-                  className="w-full min-w-0 overflow-hidden bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 text-left transition-all duration-200 group shadow-sm hover:shadow-md"
-                  style={{ ["--tw-border-opacity" as string]: "1" }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = "#1C2B4A")}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = "")}
-                >
-                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                    <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
-                      {scenario.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h2 className="text-slate-800 font-semibold">{scenario.title}</h2>
-                        {scenario.isCustom && (
-                          <span className="text-xs font-medium text-violet-600 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-full">カスタム</span>
-                        )}
+          {/* 相談者カード */}
+          <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+            {scenarios.map((scenario, idx) => {
+              const portrait = clients.find((c) => c.scenarioId === scenario.id)?.images?.idle ?? null;
+              return (
+                <div key={scenario.id} className="reveal group/card relative" style={{ ["--i" as string]: idx + 1 }}>
+                  <button
+                    onClick={() => startSession(scenario)}
+                    className="glass lift group flex h-full w-full min-w-0 flex-col overflow-hidden rounded-[28px] text-left"
+                  >
+                    <div className="relative aspect-[4/4.2] w-full overflow-hidden">
+                      {portrait ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={portrait} alt={`${scenario.clientName}さん`} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.05]" style={{ objectPosition: "50% 18%" }} />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-7xl" style={{ background: "radial-gradient(closest-side, rgba(217,70,239,0.3), transparent 80%)" }}>
+                          {scenario.icon}
+                        </div>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#14121f] via-[#14121f]/60 to-transparent" />
+                      <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1 text-[11px] font-semibold text-white/85 backdrop-blur">
+                        {scenario.isCustom ? "カスタム" : scenario.title}
                       </div>
-                      <p className="text-slate-400 text-sm truncate">{scenario.description}</p>
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
-                        <span className="text-xs text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">{scenario.clientName}</span>
-                        {scenario.tags.slice(0, 2).map((tag) => (
-                          <span key={tag} className="text-xs text-blue-600 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">{tag}</span>
+                      <div className="absolute inset-x-5 bottom-4">
+                        <p className="text-2xl font-extrabold tracking-tight">{scenario.clientName}</p>
+                        <p className="mt-0.5 text-xs text-white/65">{scenario.clientRole}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-1 flex-col p-5 pt-4 pb-6">
+                      <h2 className="text-[17px] font-bold leading-snug">{scenario.title}</h2>
+                      <p className="mt-2 line-clamp-3 text-[13.5px] leading-relaxed text-white/55">{scenario.description}</p>
+                      <div className="mt-4 flex flex-wrap gap-1.5">
+                        {scenario.tags.slice(0, 3).map((tag) => (
+                          <span key={tag} className="rounded-md bg-white/[0.07] px-2 py-1 text-[11px] font-medium text-white/65">{tag}</span>
                         ))}
                       </div>
                     </div>
-                    <svg className="w-5 h-5 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </button>
-                {scenario.isCustom && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); if (confirm(`「${scenario.title}」を削除しますか？`)) deleteCustomScenario(scenario.id); }}
-                    className="absolute top-3 right-12 w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 text-slate-400 hover:bg-red-50 hover:text-red-500 hover:border-red-200 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-all"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
                   </button>
-                )}
-              </div>
-            ))}
+                  {scenario.isCustom && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); if (confirm(`「${scenario.title}」を削除しますか？`)) deleteCustomScenario(scenario.id); }}
+                      aria-label="シナリオを削除"
+                      className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white/70 opacity-0 backdrop-blur transition-all hover:bg-red-500/70 hover:text-white group-hover/card:opacity-100"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </main>
@@ -345,23 +374,23 @@ export default function SessionPage() {
      セッション画面 — HeyGen 風 2カラムレイアウト
   ══════════════════════════════ */
   return (
-    <main className="screen-h flex flex-col bg-white overflow-hidden">
+    <main className="screen-h flex flex-col bg-[#1d1a2e] overflow-hidden">
 
       {/* ── ヘッダー ── */}
-      <div className="flex-shrink-0 border-b border-slate-200 bg-white px-5 py-3 flex items-center justify-between shadow-sm">
+      <div className="flex-shrink-0 border-b border-white/10 bg-[#1d1a2e] px-5 py-3 flex items-center justify-between shadow-sm">
 
         {/* 左：クライアント情報 */}
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-base flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-pink-400/15 border border-pink-300/30 flex items-center justify-center text-base flex-shrink-0">
             {selectedScenario.icon}
           </div>
           <div className="min-w-0">
-            <p className="text-slate-800 text-sm font-semibold leading-tight truncate">{selectedScenario.clientName}</p>
-            <p className="text-slate-400 text-xs truncate">{selectedScenario.clientRole}</p>
+            <p className="text-white text-sm font-semibold leading-tight truncate">{selectedScenario.clientName}</p>
+            <p className="text-white/45 text-xs truncate">{selectedScenario.clientRole}</p>
           </div>
           <div className="flex items-center gap-1.5 ml-1 flex-shrink-0">
             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-xs text-slate-400">セッション中</span>
+            <span className="text-xs text-white/45">セッション中</span>
           </div>
         </div>
 
@@ -373,10 +402,10 @@ export default function SessionPage() {
             <select
               value={tts.selectedSpeakerId}
               onChange={(e) => tts.setSelectedSpeakerId(Number(e.target.value))}
-              className="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-blue-400 max-w-[120px]"
+              className="text-xs text-white/75 bg-[#14121f] border border-white/10 rounded-lg px-2 py-1.5 outline-none focus:border-pink-300 max-w-[120px]"
             >
               {tts.speakerStyles.map((s) => (
-                <option key={s.id} value={s.id} className="bg-white">
+                <option key={s.id} value={s.id} className="bg-[#1d1a2e]">
                   {s.speakerName}（{s.name}）
                 </option>
               ))}
@@ -389,8 +418,8 @@ export default function SessionPage() {
             title={tts.enabled ? "読み上げをオフ" : "読み上げをオン"}
             className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
               tts.enabled
-                ? "bg-blue-50 text-blue-600 border border-blue-300"
-                : "bg-slate-100 text-slate-400 border border-slate-200 hover:text-slate-600"
+                ? "bg-pink-400/15 text-pink-300 border border-pink-300/50"
+                : "bg-white/10 text-white/45 border border-white/10 hover:text-white"
             }`}
           >
             {tts.speaking ? (
@@ -418,7 +447,7 @@ export default function SessionPage() {
           <button
             onClick={endSession}
             disabled={messages.length < 2}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-600 border border-slate-200 hover:border-red-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white/10 text-white/60 hover:bg-red-400/10 hover:text-red-300 border border-white/10 hover:border-red-300/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             終了
           </button>
@@ -429,7 +458,7 @@ export default function SessionPage() {
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
 
         {/* ═══ 左パネル：アバター（ダークネイビー — コーチング集中空間） ═══ */}
-        <div className="w-full h-[34%] md:h-auto md:w-1/2 flex-shrink-0 flex flex-col bg-[#0d1b2e] overflow-hidden">
+        <div className="w-full h-[34%] md:h-auto md:w-1/2 flex-shrink-0 flex flex-col bg-[#0f0d1a] overflow-hidden">
 
           {/* 画像エリア */}
           <div className="flex-1 min-h-0 p-4 pb-2">
@@ -445,6 +474,8 @@ export default function SessionPage() {
           {/* 下部バー: 音声波形 + ステータス */}
           <div className="flex-shrink-0 flex flex-col items-center gap-1.5 pb-3 px-4">
             <SoundWave active={tts.speaking && !isStarting} />
+            <LevelBar c={counseling} flash={levelFlash} />
+            {levelFlash && <p className="text-center text-xs text-pink-200">レベルアップ。カウンセリング Lv.{counseling.lv}</p>}
             <div className="h-4 flex items-center justify-center">
               <p className="text-white/35 text-xs">
                 {isStarting ? "セッションを準備中..." : userMsgCount > 0 ? `${userMsgCount}往復` : ""}
@@ -454,13 +485,13 @@ export default function SessionPage() {
         </div>
 
         {/* ═══ 右パネル：チャット ═══ */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
+        <div className="flex-1 flex flex-col overflow-hidden bg-[#14121f]">
 
           {/* メッセージ一覧 */}
           <div ref={messagesContainerRef} className="flex-1 overflow-y-auto scrollbar-hide px-5 py-5">
             <div className="max-w-2xl mx-auto space-y-3">
               {messages.length === 0 && !isLoading && !isStarting && (
-                <p className="text-center text-slate-400 text-sm py-16">会話がここに表示されます</p>
+                <p className="text-center text-white/45 text-sm py-16">会話がここに表示されます</p>
               )}
               {messages.map((msg, i) => (
                 <ChatMessage key={i} message={msg} clientName={selectedScenario.clientName} />
@@ -471,17 +502,17 @@ export default function SessionPage() {
 
           {/* ── レベルアップ目標（前回セッションの改善点） ── */}
           {levelUpItems.length > 0 && (
-            <div className="flex-shrink-0 bg-amber-50 border-t border-amber-200 px-5 py-2.5">
+            <div className="flex-shrink-0 bg-amber-400/10 border-t border-amber-300/30 px-5 py-2.5">
               <div className="max-w-2xl mx-auto">
                 <div className="flex items-start gap-2.5">
-                  <span className="text-xs font-bold text-amber-700 flex-shrink-0 mt-0.5 flex items-center gap-1">
+                  <span className="text-xs font-bold text-amber-200 flex-shrink-0 mt-0.5 flex items-center gap-1">
                     🎯 レベルアップ目標
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {levelUpItems.map((item, i) => (
                       <span
                         key={i}
-                        className="text-xs text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full leading-relaxed"
+                        className="text-xs text-amber-200 bg-amber-400/20 border border-amber-300/30 px-2.5 py-0.5 rounded-full leading-relaxed"
                       >
                         {item}
                       </span>
@@ -493,7 +524,7 @@ export default function SessionPage() {
           )}
 
           {/* ── 入力バー ── */}
-          <div className="flex-shrink-0 border-t border-slate-200 bg-white px-5 py-4">
+          <div className="flex-shrink-0 border-t border-white/10 bg-[#1d1a2e] px-5 py-4">
             <div className="max-w-2xl mx-auto">
               <div className="flex items-end gap-2">
 
@@ -506,13 +537,13 @@ export default function SessionPage() {
                     className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
                       voice.status === "recording"
                         ? "bg-red-500 text-white shadow-lg shadow-red-500/30 scale-110"
-                        : "bg-slate-100 text-slate-400 border border-slate-200 hover:bg-slate-200 hover:text-slate-600 disabled:opacity-30"
+                        : "bg-white/10 text-white/45 border border-white/10 hover:bg-white/20 hover:text-white disabled:opacity-30"
                     }`}
                   >
                     {voice.status === "recording" ? (
                       <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#1d1a2e] opacity-75" />
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-[#1d1a2e]" />
                       </span>
                     ) : (
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -525,8 +556,8 @@ export default function SessionPage() {
                 {/* テキスト入力 */}
                 <div className={`flex-1 rounded-xl border transition-all ${
                   voice.status === "recording"
-                    ? "bg-red-50 border-red-300"
-                    : "bg-slate-50 border-slate-200 focus-within:border-blue-400 focus-within:bg-white"
+                    ? "bg-red-400/10 border-red-300/40"
+                    : "bg-[#14121f] border-white/10 focus-within:border-pink-300 focus-within:bg-[#241f3a]"
                 }`}>
                   <textarea
                     ref={textareaRef}
@@ -539,7 +570,7 @@ export default function SessionPage() {
                         : "メッセージを入力（Enter で送信 / Shift+Enter で改行）"
                     }
                     rows={1}
-                    className="w-full bg-transparent px-4 py-3 text-sm text-slate-700 placeholder-slate-400 resize-none outline-none"
+                    className="w-full bg-transparent px-4 py-3 text-sm text-white/90 placeholder-white/35 resize-none outline-none"
                     disabled={isLoading || isStarting || voice.status === "recording"}
                   />
                 </div>
@@ -548,8 +579,8 @@ export default function SessionPage() {
                 <button
                   onClick={sendMessage}
                   disabled={!input.trim() || isLoading || isStarting || voice.status === "recording"}
-                  className="flex-shrink-0 w-10 h-10 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl flex items-center justify-center transition-all shadow-sm"
-                  style={{ background: !input.trim() || isLoading || isStarting || voice.status === "recording" ? undefined : "#1C2B4A" }}
+                  className="flex-shrink-0 w-10 h-10 disabled:bg-white/10 disabled:text-white/30 text-white rounded-xl flex items-center justify-center transition-all shadow-sm"
+                  style={{ background: !input.trim() || isLoading || isStarting || voice.status === "recording" ? undefined : "linear-gradient(135deg, #F472B6 0%, #D946EF 100%)" }}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -558,9 +589,9 @@ export default function SessionPage() {
               </div>
 
               {voice.errorMsg ? (
-                <p className="text-xs text-red-500 mt-2 px-1 leading-relaxed whitespace-pre-line">{voice.errorMsg}</p>
+                <p className="text-xs text-red-300 mt-2 px-1 leading-relaxed whitespace-pre-line">{voice.errorMsg}</p>
               ) : (
-                <p className="text-xs text-slate-400 mt-2 px-1">
+                <p className="text-xs text-white/45 mt-2 px-1">
                   {voice.status === "recording"
                     ? "🎙 話し終わると自動送信されます"
                     : `コーチとして ${selectedScenario.clientName}さんをサポートしてください`}

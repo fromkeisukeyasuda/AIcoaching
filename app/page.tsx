@@ -6,114 +6,26 @@ import { SessionRecord } from "@/types";
 
 /* ── デザイントークン ── */
 const V = {
-  navy:    "#1C2B4A",
-  navyLt:  "#EBF0FA",
-  green:   "#4DB689",
-  greenLt: "#EBF8F3",
-  greenDk: "#2E8B63",
-  coral:   "#FF7B7B",
-  coralLt: "#FFF0F0",
-  pink:    "#FF8C80",
-  blue:    "#4A87D5",
-  blueLt:  "#EBF4FF",
-  amber:   "#F59E0B",
-  bg:      "#F7F8FC",
-  surface: "#FFFFFF",
-  ink:     "#1A2332",
-  ink2:    "#4A5568",
-  ink3:    "#8A9BAB",
-  border:  "#E8ECF0",
+  navy:    "#F5F1FF",
+  navyLt:  "rgba(244,114,182,0.14)",
+  green:   "#5FD3A0",
+  greenLt: "rgba(95,211,160,0.14)",
+  greenDk: "#7EE0B5",
+  coral:   "#FF8A80",
+  coralLt: "rgba(255,138,128,0.14)",
+  pink:    "#F472B6",
+  blue:    "#7DB3FF",
+  blueLt:  "rgba(125,179,255,0.16)",
+  amber:   "#FBBF24",
+  bg:      "rgba(255,255,255,0.05)",
+  surface: "rgba(255,255,255,0.045)",
+  ink:     "#FFFFFF",
+  ink2:    "#CFC9E4",
+  ink3:    "#8F8AA8",
+  border:  "rgba(255,255,255,0.07)",
+  accent:  "linear-gradient(135deg, #F472B6 0%, #D946EF 100%)",
+  accentShadow: "0 8px 20px -8px rgba(217,70,239,0.6)",
 } as const;
-
-/* ── 風景イラスト（SVG） ── */
-function LandscapeIllustration() {
-  return (
-    <svg viewBox="0 0 440 300" width="100%" height="100%" style={{ display: "block" }}>
-      <defs>
-        <linearGradient id="sky-g" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#C8E8F5" />
-          <stop offset="45%" stopColor="#F5DCB0" />
-          <stop offset="100%" stopColor="#D4EEC5" />
-        </linearGradient>
-        <linearGradient id="water-g" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#A8CCDE" />
-          <stop offset="100%" stopColor="#7BAFC5" />
-        </linearGradient>
-        <radialGradient id="sun-g" cx="50%" cy="50%">
-          <stop offset="0%" stopColor="#FFE060" stopOpacity="0.9" />
-          <stop offset="40%" stopColor="#FFD080" stopOpacity="0.6" />
-          <stop offset="100%" stopColor="#FFD080" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      {/* 空 */}
-      <rect x="0" y="0" width="440" height="220" fill="url(#sky-g)" rx="0" />
-
-      {/* 太陽 */}
-      <circle cx="330" cy="75" r="56" fill="url(#sun-g)" />
-      <circle cx="330" cy="75" r="26" fill="#FFD060" fillOpacity="0.75" />
-
-      {/* 遠い丘 */}
-      <path d="M0 165 Q70 118 150 140 Q230 115 310 135 Q360 122 440 138 L440 215 L0 215 Z"
-        fill="#BED0A8" fillOpacity="0.75" />
-
-      {/* 水面 */}
-      <rect x="0" y="205" width="440" height="95" fill="url(#water-g)" fillOpacity="0.88" />
-
-      {/* 水面の光の揺れ */}
-      <line x1="30" y1="220" x2="130" y2="220" stroke="white" strokeWidth="1.2" strokeOpacity="0.35" />
-      <line x1="60" y1="235" x2="190" y2="235" stroke="white" strokeWidth="0.9" strokeOpacity="0.28" />
-      <line x1="20" y1="252" x2="140" y2="252" stroke="white" strokeWidth="0.7" strokeOpacity="0.2" />
-
-      {/* 岸辺 */}
-      <path d="M0 202 Q110 195 220 198 Q330 192 440 202 L440 215 L0 215 Z"
-        fill="#A8C090" fillOpacity="0.9" />
-
-      {/* 石段 */}
-      <ellipse cx="210" cy="206" rx="14" ry="5" fill="#C8C0A0" />
-      <ellipse cx="230" cy="210" rx="11" ry="4" fill="#D0C8A8" />
-      <ellipse cx="196" cy="211" rx="9" ry="3.5" fill="#BEB8A0" />
-
-      {/* 木（右） */}
-      <rect x="388" y="78" width="13" height="128" rx="3" fill="#8B6A2A" fillOpacity="0.8" />
-      <ellipse cx="394" cy="55" rx="38" ry="50" fill="#5A9B4A" fillOpacity="0.9" />
-      <ellipse cx="376" cy="80" rx="24" ry="30" fill="#4A8B3A" fillOpacity="0.75" />
-      <ellipse cx="410" cy="72" rx="22" ry="26" fill="#6AAB58" fillOpacity="0.7" />
-
-      {/* 葉のディテール */}
-      <circle cx="378" cy="42" r="8" fill="#70BB58" fillOpacity="0.6" />
-      <circle cx="410" cy="48" r="7" fill="#60AB48" fillOpacity="0.5" />
-
-      {/* 人物（右向き、座っている） */}
-      {/* 頭 */}
-      <circle cx="248" cy="183" r="10" fill="#D4A080" />
-      {/* 髪 */}
-      <ellipse cx="248" cy="176" rx="10" ry="8" fill="#3A2820" />
-      <path d="M238 180 Q236 188 240 192" fill="#3A2820" />
-      <ellipse cx="256" cy="178" rx="5" ry="7" fill="#3A2820" fillOpacity="0.6" />
-      {/* 体 */}
-      <path d="M238 192 Q246 186 258 192 Q264 204 256 214 L242 214 Q234 204 238 192 Z"
-        fill="#E8DDD5" />
-      {/* 脚（曲げた状態） */}
-      <path d="M240 212 Q232 222 240 228 Q248 224 246 212 Z" fill="#A0B0C0" />
-      <path d="M254 212 Q262 222 254 228 Q246 224 248 212 Z" fill="#A0B0C0" />
-      {/* 腕 */}
-      <path d="M258 196 Q270 200 268 208" fill="none" stroke="#D4A080" strokeWidth="5" strokeLinecap="round" />
-
-      {/* 草 */}
-      <path d="M60 205 Q62 196 64 205" stroke="#80A060" strokeWidth="1.5" fill="none" />
-      <path d="M68 207 Q70 198 72 207" stroke="#70A050" strokeWidth="1.5" fill="none" />
-      <path d="M76 204 Q78 197 80 204" stroke="#88A868" strokeWidth="1.5" fill="none" />
-      <path d="M300 200 Q302 191 304 200" stroke="#80A060" strokeWidth="1.5" fill="none" />
-      <path d="M308 202 Q310 193 312 202" stroke="#70A050" strokeWidth="1.5" fill="none" />
-
-      {/* 浮かぶ光の粒 */}
-      <circle cx="120" cy="160" r="2" fill="#FFE080" fillOpacity="0.5" />
-      <circle cx="180" cy="145" r="1.5" fill="#FFE080" fillOpacity="0.4" />
-      <circle cx="260" cy="155" r="1.8" fill="#FFE080" fillOpacity="0.45" />
-    </svg>
-  );
-}
 
 /* ── 円形プログレス ── */
 function CircularProgress({ value, max }: { value: number; max: number }) {
@@ -122,9 +34,10 @@ function CircularProgress({ value, max }: { value: number; max: number }) {
   const pct = Math.min(value / max, 1);
   const dash = c * pct;
   return (
-    <svg viewBox="0 0 104 104" width={104} height={104}>
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E8ECF0" strokeWidth={sw} />
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke={V.green} strokeWidth={sw}
+    <svg viewBox="0 0 104 104" width={132} height={132} className="tnum">
+      <defs><linearGradient id="ring-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#F9A8D4" /><stop offset="100%" stopColor="#D946EF" /></linearGradient></defs>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth={sw} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="url(#ring-g)" strokeWidth={sw}
         strokeLinecap="round"
         strokeDasharray={`${dash} ${c - dash}`}
         transform={`rotate(-90 ${cx} ${cy})`} />
@@ -183,322 +96,126 @@ export default function HomePage() {
   // 前回より良くなったこと
   const improvement = lastSession?.evaluation.improvements[0] ?? null;
 
+  const stagger = (n: number) => ({ ["--i" as string]: n } as React.CSSProperties);
+  const glassCard: React.CSSProperties = { borderRadius: 28, padding: 28, position: "relative", overflow: "hidden" };
+  const label: React.CSSProperties = { fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", color: V.ink3, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 };
+
   return (
-    <main className="screen-minh rs-main" style={{ background: V.bg, padding: "28px 24px 60px" }}>
-      <div style={{ maxWidth: 920, margin: "0 auto" }}>
+    <main className="screen-minh rs-main" style={{ padding: "40px 32px 96px" }}>
+      <div style={{ maxWidth: 1180, margin: "0 auto" }}>
 
-        {/* ═══ ヒーローカード ═══ */}
-        <div
-          className="rs-stack"
-          style={{
-            background: V.surface,
-            borderRadius: 20,
-            boxShadow: "0 2px 12px rgba(26,35,50,0.07)",
-            border: `1px solid ${V.border}`,
-            display: "flex",
-            alignItems: "stretch",
-            overflow: "hidden",
-            marginBottom: 20,
-            minHeight: 260,
-          }}
-        >
-          {/* テキスト側 */}
-          <div className="rs-pad" style={{ flex: 1, padding: "40px 40px 40px 44px", display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0 }}>
-            {/* スパークル */}
-            <div style={{ fontSize: 24, marginBottom: 12 }}>✦</div>
-
-            <h1
-              style={{
-                fontSize: 32,
-                fontWeight: 800,
-                color: V.navy,
-                lineHeight: 1.25,
-                margin: "0 0 14px",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              今日のコーチング練習
+        {/* ═══ ヒーロー ═══ */}
+        <section className="home-hero" style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(0,1.05fr) minmax(0,0.95fr)", gap: 40, alignItems: "center", minHeight: 520, padding: "24px 0 48px" }}>
+          <div>
+            <h1 className="reveal home-h1" style={{ ...stagger(1), fontSize: "clamp(40px, 6.4vw, 80px)", lineHeight: 1.06, fontWeight: 800, letterSpacing: "-0.035em", margin: "0" }}>
+              聴く力を、<br />
+              <span className="text-grad">毎日すこしずつ。</span>
             </h1>
 
-            <p
-              style={{
-                fontSize: 14,
-                color: V.ink2,
-                lineHeight: 1.85,
-                margin: "0 0 28px",
-                maxWidth: 380,
-              }}
-            >
-              たった10〜12分で、コーチングの一歩を積み重ねましょう。
-              <br />
-              あなたの「聴く力」は、確実に育っています。
+            <p className="reveal" style={{ ...stagger(2), fontSize: 17, lineHeight: 1.9, color: V.ink2, margin: "26px 0 0", maxWidth: 460 }}>
+              AIの相談者を相手に面談を練習して、すぐに評価をもらえる。
+              {mounted && lastSession ? "前回の続きから、そのまま再開できます。" : "気軽に相談できるコーチもいて、考えごとの整理にも使えます。"}
             </p>
 
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <Link
-                href="/session"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  background: V.navy,
-                  color: "white",
-                  padding: "13px 28px",
-                  borderRadius: 100,
-                  fontWeight: 700,
-                  fontSize: 15,
-                  textDecoration: "none",
-                  boxShadow: `0 6px 20px -6px ${V.navy}60`,
-                }}
-              >
-                ▶ はじめる
+            <div className="reveal" style={{ ...stagger(3), display: "flex", gap: 12, flexWrap: "wrap", marginTop: 34 }}>
+              <Link href="/session" className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: V.accent, color: "white", padding: "16px 30px", borderRadius: 999, fontWeight: 700, fontSize: 16, textDecoration: "none", boxShadow: V.accentShadow }}>
+                練習をはじめる
               </Link>
-
-              {mounted && lastSession && (
-                <Link
-                  href="/session"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    background: "transparent",
-                    border: `1.5px solid ${V.border}`,
-                    color: V.ink2,
-                    padding: "13px 24px",
-                    borderRadius: 100,
-                    fontWeight: 600,
-                    fontSize: 14,
-                    textDecoration: "none",
-                  }}
-                >
-                  ⏰ 前回の続き
-                </Link>
-              )}
+              <Link href="/talk" className="btn-ghost" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: V.ink2, padding: "16px 26px", borderRadius: 999, fontWeight: 600, fontSize: 15, textDecoration: "none", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.14)" }}>
+                コーチに相談する
+              </Link>
             </div>
           </div>
 
-          {/* イラスト側 */}
-          <div
-            className="rs-hero-art"
-            style={{
-              width: 420,
-              flexShrink: 0,
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            <LandscapeIllustration />
-          </div>
-        </div>
-
-        {/* ═══ 3枚スタットカード ═══ */}
-        <div
-          className="rs-grid-1 rs-grid-tablet-2"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3,1fr)",
-            gap: 16,
-            marginBottom: 16,
-          }}
-        >
-          {/* 今週の一歩 */}
-          <div
-            style={{
-              background: V.surface,
-              border: `1px solid ${V.border}`,
-              borderRadius: 16,
-              padding: "24px",
-              boxShadow: "0 1px 4px rgba(26,35,50,0.05)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <div style={{ width: 30, height: 30, background: V.greenLt, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={V.green} strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                </svg>
+          {/* キャラクターの重なり（非対称） */}
+          <div className="reveal home-cast" style={{ ...stagger(2), position: "relative", height: 500 }} aria-hidden>
+            <div style={{ position: "absolute", inset: "8% 6% 4% 10%", borderRadius: "50%", background: "radial-gradient(closest-side, rgba(217,70,239,0.38), transparent 72%)", filter: "blur(40px)" }} />
+            {[
+              { src: "/characters/sato_smile.webp", w: 46, top: 2, left: 3, rot: -9, z: 1 },
+              { src: "/characters/tanaka_smile.webp", w: 46, top: 12, left: 51, rot: 7, z: 2 },
+              { src: "/characters/JO_smile.webp", w: 46, top: 45, left: 24, rot: -2, z: 3 },
+            ].map((c, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={i} src={c.src} alt="" style={{ position: "absolute", top: `${c.top}%`, left: `${c.left}%`, width: `${c.w}%`, aspectRatio: "1 / 1.08", objectFit: "cover", objectPosition: "50% 18%", borderRadius: 32, transform: `rotate(${c.rot}deg)`, zIndex: c.z, boxShadow: "0 40px 70px -30px rgba(10,4,30,0.95), 0 0 0 1px rgba(255,255,255,0.12)" }} />
+            ))}
+            <div className="glass" style={{ position: "absolute", right: "2%", bottom: "6%", zIndex: 5, borderRadius: 20, padding: "14px 18px", display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 26 }}>🎧</span>
+              <div>
+                <div style={{ fontSize: 12, color: V.ink3 }}>今週の練習</div>
+                <div className="tnum" style={{ fontSize: 20, fontWeight: 800 }}>{mounted ? weekCount : 0}<span style={{ fontSize: 13, color: V.ink3, fontWeight: 600 }}> / {weekGoal} 回</span></div>
               </div>
-              <span style={{ fontSize: 13, fontWeight: 700, color: V.ink2 }}>今週の一歩</span>
             </div>
+          </div>
+        </section>
 
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+        {/* ═══ ベント（大きさの違うカード） ═══ */}
+        <section className="home-bento" style={{ display: "grid", gridTemplateColumns: "repeat(12, minmax(0,1fr))", gap: 18 }}>
+
+          {/* 今週の一歩 */}
+          <div className="reveal glass lift rs-col-12" style={{ ...stagger(4), ...glassCard, gridColumn: "span 5", display: "flex", flexDirection: "column" }}>
+            <div style={label}>今週の一歩</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 24, flex: 1 }}>
               <CircularProgress value={mounted ? weekCount : 0} max={weekGoal} />
-            </div>
-
-            <div
-              style={{
-                textAlign: "center",
-                fontSize: 13,
-                fontWeight: 700,
-                color: V.greenDk,
-                marginBottom: 8,
-              }}
-            >
-              {mounted && weekCount >= weekGoal
-                ? "🎉 今週の目標達成！"
-                : `あと${weekGoal - (mounted ? weekCount : 0)}回で今週の目標達成です！`}
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 5, justifyContent: "center" }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={V.ink3} strokeWidth={2}>
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-              <span style={{ fontSize: 11, color: V.ink3 }}>期間: {weekRange}</span>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1.35, letterSpacing: "-0.02em" }}>
+                  {mounted && weekCount >= weekGoal ? "今週の目標を達成" : `あと${weekGoal - (mounted ? weekCount : 0)}回で達成`}
+                </div>
+                <div style={{ marginTop: 8, fontSize: 12.5, color: V.ink3 }}>{weekRange}</div>
+              </div>
             </div>
           </div>
 
           {/* 今日のテーマ */}
-          <div
-            style={{
-              background: V.surface,
-              border: `1px solid ${V.border}`,
-              borderRadius: 16,
-              padding: "24px",
-              boxShadow: "0 1px 4px rgba(26,35,50,0.05)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <div style={{ width: 30, height: 30, background: V.blueLt, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={V.blue} strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <span style={{ fontSize: 13, fontWeight: 700, color: V.ink2 }}>今日のテーマ</span>
+          <div className="reveal glass lift rs-col-12" style={{ ...stagger(5), ...glassCard, gridColumn: "span 7", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 220 }}>
+            <div style={{ position: "absolute", right: -60, top: -60, width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(closest-side, rgba(124,58,237,0.45), transparent)", filter: "blur(10px)" }} />
+            <div style={{ ...label, position: "relative" }}>今日のテーマ</div>
+            <div style={{ position: "relative" }}>
+              <div style={{ fontSize: "clamp(24px, 3vw, 34px)", fontWeight: 800, lineHeight: 1.25, letterSpacing: "-0.03em" }}>{todayTopic}</div>
+              <p style={{ margin: "12px 0 0", fontSize: 14, color: V.ink2, lineHeight: 1.8, maxWidth: 440 }}>{todayDesc}</p>
             </div>
-
-            <div
-              style={{
-                fontSize: 18,
-                fontWeight: 800,
-                color: V.navy,
-                lineHeight: 1.4,
-                marginBottom: 12,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {todayTopic}
-            </div>
-
-            <p style={{ fontSize: 12, color: V.ink3, lineHeight: 1.7, marginBottom: 14 }}>
-              {todayDesc}
-            </p>
-
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                background: V.blueLt,
-                borderRadius: 100,
-                padding: "5px 12px",
-              }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill={V.blue}>
-                <path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
-              </svg>
-              <span style={{ fontSize: 11, color: V.blue, fontWeight: 600 }}>おすすめ練習時間: 10〜12分</span>
-            </div>
+            <Link href="/session" className="btn-ghost" style={{ position: "relative", alignSelf: "flex-start", marginTop: 20, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 999, color: "#F9A8D4", fontWeight: 700, fontSize: 13, textDecoration: "none", boxShadow: "inset 0 0 0 1px rgba(244,114,182,0.35)" }}>
+              このテーマで練習する
+            </Link>
           </div>
 
           {/* 前回より良くなったこと */}
-          <div
-            style={{
-              background: V.surface,
-              border: `1px solid ${V.border}`,
-              borderRadius: 16,
-              padding: "24px",
-              boxShadow: "0 1px 4px rgba(26,35,50,0.05)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <div style={{ width: 30, height: 30, background: "#FFF0F0", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill={V.coral}>
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                </svg>
-              </div>
-              <span style={{ fontSize: 13, fontWeight: 700, color: V.ink2 }}>前回より良くなったこと</span>
-            </div>
-
+          <div className="reveal glass lift rs-col-12" style={{ ...stagger(6), ...glassCard, gridColumn: "span 7" }}>
+            <div style={label}>前回より良くなったこと</div>
             {mounted && improvement ? (
-              <>
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    background: "#FFF0F0",
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 24,
-                    margin: "0 auto 12px",
-                  }}
-                >
-                  ❤️
+              <div style={{ display: "flex", gap: 18, alignItems: "flex-start" }}>
+                <div style={{ width: 52, height: 52, flexShrink: 0, borderRadius: 16, background: V.navyLt, display: "grid", placeItems: "center", fontSize: 26 }}>✨</div>
+                <div>
+                  <p style={{ margin: 0, fontSize: 18, fontWeight: 700, lineHeight: 1.6 }}>{improvement}</p>
+                  {scoreDiff !== null && scoreDiff > 0 && (
+                    <p className="tnum" style={{ margin: "8px 0 0", fontSize: 13, color: V.green, fontWeight: 600 }}>前回より +{scoreDiff} 点。継続が力になります。</p>
+                  )}
                 </div>
-                <p
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: V.ink,
-                    lineHeight: 1.6,
-                    textAlign: "center",
-                    marginBottom: 10,
-                  }}
-                >
-                  {improvement}
-                </p>
-                {scoreDiff !== null && scoreDiff > 0 && (
-                  <p style={{ fontSize: 12, color: V.ink3, textAlign: "center" }}>
-                    その調子です。継続が力になります。
-                  </p>
-                )}
-              </>
+              </div>
             ) : (
-              <div style={{ textAlign: "center", padding: "12px 0" }}>
-                <div style={{ fontSize: 36, marginBottom: 10 }}>🌱</div>
-                <p style={{ fontSize: 13, color: V.ink3, lineHeight: 1.7 }}>
-                  セッションを完了すると
-                  <br />
-                  成長の記録が表示されます
+              <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
+                <div style={{ width: 52, height: 52, flexShrink: 0, borderRadius: 16, background: "rgba(255,255,255,0.06)", display: "grid", placeItems: "center", fontSize: 26 }}>🌱</div>
+                <p style={{ margin: 0, fontSize: 15, color: V.ink2, lineHeight: 1.8 }}>
+                  最初の練習を終えると、ここに成長の記録が出ます。<br />
+                  <Link href="/session" style={{ color: "#F9A8D4", fontWeight: 700, textDecoration: "none" }}>はじめの1回をやってみる</Link>
                 </p>
               </div>
             )}
           </div>
-        </div>
 
-        {/* ═══ プライバシーストリップ ═══ */}
-        <div
-          style={{
-            background: V.surface,
-            border: `1px solid ${V.border}`,
-            borderRadius: 12,
-            padding: "14px 20px",
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            boxShadow: "0 1px 3px rgba(26,35,50,0.04)",
-          }}
-        >
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              background: V.greenLt,
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={V.green} strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-          </div>
-          <span style={{ fontSize: 13, color: V.ink2, lineHeight: 1.6 }}>
-            会話内容はあなたの成長のためだけに使われます。プライバシーを大切に、安心してご利用いただけます。
-          </span>
-        </div>
+          {/* コーチと話す */}
+          <Link href="/talk" className="reveal lift rs-col-12" style={{ ...stagger(7), ...glassCard, gridColumn: "span 5", textDecoration: "none", color: "inherit", background: "linear-gradient(135deg, rgba(217,70,239,0.28), rgba(124,58,237,0.22))", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.14), 0 30px 50px -30px rgba(217,70,239,0.55)", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 160 }}>
+            <div style={label}>CONSULT</div>
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.35 }}>JOとYUKOに、<br />気軽に相談してみる</div>
+              <div style={{ marginTop: 10, fontSize: 13, color: "rgba(255,255,255,0.75)" }}>話した内容は残るので、続きからいつでも相談できます</div>
+            </div>
+          </Link>
+        </section>
+
+        <p className="reveal" style={{ ...stagger(8), margin: "28px 4px 0", fontSize: 12.5, color: V.ink3, lineHeight: 1.8, display: "flex", alignItems: "center", gap: 8 }}>
+          <span aria-hidden>🔒</span>
+          会話の内容は、あなたの成長のためだけに使われます。
+        </p>
       </div>
     </main>
   );

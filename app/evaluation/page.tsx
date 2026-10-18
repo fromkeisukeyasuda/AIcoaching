@@ -9,26 +9,28 @@ import { SessionData, SessionRecord, EvaluationResult } from "@/types";
    デザイントークン（v3）
 ══════════════════════════════════════════════════════════════════════ */
 const V = {
-  navy:    "#1C2B4A",
-  navyLt:  "#EBF0FA",
-  green:   "#4DB689",
-  greenLt: "#EBF8F3",
-  greenDk: "#2E8B63",
-  coral:   "#F07268",
-  coralLt: "#FEF3F2",
-  amber:   "#F59E0B",
-  amberLt: "#FFFBEB",
-  blue:    "#3B82F6",
-  blueLt:  "#EBF4FF",
-  bg:      "#F4F7FA",
-  surface: "#FFFFFF",
-  ink:     "#1A2332",
-  ink2:    "#4A5568",
-  ink3:    "#8A9BAB",
-  border:  "#E8ECF0",
-  borderSoft: "#F0F4F8",
-  sans:  '"Noto Sans JP","Hiragino Sans",system-ui,sans-serif',
-  round: '"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",sans-serif',
+  navy:    "#F5F1FF",
+  navyLt:  "rgba(244,114,182,0.14)",
+  green:   "#5FD3A0",
+  greenLt: "rgba(95,211,160,0.14)",
+  greenDk: "#7EE0B5",
+  coral:   "#FF8A80",
+  coralLt: "rgba(255,138,128,0.14)",
+  amber:   "#FBBF24",
+  amberLt: "rgba(251,191,36,0.14)",
+  blue:    "#7DB3FF",
+  blueLt:  "rgba(125,179,255,0.16)",
+  bg:      "rgba(255,255,255,0.05)",
+  surface: "rgba(255,255,255,0.045)",
+  ink:     "#FFFFFF",
+  ink2:    "#CFC9E4",
+  ink3:    "#8F8AA8",
+  border:  "rgba(255,255,255,0.07)",
+  borderSoft: "rgba(255,255,255,0.06)",
+  sans:  '"Plus Jakarta Sans","Noto Sans JP","Hiragino Sans",system-ui,sans-serif',
+  round: '"Plus Jakarta Sans","Noto Sans JP","Hiragino Sans",system-ui,sans-serif',
+  accent:  "linear-gradient(135deg, #F472B6 0%, #D946EF 100%)",
+  accentShadow: "0 8px 20px -8px rgba(217,70,239,0.6)",
 } as const;
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -40,8 +42,8 @@ type TabId = "report" | "review";
 const card: React.CSSProperties = {
   background: V.surface,
   border: `1px solid ${V.border}`,
-  borderRadius: 16,
-  boxShadow: "0 1px 3px rgba(26,35,50,0.05)",
+  borderRadius: 22,
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 24px 40px -28px rgba(8,4,24,0.9)", backdropFilter: "blur(14px)",
 };
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -245,7 +247,7 @@ function GrowthChart({ data }: { data: number[] }) {
 ══════════════════════════════════════════════════════════════════════ */
 function LoadingScreen() {
   return (
-    <div className="screen-minh" style={{ background: V.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div className="screen-minh" style={{ background: "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center" }}>
         <div style={{
           width: 52, height: 52, borderRadius: "50%",
@@ -413,9 +415,9 @@ export default function EvaluationPage() {
   if (error) {
     const isCredit = error.includes("クレジット") || error.includes("credit");
     return (
-      <div className="screen-minh" style={{ background: V.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
+      <div className="screen-minh" style={{ background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
         <div style={{ textAlign: "center", maxWidth: 420 }}>
-          <div style={{ width: 60, height: 60, background: "#FEE2E2", border: "1px solid #FECACA", borderRadius: "50%", display: "grid", placeItems: "center", margin: "0 auto 20px" }}>
+          <div style={{ width: 60, height: 60, background: V.coralLt, border: `1px solid ${V.border}`, borderRadius: "50%", display: "grid", placeItems: "center", margin: "0 auto 20px" }}>
             <span style={{ fontSize: 28 }}>⚠️</span>
           </div>
           <h2 style={{ fontFamily: V.round, fontSize: 19, fontWeight: 700, color: V.ink, marginBottom: 10 }}>
@@ -428,7 +430,7 @@ export default function EvaluationPage() {
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
             {isCredit && (
-              <Link href="/evaluation?demo=1" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 26px", background: V.navy, color: "#fff", borderRadius: 12, fontFamily: V.round, fontWeight: 700, fontSize: 14, textDecoration: "none", boxShadow: `0 8px 20px -8px ${V.navy}` }}>
+              <Link href="/evaluation?demo=1" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 26px", background: V.accent, color: "#fff", borderRadius: 12, fontFamily: V.round, fontWeight: 700, fontSize: 14, textDecoration: "none", boxShadow: V.accentShadow }}>
                 📊 デモモードで確認する
               </Link>
             )}
@@ -477,7 +479,7 @@ export default function EvaluationPage() {
       icon: "📈",
       label: "改善できる点",
       count: result.improvements.length,
-      color: V.coral, colorLt: V.coralLt, colorDk: "#C0453A",
+      color: V.coral, colorLt: V.coralLt, colorDk: V.coral,
       items: result.improvements,
     },
   ];
@@ -491,10 +493,10 @@ export default function EvaluationPage() {
      レンダリング
   ══════════════════════════════════════════════════════════════ */
   return (
-    <div className="screen-minh" style={{ background: V.bg, fontFamily: V.sans }}>
+    <div className="screen-minh" style={{ background: "transparent", fontFamily: V.sans }}>
 
       {/* ─── ページヘッダー ─── */}
-      <div className="rs-px" style={{ background: V.surface, borderBottom: `1px solid ${V.border}`, padding: "0 32px" }}>
+      <div className="rs-px reveal" style={{ borderBottom: `1px solid ${V.border}`, padding: "12px 32px 0" }}>
         <div style={{ maxWidth: 1120, margin: "0 auto" }}>
           {/* タイトル行 */}
           <div className="rs-wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0 0" }}>
@@ -502,7 +504,7 @@ export default function EvaluationPage() {
               <div style={{ fontSize: 11, color: V.ink3, marginBottom: 5 }}>
                 練習 #{practiceNo} ・ {dateStr} ・ {session.scenario.clientName}さん
               </div>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: V.navy, margin: 0, letterSpacing: "-0.02em" }}>
+              <h1 style={{ fontSize: "clamp(26px, 3.6vw, 40px)", fontWeight: 800, color: V.navy, margin: 0, letterSpacing: "-0.035em", lineHeight: 1.15 }}>
                 {session.scenario.title}
               </h1>
             </div>
@@ -512,7 +514,7 @@ export default function EvaluationPage() {
                   🔥 {streak} 回連続上昇中
                 </div>
               )}
-              <Link href="/session" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px", background: V.navy, color: "white", borderRadius: 12, fontWeight: 700, fontSize: 13, textDecoration: "none", boxShadow: `0 6px 16px -6px ${V.navy}` }}>
+              <Link href="/session" className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "12px 24px", background: V.accent, color: "white", borderRadius: 999, fontWeight: 700, fontSize: 13, textDecoration: "none", boxShadow: V.accentShadow }}>
                 ▶ もう一度練習する
               </Link>
             </div>
@@ -549,7 +551,7 @@ export default function EvaluationPage() {
       </div>
 
       {/* ─── タブコンテンツ ─── */}
-      <div className="rs-px" style={{ maxWidth: 1120, margin: "0 auto", padding: "24px 32px 40px" }}>
+      <div className="rs-px" style={{ maxWidth: 1184, margin: "0 auto", padding: "24px 32px 40px" }}>
 
         {/* ════════════════════════════════════
             TAB 1: 評価レポート
@@ -607,7 +609,7 @@ export default function EvaluationPage() {
                   </div>
                   <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <div style={{ width: 10, height: 10, borderRadius: 2, background: V.navy }} />
+                      <div style={{ width: 10, height: 10, borderRadius: 2, background: V.accent }} />
                       <span style={{ fontSize: 11, color: V.ink2 }}>AI 評価</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -632,7 +634,7 @@ export default function EvaluationPage() {
                             <div style={{ fontSize: 9, color: V.ink3 }}>{a.short}</div>
                           </div>
                           <div style={{ height: 5, background: V.bg, borderRadius: 3, overflow: "hidden" }}>
-                            <div style={{ width: `${(a.ai / a.max) * 100}%`, height: "100%", background: V.navy, borderRadius: 3 }} />
+                            <div style={{ width: `${(a.ai / a.max) * 100}%`, height: "100%", background: V.accent, borderRadius: 3 }} />
                           </div>
                           <div style={{ textAlign: "right", fontFamily: V.round, fontSize: 13, fontWeight: 700, color: V.navy }}>
                             {a.ai}<span style={{ fontSize: 9, color: V.ink3 }}>/20</span>
@@ -665,11 +667,11 @@ export default function EvaluationPage() {
 
               {/* 伸びしろ */}
               <div style={{ ...card, padding: "20px", borderTop: `3px solid ${V.coral}` }}>
-                <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 14, color: "#C0453A", marginBottom: 12 }}>📈 伸びしろ</div>
+                <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 14, color: V.coral, marginBottom: 12 }}>📈 伸びしろ</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {result.improvements.map((s, i) => (
                     <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, color: V.ink2, lineHeight: 1.5 }}>
-                      <span style={{ width: 18, height: 18, borderRadius: "50%", background: V.coralLt, color: "#C0453A", display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{i+1}</span>
+                      <span style={{ width: 18, height: 18, borderRadius: "50%", background: V.coralLt, color: V.coral, display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{i+1}</span>
                       {s}
                     </div>
                   ))}
@@ -732,7 +734,7 @@ export default function EvaluationPage() {
                 <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <div style={{ width: 10, height: 10, borderRadius: 2, background: V.navy }} />
+                      <div style={{ width: 10, height: 10, borderRadius: 2, background: V.accent }} />
                       <span style={{ color: V.ink2 }}>コーチ</span>
                     </div>
                     <span style={{ fontWeight: 700, color: V.navy }}>{coachPct}%</span>
@@ -772,7 +774,7 @@ export default function EvaluationPage() {
 
             {/* AIからのひとこと */}
             <div style={{
-              background: `linear-gradient(135deg, ${V.navy} 0%, #2D4070 100%)`,
+              background: `linear-gradient(135deg, #D946EF 0%, #7C3AED 100%)`,
               borderRadius: 16,
               padding: "22px 28px",
               display: "flex",
@@ -822,7 +824,7 @@ export default function EvaluationPage() {
                   padding: "12px 26px",
                   borderRadius: 12,
                   border: "none",
-                  background: V.navy,
+                  background: V.accent,
                   color: "white",
                   fontSize: 14,
                   fontWeight: 700,
@@ -830,7 +832,7 @@ export default function EvaluationPage() {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 8,
-                  boxShadow: `0 8px 20px -8px ${V.navy}`,
+                  boxShadow: V.accentShadow,
                   fontFamily: V.sans,
                 }}
               >
@@ -885,7 +887,7 @@ export default function EvaluationPage() {
                           onClick={() => toggleGroup(group.id)}
                           style={{ width: "100%", border: "none", background: "transparent", padding: "12px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}
                         >
-                          <span style={{ width: 26, height: 26, borderRadius: 7, background: "#fff", display: "grid", placeItems: "center", fontSize: 14, flexShrink: 0 }}>{group.icon}</span>
+                          <span style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.1)", display: "grid", placeItems: "center", fontSize: 14, flexShrink: 0 }}>{group.icon}</span>
                           <span style={{ fontFamily: V.round, fontWeight: 700, fontSize: 13, color: group.colorDk, flex: 1 }}>
                             {group.label} <span style={{ fontSize: 11, color: group.color }}>{group.count} 件</span>
                           </span>
@@ -895,7 +897,7 @@ export default function EvaluationPage() {
                           <div>
                             {group.items.map((item, i) => (
                               <div key={i} style={{ display: "flex", gap: 10, padding: "9px 16px", borderTop: `1px dashed ${V.border}` }}>
-                                <span style={{ width: 20, height: 20, borderRadius: "50%", background: "#fff", color: group.colorDk, display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700, flexShrink: 0 }}>{i+1}</span>
+                                <span style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.1)", color: group.colorDk, display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700, flexShrink: 0 }}>{i+1}</span>
                                 <div style={{ fontSize: 12, color: V.ink, lineHeight: 1.6 }}>{item}</div>
                               </div>
                             ))}
@@ -917,7 +919,7 @@ export default function EvaluationPage() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                     {nextItems.map((item, i) => (
                       <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-                        <div style={{ width: 30, height: 30, borderRadius: 9, background: V.navy, color: "white", display: "grid", placeItems: "center", fontFamily: V.round, fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                        <div style={{ width: 30, height: 30, borderRadius: 9, background: V.accent, color: "white", display: "grid", placeItems: "center", fontFamily: V.round, fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
                           {i + 1}
                         </div>
                         <div style={{ fontSize: 13, color: V.ink, lineHeight: 1.7, paddingTop: 5 }}>{item}。</div>
@@ -929,7 +931,7 @@ export default function EvaluationPage() {
                 {/* AI からのフィードバック */}
                 <div style={{ ...card, padding: "22px 24px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                    <div style={{ width: 34, height: 34, background: "#F0F4FF", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>🤖</div>
+                    <div style={{ width: 34, height: 34, background: V.navyLt, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>🤖</div>
                     <div style={{ fontFamily: V.round, fontSize: 15, fontWeight: 700, color: V.navy }}>AI からのフィードバック</div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -970,7 +972,7 @@ export default function EvaluationPage() {
                   }}>
                     <div style={{
                       width: 32, height: 32, borderRadius: "50%",
-                      background: m.role === "user" ? V.navy : V.greenLt,
+                      background: m.role === "user" ? V.accent : V.greenLt,
                       display: "flex", alignItems: "center", justifyContent: "center",
                       fontSize: 14, flexShrink: 0, color: m.role === "user" ? "white" : V.greenDk,
                       fontWeight: 700,
@@ -998,7 +1000,7 @@ export default function EvaluationPage() {
               <Link href="/history" style={{ padding: "12px 22px", border: `1px solid ${V.border}`, borderRadius: 12, color: V.ink2, fontSize: 14, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
                 ← 練習履歴
               </Link>
-              <Link href="/session" style={{ padding: "12px 26px", background: V.navy, color: "white", borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8, boxShadow: `0 8px 20px -8px ${V.navy}` }}>
+              <Link href="/session" style={{ padding: "12px 26px", background: V.accent, color: "white", borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8, boxShadow: V.accentShadow }}>
                 次の練習を始める ▶
               </Link>
             </div>

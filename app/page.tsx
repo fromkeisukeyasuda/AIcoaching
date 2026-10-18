@@ -118,7 +118,7 @@ export default function HomePage() {
             </div>
 
             <p className="reveal" style={{ ...stagger(2), fontSize: 17, lineHeight: 1.9, color: V.ink2, margin: "28px 0 0", maxWidth: 460 }}>
-              AIの相談者を相手に面談を練習して、すぐに評価をもらえる。
+              AIの相談者を相手に面談を練習して、すぐに評価をもらえる。<br />
               {mounted && lastSession ? "前回の続きから、そのまま再開できます。" : "気軽に相談できるコーチもいて、考えごとの整理にも使えます。"}
             </p>
 
@@ -202,7 +202,7 @@ export default function HomePage() {
 
           {/* コーチと話す */}
           <Link href="/talk" className="reveal lift rs-col-12" style={{ ...stagger(7), ...glassCard, gridColumn: "span 5", textDecoration: "none", color: "inherit", background: "linear-gradient(135deg, rgba(217,70,239,0.28), rgba(124,58,237,0.22))", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.14), 0 30px 50px -30px rgba(217,70,239,0.55)", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 160 }}>
-            <div style={label}>CONSULT</div>
+            <div style={label}>COACH</div>
             <div>
               <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.35 }}>JOとYUKOに、<br />気軽に相談してみる</div>
               <div style={{ marginTop: 10, fontSize: 13, color: "rgba(255,255,255,0.75)" }}>話した内容は残るので、続きからいつでも相談できます</div>

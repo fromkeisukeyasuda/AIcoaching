@@ -249,7 +249,7 @@ export default function ConsultPage() {
         <div className="mx-auto max-w-[1000px]">
           <div className="reveal flex flex-wrap items-end justify-between gap-4" style={{ ["--i" as string]: 0 }}>
             <div>
-              <p className="mb-3 text-xs font-bold tracking-[0.18em] text-pink-300/80">CONSULT</p>
+              <p className="mb-3 text-xs font-bold tracking-[0.18em] text-pink-300/80">COACH</p>
               <h1 className="text-[34px] font-extrabold leading-tight tracking-tight sm:text-5xl">
                 <span className="text-grad">今日は誰に、相談する？</span>
               </h1>

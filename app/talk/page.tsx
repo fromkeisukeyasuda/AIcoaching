@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Message } from "@/types";
 import { Coach, CoachEmotion, coaches, portraitOf, EMOTION_TAG_RE } from "@/lib/coaches";
-import { TalkProfile, clearProfile, getProfile, saveProfile } from "@/lib/talkStore";
+import { TalkProfile, getProfile, saveProfile } from "@/lib/talkStore";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
@@ -220,12 +220,6 @@ export default function ConsultPage() {
     try { localStorage.removeItem(storageKey(coach.id)); } catch { /* noop */ }
   };
 
-  const resetProfile = () => {
-    if (!confirm("呼び名と年代をリセットします。次に相談するとき、もう一度聞かれます。")) return;
-    clearProfile();
-    setProfile(null);
-  };
-
   /* ── 初回の質問フロー ── */
   const finishName = (answer: string) => {
     setObNameAnswer(answer || "入力しない");
@@ -251,11 +245,6 @@ export default function ConsultPage() {
             <h1 className="text-[30px] font-extrabold leading-tight tracking-tight sm:text-4xl">
               <span className="text-grad">今日は誰に、相談する？</span>
             </h1>
-            {profile && (
-              <button onClick={resetProfile} className="btn-ghost rounded-full px-5 py-2.5 text-sm font-medium text-white/60" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.14)" }}>
-                呼び名・年代を変更{profile.nickname ? `（${profile.nickname}さん）` : ""}
-              </button>
-            )}
           </div>
 
           <div className="fit-grid mt-4 grid w-full gap-4 sm:grid-cols-2 md:mx-auto md:max-w-[820px] md:grid-rows-[minmax(0,1fr)] md:gap-5">

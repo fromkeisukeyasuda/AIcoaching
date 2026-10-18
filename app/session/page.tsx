@@ -58,8 +58,8 @@ function SoundWave({ active }: { active: boolean }) {
 
 /* キャラクター別デフォルト音声（VOICEVOXスピーカー名、優先順位順） */
 const CHARACTER_VOICE_PREFS: Record<string, string[]> = {
-  "田中": ["玄野武宏", "白上虎太郎", "青山龍星"],
-  "佐藤": ["後鬼", "春日部つむぎ", "四国めたん"],
+  "田中": ["離途", "玄野武宏", "白上虎太郎"],
+  "佐藤": ["四国めたん", "春日部つむぎ", "九州そら"],
   "鈴木": ["青山龍星", "玄野武宏", "白上虎太郎"],
 };
 
@@ -377,9 +377,6 @@ export default function SessionPage() {
 
         {/* 左：クライアント情報 */}
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-full bg-pink-400/15 border border-pink-300/30 flex items-center justify-center text-base flex-shrink-0">
-            {selectedScenario.icon}
-          </div>
           <div className="min-w-0">
             <p className="text-white text-sm font-semibold leading-tight truncate">{selectedScenario.clientName}</p>
             <p className="text-white/45 text-xs truncate">{selectedScenario.clientRole}</p>
@@ -393,50 +390,27 @@ export default function SessionPage() {
         {/* 右：コントロール */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
 
-          {/* VoiceBox スピーカー選択 */}
-          {tts.voiceBoxAvailable && tts.enabled && tts.speakerStyles.length > 0 && (
-            <select
-              value={tts.selectedSpeakerId}
-              onChange={(e) => tts.setSelectedSpeakerId(Number(e.target.value))}
-              className="text-xs text-white/75 bg-[#14121f] border border-white/10 rounded-lg px-2 py-1.5 outline-none focus:border-pink-300 max-w-[120px]"
-            >
-              {tts.speakerStyles.map((s) => (
-                <option key={s.id} value={s.id} className="bg-[#1d1a2e]">
-                  {s.speakerName}（{s.name}）
-                </option>
-              ))}
-            </select>
-          )}
-
           {/* 読み上げトグル */}
           <button
             onClick={tts.toggle}
             title={tts.enabled ? "読み上げをオフ" : "読み上げをオン"}
-            className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
               tts.enabled
                 ? "bg-pink-400/15 text-pink-300 border border-pink-300/50"
                 : "bg-white/10 text-white/45 border border-white/10 hover:text-white"
             }`}
           >
-            {tts.speaking ? (
-              <svg className="w-4 h-4 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
-              </svg>
-            ) : tts.enabled ? (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072M12 6v12M8.464 9.536a5 5 0 000 4.928" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            <svg className={`w-4 h-4 ${tts.speaking ? "animate-pulse" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              {tts.enabled ? (
+                <>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728" />
+                </>
+              ) : (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-              </svg>
-            )}
-            {tts.voiceBoxAvailable && tts.enabled && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-violet-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold" style={{ fontSize: "6px" }}>V</span>
-              </span>
-            )}
+              )}
+            </svg>
           </button>
 
           {/* 終了ボタン */}

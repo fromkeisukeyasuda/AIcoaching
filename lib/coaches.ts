@@ -37,7 +37,7 @@ export const coaches: Coach[] = [
 【スタンス】
 - アドバイスを押しつけず、相手が自分で気づけるよう問いかけるコーチングの姿勢
 - 相手の頑張りや良い点を具体的に言葉にして伝える`,
-    voicePrefs: ["麒ヶ島宗麟", "青山龍星", "玄野武宏"],
+    voicePrefs: ["黒沢冴白", "麒ヶ島宗麟", "青山龍星"],
     images: {
       idle: "/characters/JO.webp",
       neutral: "/characters/JO_neutral.webp",
@@ -92,7 +92,7 @@ export const clients: Coach[] = [
     tags: ["マネジメント", "リーダーシップ", "チームビルディング"],
     greeting: "",
     persona: "",
-    voicePrefs: ["玄野武宏", "白上虎太郎", "青山龍星"],
+    voicePrefs: ["離途", "玄野武宏", "白上虎太郎"],
     scenarioId: "team-management",
     images: {
       idle: "/characters/tanaka.webp",
@@ -113,7 +113,7 @@ export const clients: Coach[] = [
     tags: ["キャリア", "転職", "自己実現"],
     greeting: "",
     persona: "",
-    voicePrefs: ["後鬼", "春日部つむぎ", "四国めたん"],
+    voicePrefs: ["四国めたん", "春日部つむぎ", "九州そら"],
     scenarioId: "career-change",
     images: {
       idle: "/characters/sato.webp",

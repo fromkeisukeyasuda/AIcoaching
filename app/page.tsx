@@ -27,26 +27,6 @@ const V = {
   accentShadow: "0 8px 20px -8px rgba(217,70,239,0.6)",
 } as const;
 
-/* ── 円形プログレス ── */
-function CircularProgress({ value, max }: { value: number; max: number }) {
-  const r = 38, cx = 52, cy = 52, sw = 7;
-  const c = 2 * Math.PI * r;
-  const pct = Math.min(value / max, 1);
-  const dash = c * pct;
-  return (
-    <svg viewBox="0 0 104 104" width={132} height={132} className="tnum">
-      <defs><linearGradient id="ring-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#F9A8D4" /><stop offset="100%" stopColor="#D946EF" /></linearGradient></defs>
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth={sw} />
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="url(#ring-g)" strokeWidth={sw}
-        strokeLinecap="round"
-        strokeDasharray={`${dash} ${c - dash}`}
-        transform={`rotate(-90 ${cx} ${cy})`} />
-      <text x={cx} y={cy - 7} textAnchor="middle" fontWeight={800} fontSize={24} fill={V.navy}>{value}</text>
-      <text x={cx} y={cy + 12} textAnchor="middle" fontSize={13} fill={V.ink3}>/ {max}</text>
-    </svg>
-  );
-}
-
 /* ── ホームページ ── */
 export default function HomePage() {
   const [history, setHistory] = useState<SessionRecord[]>([]);
@@ -61,51 +41,15 @@ export default function HomePage() {
   }, []);
 
   const lastSession   = history[0] ?? null;
-  const lastScore     = lastSession?.evaluation.overallScore ?? null;
-  const prevScore     = history[1]?.evaluation.overallScore ?? null;
-  const scoreDiff     = lastScore !== null && prevScore !== null ? lastScore - prevScore : null;
-
-  const weekCount = (() => {
-    if (!mounted) return 0;
-    const cutoff = Date.now() - 7 * 24 * 3600 * 1000;
-    return history.filter(r => new Date(r.savedAt).getTime() > cutoff).length;
-  })();
-  const weekGoal = 3;
-
-  // 今週の期間表示
-  const now = new Date();
-  const mon = new Date(now); mon.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
-  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-  const fmtMD = (d: Date) => `${d.getMonth()+1}/${d.getDate()}`;
-  const WDAYS = ["日","月","火","水","木","金","土"];
-  const weekRange = `${fmtMD(mon)}（${WDAYS[mon.getDay()]}）〜${fmtMD(sun)}（${WDAYS[sun.getDay()]}）`;
-
-  // 今日のテーマ（最新セッションのシナリオタイトル、または日替わり）
-  const DAILY_TOPICS = [
-    "深い傾聴で信頼を育む",
-    "オープン質問で可能性を広げる",
-    "共感の言葉でつながりを作る",
-    "目標を一緒に描く力",
-    "部下のモチベーションを引き出す",
-    "コンフリクトを成長に変える",
-    "強みを引き出すフィードバック",
-  ];
-  const todayTopic = lastSession?.session.scenario.title ?? DAILY_TOPICS[now.getDay()];
-  const todayDesc  = lastSession?.session.scenario.description ?? "コーチングの一歩を積み重ねましょう。";
-
-  // 前回より良くなったこと
-  const improvement = lastSession?.evaluation.improvements[0] ?? null;
 
   const stagger = (n: number) => ({ ["--i" as string]: n } as React.CSSProperties);
-  const glassCard: React.CSSProperties = { borderRadius: 28, padding: 28, position: "relative", overflow: "hidden" };
-  const label: React.CSSProperties = { fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", color: V.ink3, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 };
 
   return (
-    <main className="screen-minh rs-main" style={{ padding: "36px 32px 96px" }}>
-      <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+    <main className="screen-minh rs-main" style={{ padding: "24px 32px 56px", display: "flex", alignItems: "center" }}>
+      <div style={{ maxWidth: 1180, width: "100%", margin: "0 auto" }}>
 
         {/* ═══ ヒーロー ═══ */}
-        <section className="home-hero" style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(0,1.05fr) minmax(0,0.95fr)", gap: 40, alignItems: "center", minHeight: 0, padding: "0 0 36px" }}>
+        <section className="home-hero" style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(0,1.05fr) minmax(0,0.95fr)", gap: 40, alignItems: "center", minHeight: 0, padding: 0 }}>
           <div>
             {/* アイコン + 見出し（アイコンは見出しの左） */}
             <div className="home-title-row" style={{ display: "flex", alignItems: "center", gap: 24 }}>
@@ -145,75 +89,6 @@ export default function HomePage() {
             ))}
           </div>
         </section>
-
-        {/* ═══ ベント（大きさの違うカード） ═══ */}
-        <section className="home-bento" style={{ display: "grid", gridTemplateColumns: "repeat(12, minmax(0,1fr))", gap: 18 }}>
-
-          {/* 今週の一歩 */}
-          <div className="reveal glass lift rs-col-12" style={{ ...stagger(4), ...glassCard, gridColumn: "span 5", display: "flex", flexDirection: "column" }}>
-            <div style={label}>今週の一歩</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 24, flex: 1 }}>
-              <CircularProgress value={mounted ? weekCount : 0} max={weekGoal} />
-              <div>
-                <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1.35, letterSpacing: "-0.02em" }}>
-                  {mounted && weekCount >= weekGoal ? "今週の目標を達成" : `あと${weekGoal - (mounted ? weekCount : 0)}回で達成`}
-                </div>
-                <div style={{ marginTop: 8, fontSize: 12.5, color: V.ink3 }}>{weekRange}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* 今日のテーマ */}
-          <div className="reveal glass lift rs-col-12" style={{ ...stagger(5), ...glassCard, gridColumn: "span 7", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 220 }}>
-            <div style={{ position: "absolute", right: -60, top: -60, width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(closest-side, rgba(124,58,237,0.45), transparent)", filter: "blur(10px)" }} />
-            <div style={{ ...label, position: "relative" }}>今日のテーマ</div>
-            <div style={{ position: "relative" }}>
-              <div style={{ fontSize: "clamp(24px, 3vw, 34px)", fontWeight: 800, lineHeight: 1.25, letterSpacing: "-0.03em" }}>{todayTopic}</div>
-              <p style={{ margin: "12px 0 0", fontSize: 14, color: V.ink2, lineHeight: 1.8, maxWidth: 440 }}>{todayDesc}</p>
-            </div>
-            <Link href="/session" className="btn-ghost" style={{ position: "relative", alignSelf: "flex-start", marginTop: 20, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 999, color: "#F9A8D4", fontWeight: 700, fontSize: 13, textDecoration: "none", boxShadow: "inset 0 0 0 1px rgba(244,114,182,0.35)" }}>
-              このテーマで練習する
-            </Link>
-          </div>
-
-          {/* 前回より良くなったこと */}
-          <div className="reveal glass lift rs-col-12" style={{ ...stagger(6), ...glassCard, gridColumn: "span 7" }}>
-            <div style={label}>前回より良くなったこと</div>
-            {mounted && improvement ? (
-              <div style={{ display: "flex", gap: 18, alignItems: "flex-start" }}>
-                <div style={{ width: 52, height: 52, flexShrink: 0, borderRadius: 16, background: V.navyLt, display: "grid", placeItems: "center", fontSize: 26 }}>✨</div>
-                <div>
-                  <p style={{ margin: 0, fontSize: 18, fontWeight: 700, lineHeight: 1.6 }}>{improvement}</p>
-                  {scoreDiff !== null && scoreDiff > 0 && (
-                    <p className="tnum" style={{ margin: "8px 0 0", fontSize: 13, color: V.green, fontWeight: 600 }}>前回より +{scoreDiff} 点。継続が力になります。</p>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
-                <div style={{ width: 52, height: 52, flexShrink: 0, borderRadius: 16, background: "rgba(255,255,255,0.06)", display: "grid", placeItems: "center", fontSize: 26 }}>🌱</div>
-                <p style={{ margin: 0, fontSize: 15, color: V.ink2, lineHeight: 1.8 }}>
-                  最初の練習を終えると、ここに成長の記録が出ます。<br />
-                  <Link href="/session" style={{ color: "#F9A8D4", fontWeight: 700, textDecoration: "none" }}>はじめの1回をやってみる</Link>
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* コーチと話す */}
-          <Link href="/talk" className="reveal lift rs-col-12" style={{ ...stagger(7), ...glassCard, gridColumn: "span 5", textDecoration: "none", color: "inherit", background: "linear-gradient(135deg, rgba(217,70,239,0.28), rgba(124,58,237,0.22))", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.14), 0 30px 50px -30px rgba(217,70,239,0.55)", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 160 }}>
-            <div style={label}>COACH</div>
-            <div>
-              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.35 }}>JOとYUKOに、<br />気軽に相談してみる</div>
-              <div style={{ marginTop: 10, fontSize: 13, color: "rgba(255,255,255,0.75)" }}>話した内容は残るので、続きからいつでも相談できます</div>
-            </div>
-          </Link>
-        </section>
-
-        <p className="reveal" style={{ ...stagger(8), margin: "28px 4px 0", fontSize: 12.5, color: V.ink3, lineHeight: 1.8, display: "flex", alignItems: "center", gap: 8 }}>
-          <span aria-hidden>🔒</span>
-          会話の内容は、あなたの成長のためだけに使われます。
-        </p>
       </div>
     </main>
   );

@@ -280,3 +280,15 @@ body > * { position: relative; z-index: 1; }
   .home-icon { width: 72px !important; height: 72px !important; border-radius: 18px !important; }
   .home-h1 { font-size: clamp(26px, 8vw, 34px) !important; }
 }
+
+
+/* 選択画面を画面の高さに収める（PC・タブレット）。画面が低すぎるときは最低高さを守ってスクロール */
+@media (min-width: 768px) {
+  .fit-page {
+    height: max(calc(100dvh - 64px - 40px), 520px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .fit-grid { flex: 1; min-height: 0; }
+}

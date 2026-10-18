@@ -289,61 +289,57 @@ export default function SessionPage() {
   ══════════════════════════════ */
   if (!selectedScenario) {
     return (
-      <main className="screen-minh px-5 sm:px-8 pb-24 pt-8 sm:pt-12">
-        <div className="mx-auto max-w-[1100px]">
+      <main className="fit-page px-5 sm:px-8 pb-10 pt-4 sm:pt-5">
+        <div className="mx-auto flex w-full max-w-[1100px] flex-col md:min-h-0 md:flex-1">
 
-          {/* ヘッダー */}
-          <div className="reveal flex flex-wrap items-end justify-between gap-4" style={{ ["--i" as string]: 0 }}>
-            <div>
-              <h1 className="text-[34px] font-extrabold leading-tight tracking-tight sm:text-5xl">
-                <span className="text-grad">誰の相談を、聴く？</span>
-              </h1>
-              <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/60">
-                相談者を選ぶと、すぐに面談がはじまります。終わったあとに、AIが聴き方を評価します。
-              </p>
-              <div className="mt-5 max-w-sm"><LevelBar c={counseling} /></div>
+          {/* ヘッダー（1行にまとめて、カードを画面内に収める） */}
+          <div className="reveal flex min-h-[44px] md:h-11 flex-wrap items-center justify-between gap-x-6 gap-y-3" style={{ ["--i" as string]: 0 }}>
+            <h1 className="text-[30px] font-extrabold leading-tight tracking-tight sm:text-4xl">
+              <span className="text-grad">誰の相談を、聴く？</span>
+            </h1>
+            <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
+              <div className="min-w-[240px] flex-1 md:w-[280px] md:flex-none"><LevelBar c={counseling} /></div>
+              <Link href="/scenario/new" className="btn-ghost inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white/80" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.16)" }}>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                シナリオを作成
+              </Link>
             </div>
-            <Link href="/scenario/new" className="btn-ghost inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white/80" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.16)" }}>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
-              シナリオを作成
-            </Link>
           </div>
 
-          {/* 相談者カード */}
-          <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+          {/* 相談者カード（PCでは画面の高さいっぱいに収める） */}
+          <div className="fit-grid mt-4 grid grid-cols-1 gap-4 md:grid-cols-3 md:grid-rows-[minmax(0,1fr)] md:gap-5">
             {scenarios.map((scenario, idx) => {
               const portrait = clients.find((c) => c.scenarioId === scenario.id)?.images?.idle ?? null;
               return (
-                <div key={scenario.id} className="reveal group/card relative" style={{ ["--i" as string]: idx + 1 }}>
+                <div key={scenario.id} className="reveal group/card relative min-h-0" style={{ ["--i" as string]: idx + 1 }}>
                   <button
                     onClick={() => startSession(scenario)}
                     className="glass lift group flex h-full w-full min-w-0 flex-col overflow-hidden rounded-[28px] text-left"
                   >
-                    <div className="relative aspect-[4/4.2] w-full overflow-hidden">
+                    <div className="relative aspect-[4/4.2] w-full overflow-hidden md:aspect-auto md:min-h-0 md:flex-1">
                       {portrait ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={portrait} alt={`${scenario.clientName}さん`} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.05]" style={{ objectPosition: "50% 18%" }} />
+                        <img src={portrait} alt={`${scenario.clientName}さん`} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.05]" style={{ objectPosition: "50% 15%" }} />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-7xl" style={{ background: "radial-gradient(closest-side, rgba(217,70,239,0.3), transparent 80%)" }}>
                           {scenario.icon}
                         </div>
                       )}
                       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#14121f] via-[#14121f]/60 to-transparent" />
-                      <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1 text-[11px] font-semibold text-white/85 backdrop-blur">
-                        {scenario.isCustom ? "カスタム" : scenario.title}
+                      <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-pink-400 to-fuchsia-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-lg shadow-fuchsia-500/30">
+                        {scenario.title}
                       </div>
-                      <div className="absolute inset-x-5 bottom-4">
+                      <div className="absolute inset-x-5 bottom-3">
                         <p className="text-2xl font-extrabold tracking-tight">{scenario.clientName}</p>
                         <p className="mt-0.5 text-xs text-white/65">{scenario.clientRole}</p>
                       </div>
                     </div>
 
-                    <div className="flex flex-1 flex-col p-5 pt-4 pb-6">
-                      <h2 className="text-[17px] font-bold leading-snug">{scenario.title}</h2>
-                      <p className="mt-2 line-clamp-3 text-[13.5px] leading-relaxed text-white/55">{scenario.description}</p>
-                      <div className="mt-4 flex flex-wrap gap-1.5">
+                    <div className="flex-shrink-0 p-5 pt-4">
+                      <p className="line-clamp-2 text-[13px] leading-relaxed text-white/60">{scenario.description}</p>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
                         {scenario.tags.slice(0, 3).map((tag) => (
                           <span key={tag} className="rounded-md bg-white/[0.07] px-2 py-1 text-[11px] font-medium text-white/65">{tag}</span>
                         ))}

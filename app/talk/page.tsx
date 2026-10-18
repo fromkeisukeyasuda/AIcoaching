@@ -245,34 +245,28 @@ export default function ConsultPage() {
   /* ══════ コーチ選択 ══════ */
   if (!coach) {
     return (
-      <main className="screen-minh px-5 sm:px-8 pb-24 pt-8 sm:pt-12">
-        <div className="mx-auto max-w-[1000px]">
-          <div className="reveal flex flex-wrap items-end justify-between gap-4" style={{ ["--i" as string]: 0 }}>
-            <div>
-              <p className="mb-3 text-xs font-bold tracking-[0.18em] text-pink-300/80">COACH</p>
-              <h1 className="text-[34px] font-extrabold leading-tight tracking-tight sm:text-5xl">
-                <span className="text-grad">今日は誰に、相談する？</span>
-              </h1>
-              <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/60">
-                気軽に話を聴いてくれるAIコーチ。愚痴も、考えごとも、そのままどうぞ。
-              </p>
-            </div>
+      <main className="fit-page px-5 sm:px-8 pb-10 pt-4 sm:pt-5">
+        <div className="mx-auto flex w-full max-w-[1100px] flex-col md:min-h-0 md:flex-1">
+          <div className="reveal flex min-h-[44px] md:h-11 flex-wrap items-center justify-between gap-x-6 gap-y-3" style={{ ["--i" as string]: 0 }}>
+            <h1 className="text-[30px] font-extrabold leading-tight tracking-tight sm:text-4xl">
+              <span className="text-grad">今日は誰に、相談する？</span>
+            </h1>
             {profile && (
-              <button onClick={resetProfile} className="btn-ghost rounded-full px-4 py-2 text-xs font-medium text-white/60" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.14)" }}>
+              <button onClick={resetProfile} className="btn-ghost rounded-full px-5 py-2.5 text-sm font-medium text-white/60" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.14)" }}>
                 呼び名・年代を変更{profile.nickname ? `（${profile.nickname}さん）` : ""}
               </button>
             )}
           </div>
 
-          <div className="mt-10 grid gap-5 sm:grid-cols-2">
+          <div className="fit-grid mt-4 grid w-full gap-4 sm:grid-cols-2 md:mx-auto md:max-w-[820px] md:grid-rows-[minmax(0,1fr)] md:gap-5">
             {coaches.map((c, idx) => (
               <button
                 key={c.id}
                 onClick={() => selectCoach(c)}
-                className="reveal lift group relative overflow-hidden rounded-[28px] bg-[#1d1a2e] text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                className="reveal lift group relative min-h-0 overflow-hidden rounded-[28px] bg-[#1d1a2e] text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
                 style={{ ["--i" as string]: idx + 1 }}
               >
-                <div className="aspect-[4/5] overflow-hidden">
+                <div className="aspect-[4/5] overflow-hidden md:absolute md:inset-0 md:aspect-auto">
                   {c.images ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={c.images.idle} alt={c.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" style={{ objectPosition: "50% 18%" }} />

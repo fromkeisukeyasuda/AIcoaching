@@ -29,6 +29,39 @@ export interface ImprovementReview {
   comment: string;    // AIによるコメント
 }
 
+/** 面談プロセス分析（三層モデルの推移）の1フェーズ */
+export interface SheetPhase {
+  phase: string;   // 導入・防衛解除 など
+  client: string;  // クライエントの状態・発言の要点
+  cc: string;      // CCの意図的な関わり・発問
+  change: string;  // 変化・内省の深化度
+}
+
+/** ロールプレイ振り返りシート（AIが会話から作成する部分） */
+export interface ReflectionSheet {
+  situation: string;                               // 相談場面・導入状況
+  layers: { role: string; action: string; being: string }; // 役割層・行動層・存在層
+  phases: SheetPhase[];                            // A. 面談プロセス分析
+  oral: {                                          // B. 口頭試問 整合性マトリクス
+    complaint: string;  // ① 主訴
+    view: string;       // ② CC視点の見立て
+    done: string;       // ③ できたこと
+    improve: string;    // ④ やり残した点・改善点
+    plan: string;       // ④ 次回以降の具体的支援
+  };
+  consistency: string;                             // 4問の整合性コメント
+  keyQuestions: { label: string; question: string; effect: string }[]; // C. キークエスチョン
+  nextTheme: string;                               // D. 次回へ持ち越す実践テーマ（AI案）
+}
+
+/** シートのうち、本人が入力する部分（自己採点・テーマ・メモ） */
+export interface ReflectionNotes {
+  selfScore?: number;
+  targetScore?: number;
+  nextTheme?: string;
+  memo?: string;
+}
+
 export interface EvaluationResult {
   overallScore: number;
   summary: string;
@@ -37,6 +70,7 @@ export interface EvaluationResult {
   improvements: string[];
   nextSteps: string;
   previousImprovementsReview?: ImprovementReview[];
+  sheet?: ReflectionSheet;
 }
 
 export interface SessionData {
@@ -51,4 +85,5 @@ export interface SessionRecord {
   session: SessionData;
   evaluation: EvaluationResult;
   savedAt: string;
+  reflection?: ReflectionNotes;
 }

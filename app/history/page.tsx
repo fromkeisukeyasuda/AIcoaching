@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { SessionRecord } from "@/types";
+import { ReflectionNotes, SessionRecord } from "@/types";
 
 /* ══════════════════════════════════════════════════════════════════════
    デザイントークン（v3）
@@ -93,6 +93,305 @@ function MiniBar({ score, maxScore }: { score: number; maxScore: number }) {
 /* ══════════════════════════════════════════════════════════════════════
    メインページ
 ══════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   振り返りシート（展開パネル）の部品
+══════════════════════════════════════════════ */
+const SHEET_BOX: React.CSSProperties = {
+  borderRadius: 16,
+  background: "rgba(255,255,255,0.04)",
+  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)",
+};
+
+function SheetTitle({ badge, title, sub }: { badge: string; title: string; sub?: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+      <span style={{ display: "inline-grid", placeItems: "center", minWidth: 24, height: 24, padding: "0 7px", borderRadius: 8, background: V.accent, color: "white", fontSize: 11.5, fontWeight: 800 }}>{badge}</span>
+      <span style={{ fontFamily: V.round, fontSize: 15, fontWeight: 800, letterSpacing: "-0.01em" }}>{title}</span>
+      {sub && <span style={{ fontSize: 11.5, color: V.ink3 }}>{sub}</span>}
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ ...SHEET_BOX, padding: "11px 14px" }}>
+      <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.06em", color: V.ink3, marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 13, color: V.ink, lineHeight: 1.7 }}>{children}</div>
+    </div>
+  );
+}
+
+const LAYER_META = [
+  { key: "role" as const, name: "役割層", hint: "べき論・他者評価・鎧", color: V.coral },
+  { key: "action" as const, name: "行動層", hint: "業務内容・時間・成果", color: V.amber },
+  { key: "being" as const, name: "存在層", hint: "原動力・価値観・生きた証", color: "#F472B6" },
+];
+
+function dimmed(v: string) {
+  return v.trim() === "—" || v.trim() === "未実施" || v.trim() === "";
+}
+
+function NumberInput({ value, onChange, placeholder }: { value?: number; onChange: (v: number | undefined) => void; placeholder: string }) {
+  return (
+    <input
+      type="number"
+      min={0}
+      max={100}
+      inputMode="numeric"
+      value={value ?? ""}
+      placeholder={placeholder}
+      onChange={(e) => {
+        const n = e.target.value === "" ? undefined : Math.max(0, Math.min(100, Number(e.target.value)));
+        onChange(n);
+      }}
+      className="tnum"
+      style={{ width: 84, borderRadius: 12, border: "none", outline: "none", background: "rgba(255,255,255,0.07)", color: V.ink, fontSize: 18, fontWeight: 800, padding: "9px 12px", fontFamily: V.sans }}
+    />
+  );
+}
+
+function TextArea({ value, onChange, placeholder, rows = 3 }: { value: string; onChange: (v: string) => void; placeholder: string; rows?: number }) {
+  return (
+    <textarea
+      value={value}
+      rows={rows}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      style={{ width: "100%", resize: "vertical", borderRadius: 14, border: "none", outline: "none", background: "rgba(255,255,255,0.07)", color: V.ink, fontSize: 13, lineHeight: 1.8, padding: "11px 14px", fontFamily: V.sans }}
+    />
+  );
+}
+
+/** 1件分の振り返りシート */
+function ReflectionSheetView({
+  record, onUpdate, onDelete,
+}: {
+  record: SessionRecord;
+  onUpdate: (patch: Partial<SessionRecord>) => void;
+  onDelete: () => void;
+}) {
+  const sc = record.session.scenario;
+  const ev = record.evaluation;
+  const sheet = ev.sheet;
+  const notes = record.reflection ?? {};
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
+
+  const setNotes = (patch: Partial<ReflectionNotes>) => onUpdate({ reflection: { ...notes, ...patch } });
+
+  const generate = async () => {
+    setGenerating(true);
+    setGenError(null);
+    try {
+      const res = await fetch("/api/reflect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: record.session.messages, scenario: sc }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error ?? "シートを作成できませんでした");
+      onUpdate({ evaluation: { ...ev, sheet: data } });
+    } catch (e) {
+      setGenError(e instanceof Error ? e.message : "シートを作成できませんでした");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <div style={{ borderTop: `1px solid ${V.borderSoft}`, padding: "22px", display: "flex", flexDirection: "column", gap: 26 }}>
+
+      {/* ── 基本情報 ── */}
+      <section>
+        <SheetTitle badge="基本" title="基本情報" />
+        <div className="rs-grid-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <Field label="実施日">{formatDate(record.savedAt)}</Field>
+          <Field label="ケース・クライエント名">{sc.title}／{sc.clientName}さん</Field>
+          <Field label="属性・役職">{sc.clientRole || "—"}</Field>
+          <Field label="相談場面・導入状況">{sheet?.situation || sc.situation || "—"}</Field>
+        </div>
+      </section>
+
+      {!sheet ? (
+        <section style={{ ...SHEET_BOX, padding: "22px", textAlign: "center" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>このセッションの振り返りシートは、まだ作成されていません</div>
+          <p style={{ margin: "0 0 14px", fontSize: 12.5, color: V.ink3, lineHeight: 1.8 }}>会話の記録から、面談プロセス・口頭試問の整合性・キークエスチョンを自動でまとめます。</p>
+          <button
+            onClick={generate}
+            disabled={generating || record.session.messages.length === 0}
+            className="btn-primary"
+            style={{ border: "none", cursor: generating ? "default" : "pointer", background: V.accent, color: "white", fontWeight: 700, fontSize: 13, padding: "11px 24px", borderRadius: 999, opacity: generating || record.session.messages.length === 0 ? 0.5 : 1, fontFamily: V.sans }}
+          >
+            {generating ? "作成中…（1分ほどかかります）" : "シートを作成する"}
+          </button>
+          {record.session.messages.length === 0 && <p style={{ margin: "10px 0 0", fontSize: 11.5, color: V.ink3 }}>会話の記録が残っていないため、作成できません。</p>}
+          {genError && <p style={{ margin: "10px 0 0", fontSize: 12, color: V.coral }}>{genError}</p>}
+        </section>
+      ) : (
+        <>
+          {/* ── A. 面談プロセス分析 ── */}
+          <section>
+            <SheetTitle badge="A" title="面談プロセス分析" sub="三層モデルの推移" />
+
+            {(sheet.layers.role || sheet.layers.action || sheet.layers.being) && (
+              <div className="rs-grid-1" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 14 }}>
+                {LAYER_META.map((l) => (
+                  <div key={l.key} style={{ ...SHEET_BOX, padding: "12px 14px", borderTop: `3px solid ${l.color}` }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: l.color }}>{l.name}</span>
+                      <span style={{ fontSize: 10.5, color: V.ink3 }}>{l.hint}</span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: 12.5, color: V.ink2, lineHeight: 1.75 }}>{sheet.layers[l.key] || "—"}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="sheet-table">
+              <div className="sheet-head">
+                <span>フェーズ</span><span>クライエントの状態・発言の要点</span><span>CCの意図的な関わり・発問</span><span>変化・内省の深化度</span>
+              </div>
+              {sheet.phases.map((p, i) => (
+                <div key={p.phase} className="sheet-row" style={{ opacity: dimmed(p.change) ? 0.55 : 1 }}>
+                  <div className="sheet-phase"><span className="tnum" style={{ color: "#F9A8D4", marginRight: 6 }}>{i + 1}</span>{p.phase}</div>
+                  <div><span className="sheet-lab">クライエントの状態・発言の要点</span>{p.client}</div>
+                  <div><span className="sheet-lab">CCの意図的な関わり・発問</span>{p.cc}</div>
+                  <div><span className="sheet-lab">変化・内省の深化度</span>{p.change}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ── B. 口頭試問 整合性マトリクス ── */}
+          <section>
+            <SheetTitle badge="B" title="口頭試問 整合性マトリクス" sub="4問が一つのストーリーになっているか" />
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                { n: "①", title: "クライエントの主訴", hint: "客観的事実＋主観的苦悩・葛藤", body: sheet.oral.complaint },
+                { n: "②", title: "CC視点の見立て", hint: "心理的課題・自己概念の歪み", body: sheet.oral.view },
+                { n: "③", title: "できたこと", hint: "CCの具体的介入 → クライエントの気づき", body: sheet.oral.done },
+              ].map((o) => (
+                <div key={o.n} style={{ ...SHEET_BOX, padding: "13px 16px" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "2px 10px", marginBottom: 6 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800 }}><span style={{ color: "#F9A8D4", marginRight: 6 }}>{o.n}</span>{o.title}</span>
+                    <span style={{ fontSize: 10.5, color: V.ink3 }}>{o.hint}</span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 13, color: V.ink2, lineHeight: 1.85 }}>{o.body || "—"}</p>
+                </div>
+              ))}
+              <div style={{ ...SHEET_BOX, padding: "13px 16px" }}>
+                <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 8 }}><span style={{ color: "#F9A8D4", marginRight: 6 }}>④</span>改善点・今後の方針</div>
+                <div className="rs-grid-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div style={{ background: V.coralLt, borderRadius: 12, padding: "11px 13px" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: V.coral, marginBottom: 4 }}>やり残した点・改善点</div>
+                    <p style={{ margin: 0, fontSize: 12.5, color: V.ink2, lineHeight: 1.8 }}>{sheet.oral.improve || "—"}</p>
+                  </div>
+                  <div style={{ background: V.greenLt, borderRadius: 12, padding: "11px 13px" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: V.greenDk, marginBottom: 4 }}>次回以降の具体的支援</div>
+                    <p style={{ margin: 0, fontSize: 12.5, color: V.ink2, lineHeight: 1.8 }}>{sheet.oral.plan || "—"}</p>
+                  </div>
+                </div>
+              </div>
+              {sheet.consistency && (
+                <div style={{ borderRadius: 14, background: V.navyLt, padding: "11px 14px" }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "#F9A8D4", marginRight: 8 }}>整合性</span>
+                  <span style={{ fontSize: 12.5, color: V.ink, lineHeight: 1.8 }}>{sheet.consistency}</span>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* ── C. キークエスチョン ── */}
+          <section>
+            <SheetTitle badge="C" title="決め手になったキークエスチョン" sub="再現できる問いとして蓄積" />
+            {sheet.keyQuestions.length === 0 ? (
+              <p style={{ margin: 0, fontSize: 12.5, color: V.ink3 }}>今回は、決め手になった問いを抽出できませんでした。</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {sheet.keyQuestions.map((k, i) => (
+                  <div key={i} style={{ ...SHEET_BOX, padding: "13px 16px", position: "relative" }}>
+                    <span aria-hidden style={{ position: "absolute", left: 0, top: 14, bottom: 14, width: 3, borderRadius: 3, background: V.accent }} />
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <span className="tnum" style={{ fontSize: 11, fontWeight: 800, color: "#F9A8D4" }}>問い{i + 1}</span>
+                      {k.label && <span style={{ fontSize: 11, color: V.ink3 }}>（{k.label}）</span>}
+                    </div>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, lineHeight: 1.7 }}>「{k.question}」</p>
+                    {k.effect && <p style={{ margin: "6px 0 0", fontSize: 12.5, color: V.ink2, lineHeight: 1.8 }}>{k.effect}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
+
+      {/* ── D. 総合得点・自己フィードバック ── */}
+      <section>
+        <SheetTitle badge="D" title="総合得点・自己フィードバック" />
+        <div style={{ ...SHEET_BOX, padding: "16px 18px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: "14px 28px" }}>
+            <div>
+              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.06em", color: V.ink3, marginBottom: 6 }}>AI採点</div>
+              <div className="tnum" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, color: scoreColor(ev.overallScore) }}>{ev.overallScore}<span style={{ fontSize: 13, color: V.ink3, fontWeight: 600 }}> / 100</span></div>
+            </div>
+            <div>
+              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.06em", color: V.ink3, marginBottom: 6 }}>自己採点</div>
+              <NumberInput value={notes.selfScore} onChange={(v) => setNotes({ selfScore: v })} placeholder="—" />
+            </div>
+            <div>
+              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.06em", color: V.ink3, marginBottom: 6 }}>目標点</div>
+              <NumberInput value={notes.targetScore} onChange={(v) => setNotes({ targetScore: v })} placeholder="100" />
+            </div>
+          </div>
+
+          <div style={{ marginTop: 18 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
+              <span style={{ fontSize: 12, fontWeight: 700 }}>次回ケースへ持ち越す実践テーマ</span>
+              {sheet?.nextTheme && !notes.nextTheme && (
+                <button onClick={() => setNotes({ nextTheme: sheet.nextTheme })} className="btn-ghost" style={{ border: "none", cursor: "pointer", background: "transparent", color: "#F9A8D4", fontSize: 11.5, fontWeight: 700, padding: "4px 10px", borderRadius: 999, boxShadow: "inset 0 0 0 1px rgba(244,114,182,0.35)", fontFamily: V.sans }}>
+                  AIの提案を入れる
+                </button>
+              )}
+            </div>
+            <TextArea
+              value={notes.nextTheme ?? ""}
+              onChange={(v) => setNotes({ nextTheme: v })}
+              placeholder={sheet?.nextTheme ? `例）${sheet.nextTheme}` : "次の面談で意識することを書く"}
+            />
+          </div>
+
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>メモ</div>
+            <TextArea value={notes.memo ?? ""} onChange={(v) => setNotes({ memo: v })} placeholder="気づき、口頭試問で話したいこと など" rows={2} />
+          </div>
+
+          {ev.scores.length > 0 && (
+            <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px 18px" }}>
+              {ev.scores.map((s) => (
+                <div key={s.category}>
+                  <div style={{ fontSize: 11.5, color: V.ink2, marginBottom: 4 }}>{s.category}</div>
+                  <MiniBar score={s.score} maxScore={s.maxScore} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <Link href="/evaluation?demo=1" className="btn-ghost" style={{ fontSize: 12, color: V.ink2, textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", padding: "9px 16px", borderRadius: 999, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.14)" }}>
+          詳細レポート
+        </Link>
+        <span style={{ fontSize: 11, color: V.ink3 }}>自己採点・テーマ・メモは、入力すると自動で保存されます</span>
+        <div style={{ flex: 1 }} />
+        <button onClick={onDelete} style={{ fontSize: 11, color: V.ink3, background: "transparent", border: `1px solid ${V.border}`, borderRadius: 999, padding: "7px 14px", cursor: "pointer", fontFamily: V.sans }}>
+          削除
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function HistoryPage() {
   const [records, setRecords] = useState<SessionRecord[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -109,6 +408,14 @@ export default function HistoryPage() {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
+    });
+  };
+
+  const updateRecord = (id: string, patch: Partial<SessionRecord>) => {
+    setRecords((prev) => {
+      const updated = prev.map((r) => (r.id === id ? { ...r, ...patch } : r));
+      try { localStorage.setItem("sessionHistory", JSON.stringify(updated)); } catch { /* 容量超過などは無視 */ }
+      return updated;
     });
   };
 
@@ -292,71 +599,13 @@ export default function HistoryPage() {
                     </div>
                   </button>
 
-                  {/* ─ 展開パネル ─ */}
+                  {/* ─ 展開パネル: 振り返りシート ─ */}
                   {isExpanded && (
-                    <div style={{ borderTop: `1px solid ${V.borderSoft}`, padding: "18px 22px" }}>
-                      <div className="rs-grid-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 18 }}>
-
-                        {/* 各軸スコア */}
-                        <div>
-                          <div style={{ fontFamily: V.round, fontSize: 13, fontWeight: 700, color: V.navy, marginBottom: 12 }}>スキル評価</div>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                            {ev.scores.map(s => (
-                              <div key={s.category}>
-                                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                                  <span style={{ fontSize: 12, color: V.ink2 }}>{s.category}</span>
-                                </div>
-                                <MiniBar score={s.score} maxScore={s.maxScore} />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* 強み / 改善点 */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                          {/* 強み */}
-                          <div style={{ background: V.greenLt, borderRadius: 12, padding: "12px 14px" }}>
-                            <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 12, color: V.greenDk, marginBottom: 8 }}>✅ 良かった点</div>
-                            {ev.strengths.slice(0, 2).map((s, i) => (
-                              <div key={i} style={{ fontSize: 12, color: V.ink2, lineHeight: 1.6, marginBottom: 4, paddingLeft: 8, borderLeft: `2px solid ${V.green}` }}>{s}</div>
-                            ))}
-                          </div>
-
-                          {/* 改善点 */}
-                          <div style={{ background: V.coralLt, borderRadius: 12, padding: "12px 14px" }}>
-                            <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 12, color: V.coral, marginBottom: 8 }}>📈 改善できる点</div>
-                            {ev.improvements.slice(0, 2).map((s, i) => (
-                              <div key={i} style={{ fontSize: 12, color: V.ink2, lineHeight: 1.6, marginBottom: 4, paddingLeft: 8, borderLeft: `2px solid ${V.coral}` }}>{s}</div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 次のステップ */}
-                      {ev.nextSteps && (
-                        <div style={{ background: V.navyLt, borderRadius: 12, padding: "12px 16px", marginBottom: 16 }}>
-                          <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 12, color: V.navy, marginBottom: 6 }}>🎯 次の練習で意識すること</div>
-                          <div style={{ fontSize: 12, color: V.ink2, lineHeight: 1.7 }}>{ev.nextSteps}</div>
-                        </div>
-                      )}
-
-                      {/* アクション行 */}
-                      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                        <Link
-                          href="/evaluation?demo=1"
-                          style={{ fontSize: 12, color: V.navy, textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4, padding: "8px 14px", border: `1px solid ${V.border}`, borderRadius: 8 }}
-                        >
-                          📊 詳細レポート
-                        </Link>
-                        <div style={{ flex: 1 }} />
-                        <button
-                          onClick={() => deleteRecord(record.id)}
-                          style={{ fontSize: 11, color: V.ink3, background: "transparent", border: `1px solid ${V.border}`, borderRadius: 8, padding: "7px 12px", cursor: "pointer", fontFamily: V.sans }}
-                        >
-                          削除
-                        </button>
-                      </div>
-                    </div>
+                    <ReflectionSheetView
+                      record={record}
+                      onUpdate={(patch) => updateRecord(record.id, patch)}
+                      onDelete={() => deleteRecord(record.id)}
+                    />
                   )}
                 </div>
               );

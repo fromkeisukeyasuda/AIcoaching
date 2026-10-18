@@ -64,7 +64,7 @@ export const coaches: Coach[] = [
 【スタンス】
 - 答えを与えるのではなく、問いで相手の中にある答えを引き出す
 - 前向きな変化を見つけたら、はっきり認めて背中を押す`,
-    voicePrefs: ["小夜/SAYO", "四国めたん", "春日部つむぎ"],
+    voicePrefs: ["WhiteCUL", "小夜/SAYO", "四国めたん"],
     images: {
       idle: "/characters/YUKO.webp",
       neutral: "/characters/YUKO_neutral.webp",

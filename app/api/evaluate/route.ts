@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { Message, Scenario, EvaluationResult } from "@/types";
+import { sheetInstructions, SHEET_JSON_EXAMPLE, normalizeSheet } from "@/lib/sheet";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -47,7 +48,7 @@ ${conversation}
 3. 共感力: クライアントの感情に寄り添い、安心感を与えられているか
 4. 目標設定支援: クライアントが自分の目標を明確にする手助けができているか
 5. アクション促進: 具体的な行動につながる対話ができているか
-
+${sheetInstructions(scenario)}
 以下のJSON形式のみで返答してください（他のテキストは一切含めないこと）:
 {
   "overallScore": 75,
@@ -61,18 +62,19 @@ ${conversation}
   ],
   "strengths": ["強みの具体例1", "強みの具体例2", "強みの具体例3"],
   "improvements": ["改善点の具体例1", "改善点の具体例2"],
-  "nextSteps": "次の練習に向けた具体的なアドバイス（2〜3文）"${prevJsonField}
+  "nextSteps": "次の練習に向けた具体的なアドバイス（2〜3文）",
+  "sheet": ${SHEET_JSON_EXAMPLE}${prevJsonField}
 }`;
 
   try {
     const response = await client.messages.create({
       model: "claude-sonnet-5-5",
-      max_tokens: 2000,
+      max_tokens: 6000,
       messages: [{ role: "user", content: prompt }],
     });
 
-    const text =
-      response.content[0].type === "text" ? response.content[0].text : "";
+    // 思考ブロックが先頭に来ることがあるため、テキストブロックをすべて連結する
+    const text = response.content.map((c) => (c.type === "text" ? c.text : "")).join("");
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -80,6 +82,7 @@ ${conversation}
     }
 
     const result: EvaluationResult = JSON.parse(jsonMatch[0]);
+    result.sheet = normalizeSheet(result.sheet);
 
     return Response.json(result);
   } catch (error) {

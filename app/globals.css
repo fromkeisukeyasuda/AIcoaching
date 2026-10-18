@@ -292,3 +292,29 @@ body > * { position: relative; z-index: 1; }
   }
   .fit-grid { flex: 1; min-height: 0; }
 }
+
+
+/* 振り返りシートの「面談プロセス分析」表。PCは4列、スマホは各行をカードにして項目名を添える */
+.sheet-table { display: flex; flex-direction: column; gap: 8px; }
+.sheet-head, .sheet-row {
+  display: grid;
+  grid-template-columns: 150px 1fr 1fr 1fr;
+  gap: 12px;
+}
+.sheet-head { padding: 0 14px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; color: #8F8AA8; }
+.sheet-row {
+  padding: 13px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: #CFC9E4;
+}
+.sheet-phase { font-size: 12.5px; font-weight: 800; color: #fff; line-height: 1.6; }
+.sheet-lab { display: none; }
+@media (max-width: 900px) {
+  .sheet-head { display: none; }
+  .sheet-row { grid-template-columns: 1fr; gap: 8px; }
+  .sheet-lab { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; color: #8F8AA8; margin-bottom: 1px; }
+}

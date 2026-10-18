@@ -43,7 +43,7 @@ function SoundWave({ active }: { active: boolean }) {
 /* キャラクター別デフォルト音声（VOICEVOXスピーカー名、優先順位順） */
 const CHARACTER_VOICE_PREFS: Record<string, string[]> = {
   "田中": ["玄野武宏", "白上虎太郎", "青山龍星"],
-  "佐藤": ["春日部つむぎ", "四国めたん", "九州そら"],
+  "佐藤": ["後鬼", "春日部つむぎ", "四国めたん"],
   "鈴木": ["青山龍星", "玄野武宏", "白上虎太郎"],
 };
 

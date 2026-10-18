@@ -228,11 +228,11 @@ export default function MyPage() {
   }
 
   return (
-    <main style={{ minHeight: "calc(100vh - 64px)", background: V.bg, paddingBottom: 64, fontFamily: V.sans }}>
+    <main className="screen-minh" style={{ background: V.bg, paddingBottom: 64, fontFamily: V.sans }}>
 
       {/* ─── プロフィールカード ─── */}
-      <div style={{ maxWidth: 860, margin: "0 auto", padding: "28px 24px 0" }}>
-        <div style={{
+      <div className="rs-px" style={{ maxWidth: 860, margin: "0 auto", padding: "28px 24px 0" }}>
+        <div className="rs-stack rs-pad" style={{
           ...card,
           padding: "28px 32px",
           display: "flex",
@@ -279,14 +279,14 @@ export default function MyPage() {
           </div>
 
           {/* 右: イラスト */}
-          <div style={{ flexShrink: 0 }}>
+          <div className="rs-hide" style={{ flexShrink: 0 }}>
             <ProfileIllustration />
           </div>
         </div>
       </div>
 
       {/* ─── コンテンツグリッド ─── */}
-      <div style={{ maxWidth: 860, margin: "0 auto", padding: "20px 24px", display: "grid", gap: 18 }}>
+      <div className="rs-px" style={{ maxWidth: 860, margin: "0 auto", padding: "20px 24px", display: "grid", gap: 18 }}>
 
         {/* サポート設定 */}
         <div style={{ ...card, padding: "24px 28px" }}>

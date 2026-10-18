@@ -289,17 +289,17 @@ export default function SessionPage() {
             <p className="text-slate-400 text-sm">シナリオを選んでセッションを開始してください</p>
           </div>
 
-          <div className="grid gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {scenarios.map((scenario) => (
               <div key={scenario.id} className="relative group/card">
                 <button
                   onClick={() => startSession(scenario)}
-                  className="w-full bg-white border border-slate-200 rounded-2xl p-5 text-left transition-all duration-200 group shadow-sm hover:shadow-md"
+                  className="w-full min-w-0 overflow-hidden bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 text-left transition-all duration-200 group shadow-sm hover:shadow-md"
                   style={{ ["--tw-border-opacity" as string]: "1" }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = "#1C2B4A")}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = "")}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                     <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
                       {scenario.icon}
                     </div>
@@ -311,7 +311,7 @@ export default function SessionPage() {
                         )}
                       </div>
                       <p className="text-slate-400 text-sm truncate">{scenario.description}</p>
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
                         <span className="text-xs text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">{scenario.clientName}</span>
                         {scenario.tags.slice(0, 2).map((tag) => (
                           <span key={tag} className="text-xs text-blue-600 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">{tag}</span>
@@ -345,7 +345,7 @@ export default function SessionPage() {
      セッション画面 — HeyGen 風 2カラムレイアウト
   ══════════════════════════════ */
   return (
-    <main className="h-screen flex flex-col bg-white overflow-hidden">
+    <main className="screen-full flex flex-col bg-white overflow-hidden">
 
       {/* ── ヘッダー ── */}
       <div className="flex-shrink-0 border-b border-slate-200 bg-white px-5 py-3 flex items-center justify-between shadow-sm">
@@ -426,10 +426,10 @@ export default function SessionPage() {
       </div>
 
       {/* ── 2カラム ── */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
 
         {/* ═══ 左パネル：アバター（ダークネイビー — コーチング集中空間） ═══ */}
-        <div className="w-1/2 flex-shrink-0 flex flex-col bg-[#0d1b2e] overflow-hidden">
+        <div className="w-full h-[34%] md:h-auto md:w-1/2 flex-shrink-0 flex flex-col bg-[#0d1b2e] overflow-hidden">
 
           {/* 画像エリア */}
           <div className="flex-1 min-h-0 p-4 pb-2">

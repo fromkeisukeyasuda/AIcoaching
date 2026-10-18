@@ -146,12 +146,12 @@ export default function HistoryPage() {
   };
 
   return (
-    <div style={{ minHeight: "calc(100vh - 60px)", background: V.bg, fontFamily: V.sans }}>
+    <div className="screen-minh" style={{ background: V.bg, fontFamily: V.sans }}>
 
       {/* ─── ページヘッダー ─── */}
-      <div style={{ background: V.surface, borderBottom: `1px solid ${V.border}`, padding: "0 32px" }}>
+      <div className="rs-px" style={{ background: V.surface, borderBottom: `1px solid ${V.border}`, padding: "0 32px" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0" }}>
+          <div className="rs-wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0" }}>
             <div>
               <h1 style={{ fontSize: 22, fontWeight: 800, color: V.navy, margin: 0, letterSpacing: "-0.02em" }}>
                 ふりかえり
@@ -162,7 +162,7 @@ export default function HistoryPage() {
                   : "まだ記録がありません"}
               </div>
             </div>
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <div className="rs-wrap" style={{ display: "flex", gap: 10, alignItems: "center" }}>
               {streak > 0 && (
                 <div style={{ display: "flex", alignItems: "center", gap: 6, background: V.amberLt, color: V.amber, padding: "7px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600 }}>
                   🔥 {streak} 回連続上昇中
@@ -188,12 +188,12 @@ export default function HistoryPage() {
       </div>
 
       {/* ─── コンテンツ ─── */}
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "24px 32px 40px" }}>
+      <div className="rs-px" style={{ maxWidth: 1000, margin: "0 auto", padding: "24px 32px 40px" }}>
 
         {/* 統計カード */}
         {records.length > 0 && (
-          <div style={{ ...card, padding: "22px 28px", marginBottom: 24 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1.6fr", gap: 0, alignItems: "center" }}>
+          <div className="rs-pad" style={{ ...card, padding: "22px 28px", marginBottom: 24 }}>
+            <div className="rs-stats" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1.6fr", gap: 0, alignItems: "center" }}>
               {/* セッション数 */}
               <div style={{ textAlign: "center", padding: "0 20px", borderRight: `1px solid ${V.borderSoft}` }}>
                 <div style={{ fontFamily: V.round, fontSize: 36, fontWeight: 800, color: V.navy, lineHeight: 1 }}>{records.length}</div>
@@ -293,7 +293,7 @@ export default function HistoryPage() {
                   {/* ─ 展開パネル ─ */}
                   {isExpanded && (
                     <div style={{ borderTop: `1px solid ${V.borderSoft}`, padding: "18px 22px" }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 18 }}>
+                      <div className="rs-grid-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 18 }}>
 
                         {/* 各軸スコア */}
                         <div>

@@ -78,3 +78,94 @@
 /* Portrait characters (田中・佐藤・鈴木) use image cross-fade for expression
    changes — no CSS movement animations needed here.
    Place public/characters/{name}_speaking.png to enable expression swap. */
+
+/* ══════════════════════════════════════════════
+   レスポンシブ（PC / タブレット / スマホ）
+   ブレークポイント: 1024px 以下 = タブレット, 768px 以下 = スマホ
+══════════════════════════════════════════════ */
+
+/* 画面いっぱいに使うページ用の高さ（ナビ分を引く）。dvh = スマホのアドレスバーを考慮 */
+.screen-h    { height: calc(100vh - 64px); height: calc(100dvh - 64px); }
+.screen-minh { min-height: calc(100vh - 64px); min-height: calc(100dvh - 64px); }
+
+.bottom-tabs { display: none; }
+
+@media (max-width: 1024px) {
+  .topnav { padding: 0 16px !important; }
+  .topnav-logo { margin-right: 16px !important; }
+  .topnav-links a { padding: 0 10px !important; font-size: 13px !important; }
+}
+
+@media (max-width: 768px) {
+  /* 上のナビ: ロゴとアバターだけ。メニューは下部タブバーへ */
+  .topnav { height: 56px !important; justify-content: space-between; }
+  .topnav-links { display: none !important; }
+  .topnav-avatar svg:last-child { display: none; }
+
+  .bottom-tabs {
+    display: flex;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 100;
+    background: #fff;
+    border-top: 1px solid #E8ECF0;
+    box-shadow: 0 -2px 8px rgba(26, 35, 50, 0.06);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .bottom-tab {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 2px;
+    font-size: 10px;
+    color: #8A9BAB;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .bottom-tab.is-active { color: #1C2B4A; font-weight: 700; }
+  body:has(.bottom-tabs) { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+
+  .screen-h    { height: calc(100dvh - 56px - 64px - env(safe-area-inset-bottom)); }
+  .screen-minh { min-height: calc(100dvh - 56px - 64px - env(safe-area-inset-bottom)); }
+
+  /* インラインstyleのレイアウトをスマホ向けに上書きする共通クラス */
+  .rs-stack  { flex-direction: column !important; }
+  .rs-grid-1 { grid-template-columns: 1fr !important; }
+  .rs-grid-2 { grid-template-columns: 1fr 1fr !important; }
+  .rs-hide   { display: none !important; }
+  .rs-pad    { padding: 16px !important; }
+  .rs-full   { width: 100% !important; max-width: 100% !important; }
+  .rs-nowrap-off { white-space: normal !important; }
+}
+
+@media (max-width: 1024px) {
+  .rs-grid-tablet-2 { grid-template-columns: 1fr 1fr !important; }
+}
+@media (max-width: 768px) {
+  .rs-main { padding: 16px 16px 32px !important; }
+  /* ホームのヒーロー: イラストは上に横長で表示 */
+  .rs-hero-art { width: 100% !important; height: 160px; order: -1; }
+  .rs-grid-tablet-2 { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 768px) {
+  .rs-px   { padding-left: 16px !important; padding-right: 16px !important; }
+  .rs-wrap { flex-wrap: wrap !important; gap: 10px !important; }
+  /* 統計カード: 3つ並べて、スパークラインは下の段に全幅 */
+  .rs-stats { grid-template-columns: repeat(3, 1fr) !important; }
+  .rs-stats > * { padding: 0 6px !important; }
+  .rs-stats > :last-child { grid-column: 1 / -1; margin-top: 16px; border-top: 1px solid #EEF1F4; padding-top: 14px !important; }
+}
+
+@media (max-width: 768px) {
+  .rs-grid-1 svg { max-width: 100%; height: auto; }
+}
+
+/* 上部ナビを出さない全画面ページ（/session）。スマホでは下部タブバーの分だけ引く */
+.screen-full { height: 100vh; height: 100dvh; }
+@media (max-width: 768px) {
+  .screen-full { height: calc(100dvh - 64px - env(safe-area-inset-bottom)); }
+}

@@ -245,7 +245,7 @@ function GrowthChart({ data }: { data: number[] }) {
 ══════════════════════════════════════════════════════════════════════ */
 function LoadingScreen() {
   return (
-    <div style={{ minHeight: "calc(100vh - 60px)", background: V.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div className="screen-minh" style={{ background: V.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center" }}>
         <div style={{
           width: 52, height: 52, borderRadius: "50%",
@@ -413,7 +413,7 @@ export default function EvaluationPage() {
   if (error) {
     const isCredit = error.includes("クレジット") || error.includes("credit");
     return (
-      <div style={{ minHeight: "calc(100vh - 60px)", background: V.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
+      <div className="screen-minh" style={{ background: V.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
         <div style={{ textAlign: "center", maxWidth: 420 }}>
           <div style={{ width: 60, height: 60, background: "#FEE2E2", border: "1px solid #FECACA", borderRadius: "50%", display: "grid", placeItems: "center", margin: "0 auto 20px" }}>
             <span style={{ fontSize: 28 }}>⚠️</span>
@@ -491,13 +491,13 @@ export default function EvaluationPage() {
      レンダリング
   ══════════════════════════════════════════════════════════════ */
   return (
-    <div style={{ minHeight: "calc(100vh - 60px)", background: V.bg, fontFamily: V.sans }}>
+    <div className="screen-minh" style={{ background: V.bg, fontFamily: V.sans }}>
 
       {/* ─── ページヘッダー ─── */}
-      <div style={{ background: V.surface, borderBottom: `1px solid ${V.border}`, padding: "0 32px" }}>
+      <div className="rs-px" style={{ background: V.surface, borderBottom: `1px solid ${V.border}`, padding: "0 32px" }}>
         <div style={{ maxWidth: 1120, margin: "0 auto" }}>
           {/* タイトル行 */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0 0" }}>
+          <div className="rs-wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0 0" }}>
             <div>
               <div style={{ fontSize: 11, color: V.ink3, marginBottom: 5 }}>
                 練習 #{practiceNo} ・ {dateStr} ・ {session.scenario.clientName}さん
@@ -506,7 +506,7 @@ export default function EvaluationPage() {
                 {session.scenario.title}
               </h1>
             </div>
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <div className="rs-wrap" style={{ display: "flex", gap: 10, alignItems: "center" }}>
               {streak > 0 && (
                 <div style={{ display: "flex", alignItems: "center", gap: 6, background: V.amberLt, color: V.amber, padding: "6px 12px", borderRadius: 100, fontSize: 12, fontWeight: 600 }}>
                   🔥 {streak} 回連続上昇中
@@ -549,7 +549,7 @@ export default function EvaluationPage() {
       </div>
 
       {/* ─── タブコンテンツ ─── */}
-      <div style={{ maxWidth: 1120, margin: "0 auto", padding: "24px 32px 40px" }}>
+      <div className="rs-px" style={{ maxWidth: 1120, margin: "0 auto", padding: "24px 32px 40px" }}>
 
         {/* ════════════════════════════════════
             TAB 1: 評価レポート
@@ -558,7 +558,7 @@ export default function EvaluationPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
             {/* Row 1: スコアカード + レーダー */}
-            <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 20 }}>
+            <div className="rs-grid-1" style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 20 }}>
 
               {/* スコアカード */}
               <div style={{ ...card, padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
@@ -616,7 +616,7 @@ export default function EvaluationPage() {
                     </div>
                   </div>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 24, alignItems: "center" }}>
+                <div className="rs-grid-1" style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 24, alignItems: "center" }}>
                   <RadarChart axes={axes} size={270} />
                   {/* 軸テーブル */}
                   <div>
@@ -649,7 +649,7 @@ export default function EvaluationPage() {
             </div>
 
             {/* Row 2: 3 カード */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+            <div className="rs-grid-1" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
               {/* 強み */}
               <div style={{ ...card, padding: "20px", borderTop: `3px solid ${V.green}` }}>
                 <div style={{ fontFamily: V.round, fontWeight: 700, fontSize: 14, color: V.greenDk, marginBottom: 12 }}>✅ 強み</div>
@@ -710,7 +710,7 @@ export default function EvaluationPage() {
             </div>
 
             {/* Row 3: 成長トレンド + 発話バランス + スキル別 */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 200px 240px", gap: 16 }}>
+            <div className="rs-grid-1" style={{ display: "grid", gridTemplateColumns: "1fr 200px 240px", gap: 16 }}>
               {/* 成長トレンド */}
               <div style={{ ...card, padding: "22px 24px" }}>
                 <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
@@ -847,7 +847,7 @@ export default function EvaluationPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
             {/* ─ 3 stat pills ─ */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.4fr", gap: 14 }}>
+            <div className="rs-grid-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.4fr", gap: 14 }}>
               <div style={{ ...card, padding: "18px 20px", textAlign: "center" }}>
                 <div style={{ fontFamily: V.round, fontSize: 34, fontWeight: 800, color: V.navy, lineHeight: 1 }}>{score}</div>
                 <div style={{ fontSize: 11, color: V.ink3, marginTop: 6, fontWeight: 600 }}>スコア</div>
@@ -867,7 +867,7 @@ export default function EvaluationPage() {
             </div>
 
             {/* ─ 2-column: 所見 | 次の練習 ─ */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div className="rs-grid-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               {/* 左: 所見 + アコーディオン */}
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <div style={{ ...card, padding: "22px 24px" }}>

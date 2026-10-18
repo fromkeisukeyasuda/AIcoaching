@@ -184,11 +184,12 @@ export default function HomePage() {
   const improvement = lastSession?.evaluation.improvements[0] ?? null;
 
   return (
-    <main style={{ minHeight: "calc(100vh - 64px)", background: V.bg, padding: "28px 24px 60px" }}>
+    <main className="screen-minh rs-main" style={{ background: V.bg, padding: "28px 24px 60px" }}>
       <div style={{ maxWidth: 920, margin: "0 auto" }}>
 
         {/* ═══ ヒーローカード ═══ */}
         <div
+          className="rs-stack"
           style={{
             background: V.surface,
             borderRadius: 20,
@@ -202,7 +203,7 @@ export default function HomePage() {
           }}
         >
           {/* テキスト側 */}
-          <div style={{ flex: 1, padding: "40px 40px 40px 44px", display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0 }}>
+          <div className="rs-pad" style={{ flex: 1, padding: "40px 40px 40px 44px", display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0 }}>
             {/* スパークル */}
             <div style={{ fontSize: 24, marginBottom: 12 }}>✦</div>
 
@@ -278,6 +279,7 @@ export default function HomePage() {
 
           {/* イラスト側 */}
           <div
+            className="rs-hero-art"
             style={{
               width: 420,
               flexShrink: 0,
@@ -291,6 +293,7 @@ export default function HomePage() {
 
         {/* ═══ 3枚スタットカード ═══ */}
         <div
+          className="rs-grid-1 rs-grid-tablet-2"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3,1fr)",

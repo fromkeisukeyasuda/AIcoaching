@@ -49,16 +49,16 @@ function DiagnoseIcon({ active }: { active: boolean }) {
   );
 }
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { href: string; label: string; shortLabel?: string; Icon: (p: { active: boolean }) => React.JSX.Element; exact: boolean }[] = [
   { href: "/",         label: "ホーム",     Icon: HomeIcon,     exact: true  },
   { href: "/session",  label: "練習",       Icon: ChatIcon,     exact: false },
   { href: "/talk",     label: "話す",       Icon: ChatIcon,     exact: false },
-  { href: "/diagnose", label: "経営者診断", Icon: DiagnoseIcon, exact: false },
-  { href: "/history",  label: "ふりかえり", Icon: ChartIcon,    exact: false },
+  { href: "/diagnose", label: "経営者診断", shortLabel: "診断", Icon: DiagnoseIcon, exact: false },
+  { href: "/history",  label: "ふりかえり", shortLabel: "記録", Icon: ChartIcon,    exact: false },
   { href: "/mypage",   label: "マイページ", Icon: UserIcon,     exact: false },
 ];
 
-export default function TopNav() {
+export default function TopNav({ immersive = false }: { immersive?: boolean }) {
   const path = usePathname();
 
   function isActive(href: string, exact: boolean) {
@@ -66,7 +66,10 @@ export default function TopNav() {
   }
 
   return (
+    <>
+    {!immersive && (
     <nav
+      className="topnav"
       style={{
         background: "#FFFFFF",
         height: 64,
@@ -84,6 +87,7 @@ export default function TopNav() {
       {/* ロゴ */}
       <Link
         href="/"
+        className="topnav-logo"
         style={{
           display: "flex",
           alignItems: "center",
@@ -124,8 +128,8 @@ export default function TopNav() {
         </span>
       </Link>
 
-      {/* ナビリンク */}
-      <div style={{ display: "flex", alignItems: "stretch", gap: 0, flex: 1 }}>
+      {/* ナビリンク（PC・タブレット。スマホでは下部タブバーに切り替え） */}
+      <div className="topnav-links" style={{ display: "flex", alignItems: "stretch", gap: 0, flex: 1 }}>
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href, item.exact);
           return (
@@ -158,6 +162,7 @@ export default function TopNav() {
       {/* ユーザーアバター */}
       <Link
         href="/mypage"
+        className="topnav-avatar"
         style={{
           display: "flex",
           alignItems: "center",
@@ -187,5 +192,25 @@ export default function TopNav() {
         </svg>
       </Link>
     </nav>
+    )}
+
+    {/* スマホ用 下部タブバー（CSSで768px以下のときだけ表示） */}
+    <nav className="bottom-tabs" aria-label="メインメニュー">
+      {NAV_ITEMS.map((item) => {
+        const active = isActive(item.href, item.exact);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`bottom-tab${active ? " is-active" : ""}`}
+            aria-current={active ? "page" : undefined}
+          >
+            <item.Icon active={active} />
+            <span>{item.shortLabel ?? item.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+    </>
   );
 }

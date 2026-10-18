@@ -432,7 +432,7 @@ export default function TalkPage() {
   /* ══════ コーチ選択 ══════ */
   if (!coach) {
     return (
-      <main className="min-h-[calc(100vh-64px)] bg-[#14121f] text-white px-5 py-10">
+      <main className="screen-minh bg-[#14121f] text-white px-5 py-10">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -494,17 +494,17 @@ export default function TalkPage() {
   const showNormalChat = !needsOnboarding;
 
   return (
-    <main className="h-[calc(100vh-64px)] bg-[#14121f] text-white flex justify-center">
-      <div className="relative w-full max-w-[520px] h-full flex flex-col">
+    <main className="screen-h bg-[#14121f] text-white flex justify-center">
+      <div className="relative w-full max-w-[520px] lg:max-w-[1120px] h-full flex flex-col lg:flex-row">
         {/* 立ち絵 */}
-        <div className="relative flex-shrink-0 h-[44%] min-h-[220px] overflow-hidden">
+        <div className="relative flex-shrink-0 h-[44%] min-h-[220px] overflow-hidden lg:h-full lg:w-1/2 lg:min-h-0">
           <Portrait coach={coach} emotion={emotion} speaking={tts.speaking} loading={isLoading} />
-          <div className="absolute left-0 right-0 top-0 flex items-center justify-between px-3 py-3">
+          <div className="absolute left-0 right-0 top-0 flex items-center justify-between gap-2 px-3 py-3">
             <button
               onClick={leaveChat}
               className="rounded-full bg-black/35 backdrop-blur px-3 py-1.5 text-xs text-white/85 hover:bg-black/50"
             >
-              ← えらびなおす
+              ←<span className="hidden sm:inline"> えらびなおす</span><span className="sm:hidden"> 戻る</span>
             </button>
             <div className="flex gap-1.5">
               {mode === "practice" && (
@@ -521,7 +521,7 @@ export default function TalkPage() {
                 onClick={tts.toggle}
                 className={`rounded-full backdrop-blur px-3 py-1.5 text-xs ${tts.enabled ? "bg-pink-400/40 text-white" : "bg-black/35 text-white/70"}`}
               >
-                {tts.enabled ? "🔊 声オン" : "🔇 声オフ"}
+                {tts.enabled ? "🔊" : "🔇"}<span className="hidden sm:inline">{tts.enabled ? " 声オン" : " 声オフ"}</span>
               </button>
               <button
                 onClick={resetConversation}
@@ -541,6 +541,8 @@ export default function TalkPage() {
           </div>
         </div>
 
+        {/* 右側（PCでは立ち絵の隣）: ゲージ・メッセージ・入力 */}
+        <div className="flex flex-1 min-h-0 flex-col lg:w-1/2 lg:flex-none lg:max-w-[600px]">
         {mode === "practice" && (
           <div className="flex-shrink-0 px-4 pt-2">
             <LevelBar c={counseling} flash={levelFlash} />
@@ -656,6 +658,7 @@ export default function TalkPage() {
               {voice.errorMsg && <p className="text-xs text-pink-300 mt-2 whitespace-pre-line">{voice.errorMsg}</p>}
             </>
           )}
+        </div>
         </div>
       </div>
     </main>

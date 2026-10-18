@@ -35,7 +35,7 @@ export default function DiaryPage() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-64px)] bg-[#14121f] text-white px-5 py-8">
+    <main className="screen-minh bg-[#14121f] text-white px-5 py-8">
       <div className="max-w-xl mx-auto">
         <Link href="/talk" className="text-xs text-white/60 hover:text-white">← 話す</Link>
         <h1 className="mt-3 text-2xl font-bold">日記</h1>

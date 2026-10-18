@@ -1,4 +1,4 @@
-# AIコーチング練習
+# RoleMate — AI Roleplay Partner
 
 AIと対話しながらコーチングスキルを磨くNext.jsアプリです。
 

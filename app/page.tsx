@@ -101,23 +101,28 @@ export default function HomePage() {
   const label: React.CSSProperties = { fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", color: V.ink3, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 };
 
   return (
-    <main className="screen-minh rs-main" style={{ padding: "40px 32px 96px" }}>
+    <main className="screen-minh rs-main" style={{ padding: "36px 32px 96px" }}>
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
 
         {/* ═══ ヒーロー ═══ */}
-        <section className="home-hero" style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(0,1.05fr) minmax(0,0.95fr)", gap: 40, alignItems: "center", minHeight: 520, padding: "24px 0 48px" }}>
+        <section className="home-hero" style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(0,1.05fr) minmax(0,0.95fr)", gap: 40, alignItems: "center", minHeight: 0, padding: "0 0 36px" }}>
           <div>
-            <h1 className="reveal home-h1" style={{ ...stagger(1), fontSize: "clamp(40px, 6.4vw, 80px)", lineHeight: 1.06, fontWeight: 800, letterSpacing: "-0.035em", margin: "0" }}>
-              聴く力を、<br />
-              <span className="text-grad">毎日すこしずつ。</span>
-            </h1>
+            {/* アイコン + 見出し（アイコンは見出しの左） */}
+            <div className="home-title-row" style={{ display: "flex", alignItems: "center", gap: 24 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="reveal home-icon" src="/icons/icon-512.png" alt="RoleMate" width={120} height={120} style={{ ...stagger(0), width: 120, height: 120, flexShrink: 0, borderRadius: 30, display: "block", boxShadow: "0 24px 48px -18px rgba(217,70,239,0.7), 0 0 0 1px rgba(255,255,255,0.1)" }} />
+              <h1 className="reveal home-h1" style={{ ...stagger(1), fontSize: "clamp(34px, 4.6vw, 60px)", lineHeight: 1.1, fontWeight: 800, letterSpacing: "-0.035em", margin: 0 }}>
+                聴く力を、<br />
+                <span className="text-grad">毎日すこしずつ。</span>
+              </h1>
+            </div>
 
-            <p className="reveal" style={{ ...stagger(2), fontSize: 17, lineHeight: 1.9, color: V.ink2, margin: "26px 0 0", maxWidth: 460 }}>
+            <p className="reveal" style={{ ...stagger(2), fontSize: 17, lineHeight: 1.9, color: V.ink2, margin: "28px 0 0", maxWidth: 460 }}>
               AIの相談者を相手に面談を練習して、すぐに評価をもらえる。
               {mounted && lastSession ? "前回の続きから、そのまま再開できます。" : "気軽に相談できるコーチもいて、考えごとの整理にも使えます。"}
             </p>
 
-            <div className="reveal" style={{ ...stagger(3), display: "flex", gap: 12, flexWrap: "wrap", marginTop: 34 }}>
+            <div className="reveal" style={{ ...stagger(3), display: "flex", gap: 12, flexWrap: "wrap", marginTop: 32 }}>
               <Link href="/session" className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: V.accent, color: "white", padding: "16px 30px", borderRadius: 999, fontWeight: 700, fontSize: 16, textDecoration: "none", boxShadow: V.accentShadow }}>
                 練習をはじめる
               </Link>
@@ -128,7 +133,7 @@ export default function HomePage() {
           </div>
 
           {/* キャラクターの重なり（非対称） */}
-          <div className="reveal home-cast" style={{ ...stagger(2), position: "relative", height: 500 }} aria-hidden>
+          <div className="reveal home-cast" style={{ ...stagger(2), position: "relative", height: 440 }} aria-hidden>
             <div style={{ position: "absolute", inset: "8% 6% 4% 10%", borderRadius: "50%", background: "radial-gradient(closest-side, rgba(217,70,239,0.38), transparent 72%)", filter: "blur(40px)" }} />
             {[
               { src: "/characters/sato_smile.webp", w: 46, top: 2, left: 3, rot: -9, z: 1 },
@@ -138,13 +143,6 @@ export default function HomePage() {
               // eslint-disable-next-line @next/next/no-img-element
               <img key={i} src={c.src} alt="" style={{ position: "absolute", top: `${c.top}%`, left: `${c.left}%`, width: `${c.w}%`, aspectRatio: "1 / 1.08", objectFit: "cover", objectPosition: "50% 18%", borderRadius: 32, transform: `rotate(${c.rot}deg)`, zIndex: c.z, boxShadow: "0 40px 70px -30px rgba(10,4,30,0.95), 0 0 0 1px rgba(255,255,255,0.12)" }} />
             ))}
-            <div className="glass" style={{ position: "absolute", right: "2%", bottom: "6%", zIndex: 5, borderRadius: 20, padding: "14px 18px", display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 26 }}>🎧</span>
-              <div>
-                <div style={{ fontSize: 12, color: V.ink3 }}>今週の練習</div>
-                <div className="tnum" style={{ fontSize: 20, fontWeight: 800 }}>{mounted ? weekCount : 0}<span style={{ fontSize: 13, color: V.ink3, fontWeight: 600 }}> / {weekGoal} 回</span></div>
-              </div>
-            </div>
           </div>
         </section>
 

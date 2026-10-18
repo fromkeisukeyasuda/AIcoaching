@@ -1,10 +1,27 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import NavWrapper from "@/components/NavWrapper";
 
 export const metadata: Metadata = {
-  title: "AIコーチトレーナー",
-  description: "AIと対話しながらコーチングスキルを磨くトレーニングアプリ",
+  title: "RoleMate | AI Roleplay Partner",
+  description: "RoleMate — AI Roleplay Partner。AIとロールプレイしながら、コーチングの聴く力を磨く。",
+  applicationName: "RoleMate",
+  icons: {
+    icon: [
+      { url: "/icons/icon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: { capable: true, title: "RoleMate", statusBarStyle: "black-translucent" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#14121f",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

@@ -267,11 +267,16 @@ body > * { position: relative; z-index: 1; }
 /* ホーム */
 @media (max-width: 1024px) {
   .home-hero { grid-template-columns: 1fr !important; min-height: 0 !important; }
-  .home-cast { height: 380px !important; order: -1; }
+  .home-cast { height: 360px !important; }
   .rs-col-12 { grid-column: 1 / -1 !important; grid-row: auto !important; }
 }
 @media (max-width: 768px) {
   .home-cast { height: 300px !important; }
-  .home-h1 { margin-top: 16px !important; }
   .rs-main { padding: 20px 16px 40px !important; }
+}
+
+@media (max-width: 768px) {
+  .home-title-row { gap: 14px !important; }
+  .home-icon { width: 72px !important; height: 72px !important; border-radius: 18px !important; }
+  .home-h1 { font-size: clamp(26px, 8vw, 34px) !important; }
 }

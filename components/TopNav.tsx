@@ -42,19 +42,10 @@ function UserIcon({ active }: { active: boolean }) {
     </svg>
   );
 }
-function DiagnoseIcon({ active }: { active: boolean }) {
-  return (
-    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke={active ? C.navy : C.ink3} strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-    </svg>
-  );
-}
-
 const NAV_ITEMS: { href: string; label: string; shortLabel?: string; Icon: (p: { active: boolean }) => React.JSX.Element; exact: boolean }[] = [
   { href: "/",         label: "ホーム",     Icon: HomeIcon,     exact: true  },
   { href: "/session",  label: "練習",       Icon: ChatIcon,     exact: false },
   { href: "/talk",     label: "相談",       Icon: ChatIcon,     exact: false },
-  { href: "/diagnose", label: "経営者診断", shortLabel: "診断", Icon: DiagnoseIcon, exact: false },
   { href: "/history",  label: "ふりかえり", shortLabel: "記録", Icon: ChartIcon,    exact: false },
   { href: "/mypage",   label: "マイページ", Icon: UserIcon,     exact: false },
 ];
@@ -97,34 +88,13 @@ export default function TopNav() {
           flexShrink: 0,
         }}
       >
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: "50%",
-            border: `2px solid ${C.accent}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" fill={C.accent} />
-            <path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4" stroke="white" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="12" cy="15" r="1.5" fill="white" />
-          </svg>
-        </div>
-        <span
-          style={{
-            color: C.navy,
-            fontWeight: 700,
-            fontSize: 15,
-            letterSpacing: "-0.02em",
-            whiteSpace: "nowrap",
-          }}
-        >
-          AIコーチトレーナー
+        <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.1, whiteSpace: "nowrap" }}>
+          <span style={{ color: C.navy, fontWeight: 800, fontSize: 18, letterSpacing: "-0.03em" }}>
+            RoleMate
+          </span>
+          <span style={{ color: C.ink3, fontWeight: 500, fontSize: 9.5, letterSpacing: "0.08em", marginTop: 3 }}>
+            AI Roleplay Partner
+          </span>
         </span>
       </Link>
 

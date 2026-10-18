@@ -1,7 +1,7 @@
 export type CoachEmotion = "idle" | "neutral" | "smile" | "happy" | "worried" | "sad" | "surprised" | "angry";
 
 export interface Coach {
-  id: "jo" | "yuko";
+  id: string;
   name: string;
   tagline: string;
   role: string;
@@ -9,7 +9,14 @@ export interface Coach {
   greeting: string;
   persona: string;
   voicePrefs: string[]; // VOICEVOXスピーカー名（優先順位順）
-  images: Record<CoachEmotion, string>;
+  images: Record<CoachEmotion, string> | null; // null = 画像なし（カスタムシナリオ用）
+  scenarioId?: string;  // 面談練習の相談者キャラが演じるシナリオ
+  icon?: string;
+}
+
+export function portraitOf(c: Coach, emotion: CoachEmotion): string | null {
+  if (!c.images) return null;
+  return c.images[emotion] ?? c.images.idle;
 }
 
 export const EMOTION_TAG_RE = /^\s*\[表情:\s*(\w+)\]\s*/;
@@ -73,4 +80,88 @@ export const coaches: Coach[] = [
 
 export function getCoach(id: string | null | undefined): Coach | undefined {
   return coaches.find((c) => c.id === id);
+}
+
+/* ── 面談練習: 相談者役の3キャラ（既存シナリオに対応） ── */
+export const clients: Coach[] = [
+  {
+    id: "tanaka",
+    name: "田中 誠",
+    tagline: "昇進したばかりのマネージャー",
+    role: "チームリーダー（30代）",
+    tags: ["マネジメント", "リーダーシップ", "チームビルディング"],
+    greeting: "",
+    persona: "",
+    voicePrefs: ["玄野武宏", "白上虎太郎", "青山龍星"],
+    scenarioId: "team-management",
+    images: {
+      idle: "/characters/tanaka.png",
+      neutral: "/characters/tanaka_neutral.png",
+      smile: "/characters/tanaka_smile.png",
+      happy: "/characters/tanaka_happy.png",
+      worried: "/characters/tanaka_worried.png",
+      sad: "/characters/tanaka_sad.png",
+      surprised: "/characters/tanaka_surprised.png",
+      angry: "/characters/tanaka_serious.png",
+    },
+  },
+  {
+    id: "sato",
+    name: "佐藤 美咲",
+    tagline: "キャリアの岐路に立つ会社員",
+    role: "会社員（28歳）",
+    tags: ["キャリア", "転職", "自己実現"],
+    greeting: "",
+    persona: "",
+    voicePrefs: ["後鬼", "春日部つむぎ", "四国めたん"],
+    scenarioId: "career-change",
+    images: {
+      idle: "/characters/sato.png",
+      neutral: "/characters/sato_neutral.png",
+      smile: "/characters/sato_smile.png",
+      happy: "/characters/sato_happy.png",
+      worried: "/characters/sato_worried.png",
+      sad: "/characters/sato_sad.png",
+      surprised: "/characters/sato_surprised.png",
+      angry: "/characters/sato_angry.png",
+    },
+  },
+  {
+    id: "suzuki",
+    name: "鈴木 健一",
+    tagline: "仕事と家庭の両立に悩むビジネスパーソン",
+    role: "ビジネスパーソン（35歳）",
+    tags: ["ワークライフバランス", "家族", "健康管理"],
+    greeting: "",
+    persona: "",
+    voicePrefs: ["青山龍星", "玄野武宏", "白上虎太郎"],
+    scenarioId: "work-life-balance",
+    images: {
+      idle: "/characters/suzuki.png",
+      neutral: "/characters/suzuki.png",
+      smile: "/characters/suzuki_smile.png",
+      happy: "/characters/suzuki_happy.png",
+      worried: "/characters/suzuki_sad.png",
+      sad: "/characters/suzuki_sad.png",
+      surprised: "/characters/suzuki_surprised.png",
+      angry: "/characters/suzuki_angry.png",
+    },
+  },
+];
+
+/* カスタムシナリオ用の相談者（画像なし） */
+export function customClient(s: { id: string; clientName: string; clientRole: string; description: string; tags: string[]; icon: string }): Coach {
+  return {
+    id: `custom_${s.id}`,
+    name: s.clientName,
+    tagline: s.description,
+    role: s.clientRole,
+    tags: s.tags,
+    greeting: "",
+    persona: "",
+    voicePrefs: [],
+    scenarioId: s.id,
+    images: null,
+    icon: s.icon,
+  };
 }

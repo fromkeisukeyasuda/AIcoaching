@@ -63,7 +63,7 @@ export default function DiaryPage() {
             return (
               <article key={e.id} className="rounded-2xl bg-white/5 p-4">
                 <div className="flex items-center gap-3">
-                  {coach && (
+                  {coach?.images && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={coach.images.idle} alt={coach.name} className="h-10 w-10 rounded-full object-cover" style={{ objectPosition: "50% 20%" }} />
                   )}

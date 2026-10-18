@@ -35,12 +35,11 @@ function consultPrompt(persona: string, profile?: Profile, memories?: Memory[], 
 ${EXPRESSION_RULE}（例: 相手が辛そうなら worried か sad、嬉しい報告なら happy）`;
 }
 
-function practicePrompt(name: string, persona: string, scenario: Scenario) {
-  return `あなたは「${name}」として、コーチングの面談練習に協力しています。ユーザーがコーチ役、あなたは相談者（クライアント）役です。
-キャラクターの雰囲気（話し方の参考）:
-${persona}
+function practicePrompt(scenario: Scenario) {
+  return `あなたは「${scenario.clientName}」として、コーチングの面談練習に協力しています。ユーザーがコーチ役、あなたは相談者（クライアント）役です。
 
 【今回あなたが演じる相談者の設定】
+名前: ${scenario.clientName}
 役割: ${scenario.clientRole}
 状況: ${scenario.situation}
 気持ち: ${scenario.emotion}
@@ -76,17 +75,16 @@ export async function POST(req: Request) {
   } = await req.json();
 
   const coach = getCoach(coachId);
-  if (!coach) {
+  if (mode === "practice") {
+    if (!scenario) return new Response("scenario required", { status: 400 });
+  } else if (!coach) {
     return new Response("coach not found", { status: 400 });
-  }
-  if (mode === "practice" && !scenario) {
-    return new Response("scenario required", { status: 400 });
   }
 
   let systemPrompt =
     mode === "practice" && scenario
-      ? practicePrompt(coach.name, coach.persona, scenario)
-      : consultPrompt(coach.persona, profile, memories, openingText);
+      ? practicePrompt(scenario)
+      : consultPrompt(coach!.persona, profile, memories, openingText);
 
   let chatMessages = messages;
   if (opening && mode === "consult") {

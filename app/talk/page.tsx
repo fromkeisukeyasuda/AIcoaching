@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Message, Scenario } from "@/types";
 import { scenarios as builtInScenarios } from "@/lib/scenarios";
-import { Coach, CoachEmotion, coaches, EMOTION_TAG_RE } from "@/lib/coaches";
+import { Coach, CoachEmotion, clients, coaches, customClient, portraitOf, EMOTION_TAG_RE } from "@/lib/coaches";
 import {
   Counseling, TalkProfile, addCounselingXp, getCounseling, getDiary, getProfile,
   saveProfile, todayStr, upsertDiary, xpNeeded, XP_PER_COACH_MESSAGE,
@@ -17,8 +17,8 @@ type TalkMode = "consult" | "practice";
 
 const MODE_LABEL: Record<TalkMode, string> = { consult: "相談する", practice: "面談練習" };
 const MODE_DESC: Record<TalkMode, string> = {
-  consult: "あなたが相談者。コーチに気軽に話を聴いてもらう",
-  practice: "あなたがコーチ。相談者役のAIと面談を練習して評価をもらう",
+  consult: "あなたが相談者。イケメンコーチに気軽に話を聴いてもらう",
+  practice: "あなたがコーチ。相談者役のキャラと面談を練習して評価をもらう",
 };
 
 const AGE_GROUPS = ["10代", "20代", "30代", "40代", "50代", "60代以上"];
@@ -76,7 +76,7 @@ function LevelBar({ c, flash = false }: { c: Counseling; flash?: boolean }) {
 
 /* ── 立ち絵（表情クロスフェード） ── */
 function Portrait({ coach, emotion, speaking, loading }: { coach: Coach; emotion: CoachEmotion; speaking: boolean; loading: boolean }) {
-  const target = coach.images[emotion] ?? coach.images.idle;
+  const target = portraitOf(coach, emotion);
   const [src, setSrc] = useState(target);
   const [fading, setFading] = useState(false);
 
@@ -89,18 +89,24 @@ function Portrait({ coach, emotion, speaking, loading }: { coach: Coach; emotion
 
   return (
     <div className="absolute inset-0">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={coach.name}
-        className="w-full h-full object-cover"
-        style={{
-          objectPosition: "50% 18%",
-          opacity: fading ? 0 : 1,
-          transition: "opacity 0.2s ease",
-          animation: speaking ? "characterBob 1.5s ease-in-out infinite" : "characterFloat 5s ease-in-out infinite",
-        }}
-      />
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={coach.name}
+          className="w-full h-full object-cover"
+          style={{
+            objectPosition: "50% 18%",
+            opacity: fading ? 0 : 1,
+            transition: "opacity 0.2s ease",
+            animation: speaking ? "characterBob 1.5s ease-in-out infinite" : "characterFloat 5s ease-in-out infinite",
+          }}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-gradient-to-b from-[#2a2545] to-[#14121f] text-7xl">
+          {coach.icon ?? "🙂"}
+        </div>
+      )}
       <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[#14121f] via-[#14121f]/70 to-transparent" />
       {(speaking || loading) && (
         <div className="absolute left-4 top-14 flex items-center gap-1.5 rounded-full bg-black/35 backdrop-blur px-3 py-1 text-[11px] text-white/85">
@@ -122,7 +128,6 @@ export default function TalkPage() {
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [mode, setMode] = useState<TalkMode>("consult");
   const [customScenarios, setCustomScenarios] = useState<Scenario[]>([]);
-  const [scenarioId, setScenarioId] = useState<string>(builtInScenarios[0].id);
   const [startedAt, setStartedAt] = useState<string | null>(null);
 
   /* 初回質問・記憶・日記・カウンセリングLv */
@@ -143,7 +148,14 @@ export default function TalkPage() {
   const summarizedCountRef = useRef(0); // 日記に反映済みのユーザー発言数
 
   const allScenarios = [...builtInScenarios, ...customScenarios];
-  const scenario = allScenarios.find((s) => s.id === scenarioId) ?? allScenarios[0];
+  /* 面談練習: 選んだ相談者キャラが演じるシナリオ */
+  const scenario = mode === "practice" && coach?.scenarioId
+    ? allScenarios.find((s) => s.id === coach.scenarioId)
+    : undefined;
+  /* キャラ選択画面に並べるキャラ（モードで切り替え） */
+  const characters: Coach[] = mode === "practice"
+    ? [...clients, ...customScenarios.map(customClient)]
+    : coaches;
   const userMsgCount = messages.filter((m) => m.role === "user").length;
 
   /* マウント後に localStorage から読む（SSRとの不一致を避ける） */
@@ -153,8 +165,6 @@ export default function TalkPage() {
       if (m === "consult" || m === "practice") setMode(m);
       const stored = localStorage.getItem("customScenarios");
       if (stored) setCustomScenarios(JSON.parse(stored));
-      const sid = localStorage.getItem("talk_scenario");
-      if (sid) setScenarioId(sid);
     } catch { /* noop */ }
     setProfile(getProfile());
     setProfileLoaded(true);
@@ -167,20 +177,16 @@ export default function TalkPage() {
     try { localStorage.setItem("talk_mode", m); } catch { /* noop */ }
   };
 
-  const changeScenario = (id: string) => {
-    setScenarioId(id);
-    try { localStorage.setItem("talk_scenario", id); } catch { /* noop */ }
-  };
-
   /* 続きがあるコーチ */
   useEffect(() => {
     if (coach) return;
-    const ids = coaches.filter((c) => {
+    const ids = characters.filter((c) => {
       try { return (JSON.parse(localStorage.getItem(storageKey(c.id, mode)) ?? "[]") as Message[]).length > 0; } catch { return false; }
     }).map((c) => c.id);
     setSavedIds(ids);
     setDiaryCount(getDiary().length);
-  }, [coach, mode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coach, mode, customScenarios]);
 
   /* 会話の保存（コーチ・モードごと） */
   useEffect(() => {
@@ -278,19 +284,20 @@ export default function TalkPage() {
     setCoach(null);
   };
 
-  /* 会話中にモードを切り替える（モードごとに履歴は別々に保存） */
+  /* 会話中にモードを切り替える → キャラ選択に戻る（モードごとに登場キャラが違うため） */
   const switchModeInChat = (m: TalkMode) => {
     if (!coach || m === mode || isLoading) return;
     tts.stop();
     if (mode === "consult") saveDiary(coach, messages);
     changeMode(m);
-    enterChat(coach, m);
+    setCoach(null);
   };
 
   const send = useCallback(
     async (text: string) => {
       const body = text.trim();
       if (!body || isLoading || !coach) return;
+      if (mode === "practice" && !scenario) return;
       tts.stop();
       const history: Message[] = [...messages, { role: "user", content: body }];
       if (!startedAt) setStartedAt(new Date().toISOString());
@@ -392,12 +399,12 @@ export default function TalkPage() {
     try { localStorage.removeItem(storageKey(coach.id, mode)); } catch { /* noop */ }
   };
 
-  /* 面談練習を終了 → 既存の評価画面へ（相談者役の名前はコーチ名にする） */
+  /* 面談練習を終了 → 既存の評価画面へ */
   const endPractice = () => {
-    if (!coach || userMsgCount < 2) return;
+    if (!coach || !scenario || userMsgCount < 2) return;
     tts.stop();
     localStorage.setItem("coachingSession", JSON.stringify({
-      scenario: { ...scenario, clientName: coach.name, clientRole: scenario.clientRole },
+      scenario,
       messages,
       startedAt: startedAt ?? new Date().toISOString(),
       endedAt: new Date().toISOString(),
@@ -430,8 +437,10 @@ export default function TalkPage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-pink-300/80 text-xs tracking-widest mb-2">TALK</p>
-              <h1 className="text-2xl font-bold mb-1">今日は誰と話す？</h1>
-              <p className="text-white/50 text-sm mb-5">気軽に話せるAIコーチ。愚痴も、考えごとも、そのままどうぞ。</p>
+              <h1 className="text-2xl font-bold mb-1">{mode === "practice" ? "今日は誰の相談を聴く？" : "今日は誰と話す？"}</h1>
+              <p className="text-white/50 text-sm mb-5">
+                {mode === "practice" ? "相談者を選んで、コーチとして面談を練習しましょう。" : "気軽に話せるAIコーチ。愚痴も、考えごとも、そのままどうぞ。"}
+              </p>
             </div>
             <Link href="/talk/diary" className="flex-shrink-0 rounded-full bg-white/10 px-4 py-2 text-xs text-white/85 hover:bg-white/15">
               📖 日記{diaryCount > 0 ? `（${diaryCount}）` : ""}
@@ -440,37 +449,25 @@ export default function TalkPage() {
           <div className="mb-8 space-y-3">
             <ModeSwitch mode={mode} onChange={changeMode} />
             <p className="text-xs text-white/55">{MODE_DESC[mode]}</p>
-            {mode === "practice" && (
-              <>
-                <div className="max-w-md"><LevelBar c={counseling} /></div>
-                <label className="flex items-center gap-2 text-xs text-white/70">
-                  相談者のテーマ
-                  <select
-                    value={scenario.id}
-                    onChange={(e) => changeScenario(e.target.value)}
-                    className="rounded-lg bg-white/10 px-3 py-2 text-sm text-white outline-none max-w-[260px]"
-                  >
-                    {allScenarios.map((s) => (
-                      <option key={s.id} value={s.id} className="bg-[#1d1a2e]">{s.title}</option>
-                    ))}
-                  </select>
-                </label>
-              </>
-            )}
+            {mode === "practice" && <div className="max-w-md"><LevelBar c={counseling} /></div>}
           </div>
-          <div className="grid sm:grid-cols-2 gap-5">
-            {coaches.map((c) => (
+          <div className={`grid gap-5 ${characters.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+            {characters.map((c) => (
               <button
                 key={c.id}
                 onClick={() => selectCoach(c)}
                 className="group relative overflow-hidden rounded-3xl text-left bg-[#1d1a2e] border border-white/10 hover:border-pink-300/60 transition-all hover:-translate-y-0.5"
               >
                 <div className="aspect-[4/5] overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={c.images.idle} alt={c.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" style={{ objectPosition: "50% 18%" }} />
+                  {c.images ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={c.images.idle} alt={c.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" style={{ objectPosition: "50% 18%" }} />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-b from-[#2a2545] to-[#1d1a2e] text-6xl">{c.icon ?? "🙂"}</div>
+                  )}
                 </div>
                 <div className="absolute inset-x-0 bottom-0 p-5 pt-16 bg-gradient-to-t from-[#14121f] via-[#14121f]/85 to-transparent">
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex flex-wrap items-baseline gap-x-2">
                     <span className="text-xl font-bold">{c.name}</span>
                     <span className="text-xs text-white/55">{c.role}</span>
                   </div>
@@ -565,13 +562,15 @@ export default function TalkPage() {
             </>
           ) : mode === "consult" ? (
             <Bubble role="assistant" text={opening ?? staticGreeting} />
-          ) : (
+          ) : scenario ? (
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs leading-relaxed text-white/70">
               <p className="font-bold text-pink-200 mb-1">面談練習 ─ {scenario.title}</p>
               <p>あなたがコーチ役です。{coach.name}さんは次の状況の相談者を演じます。</p>
               <p className="mt-1 text-white/55">{scenario.situation}</p>
               <p className="mt-1 text-white/55">まずは挨拶や最初の質問から始めてみましょう。</p>
             </div>
+          ) : (
+            <p className="text-xs text-white/50">このキャラのシナリオが見つかりませんでした。選びなおしてください。</p>
           )}
           {showNormalChat && messages.map((m, i) =>
             m.content === "" ? null : <Bubble key={i} role={m.role} text={m.content} />

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import NavWrapper from "@/components/NavWrapper";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
   title: "RoleMate | AI Roleplay Partner",
@@ -32,6 +33,7 @@ export default function RootLayout({
   return (
     <html lang="ja" suppressHydrationWarning>
       <body>
+        <ServiceWorkerRegister />
         <NavWrapper />
         {children}
       </body>

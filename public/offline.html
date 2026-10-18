@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#14121f" />
+  <title>オフライン | RoleMate</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: "Plus Jakarta Sans", "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+      color: #fff;
+      background:
+        radial-gradient(700px 420px at 85% -10%, rgba(217, 70, 239, 0.2), transparent 62%),
+        radial-gradient(600px 460px at -5% 20%, rgba(124, 58, 237, 0.18), transparent 58%),
+        #100e1a;
+      -webkit-font-smoothing: antialiased;
+    }
+    main { max-width: 360px; text-align: center; }
+    img { width: 96px; height: 96px; border-radius: 24px; display: block; margin: 0 auto 24px; box-shadow: 0 24px 48px -18px rgba(217, 70, 239, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1); }
+    h1 { margin: 0 0 10px; font-size: 24px; letter-spacing: -0.02em; }
+    p { margin: 0 0 24px; font-size: 14.5px; line-height: 1.9; color: #cfc9e4; }
+    button {
+      border: 0; cursor: pointer; font: inherit; font-weight: 700; font-size: 15px; color: #fff;
+      padding: 14px 30px; border-radius: 999px;
+      background: linear-gradient(135deg, #f472b6 0%, #d946ef 100%);
+      box-shadow: 0 8px 20px -8px rgba(217, 70, 239, 0.6);
+    }
+    button:active { transform: scale(0.98); }
+    small { display: block; margin-top: 18px; font-size: 12px; color: #8f8aa8; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <main>
+    <img src="/icons/icon-192.png" alt="RoleMate" />
+    <h1>オフラインです</h1>
+    <p>インターネットにつながっていないため、ページを開けませんでした。接続を確認して、もう一度お試しください。</p>
+    <button onclick="location.reload()">再読み込み</button>
+    <small>練習の記録は、この端末に保存されています。<br />AIの返答だけは、オンラインのときに使えます。</small>
+  </main>
+</body>
+</html>

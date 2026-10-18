@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AIコーチング v2 ・ 安心と成長</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap"
+/>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; background: #F8F9FA;
+    font-family: "Noto Sans JP", system-ui, sans-serif;
+    color: #2D3436;
+    height: 100%;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    min-width: 1280px;
+  }
+  #root {
+    height: 100vh;
+  }
+  /* Polished scrollbars where they appear */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #d8dde2; border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  #boot {
+    position: fixed; inset: 0; display: grid; place-items: center;
+    background: #F8F9FA; color: #5b6066; z-index: 99;
+    font-family: "Zen Maru Gothic", sans-serif; font-size: 14px;
+    transition: opacity 0.3s;
+  }
+  #boot.gone { opacity: 0; pointer-events: none; }
+</style>
+
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+    <rect width="240" height="240" fill="#F8F9FA"/>
+    <rect x="48" y="48" width="144" height="144" rx="32" fill="#4A90E2"/>
+    <text x="120" y="148" text-anchor="middle" font-family="sans-serif"
+          font-size="78" font-weight="700" fill="#fff">聴</text>
+  </svg>
+</template>
+</head>
+<body>
+
+<div id="boot">読み込み中…</div>
+<div id="root"></div>
+
+<!-- React + Babel (pinned) -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Shared content -->
+<script src="data.js"></script>
+
+<!-- v2 source files -->
+<script type="text/babel" src="v2-shell.jsx"></script>
+<script type="text/babel" src="v2-chat.jsx"></script>
+<script type="text/babel" src="v2-report.jsx"></script>
+
+<script type="text/babel">
+(function mount() {
+  const need = ['V2_Header','V2_Sidebar','V2_Card','V2_SectionTitle','V2_ChatView','V2_ReportView'];
+  const ready = need.every(k => typeof window[k] === 'function');
+  if (!ready) { requestAnimationFrame(mount); return; }
+
+  document.getElementById('boot').classList.add('gone');
+  const v2 = window.V2;
+
+  function App() {
+    const [view, setView] = React.useState('chat');
+
+    return (
+      <div data-screen-label={view === 'chat' ? '01 Chat' : view === 'report' ? '02 Report' : view}
+           style={{
+             display: 'grid',
+             gridTemplateColumns: '240px 1fr',
+             gridTemplateRows: '64px 1fr',
+             gridTemplateAreas: '"sidebar header" "sidebar main"',
+             height: '100vh', background: v2.bg,
+           }}>
+        <V2_Sidebar view={view} onNav={setView} />
+        <V2_Header view={view} />
+        {view === 'chat'    && <V2_ChatView />}
+        {view === 'report'  && <V2_ReportView />}
+        {view === 'history' && <V2_PlaceholderView title="会話履歴" hint="過去 12 セッションを後で表示します。" />}
+        {view === 'settings'&& <V2_PlaceholderView title="設定"     hint="通知・声・APIキーなど。" />}
+      </div>
+    );
+  }
+
+  function V2_PlaceholderView({ title, hint }) {
+    return (
+      <div style={{
+        gridArea: 'main', padding: 32, background: v2.bg,
+        display: 'grid', placeItems: 'center', color: v2.ink3,
+        fontFamily: v2.round, fontSize: 14, textAlign: 'center', minHeight: 0,
+      }}>
+        <div>
+          <div style={{ fontSize: 18, color: v2.ink, marginBottom: 8 }}>{title}</div>
+          <div style={{ fontSize: 13 }}>{hint}</div>
+          <div style={{ marginTop: 18, fontSize: 12, color: v2.ink3 }}>
+            （プロトタイプ未実装画面）
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+})();
+</script>
+
+</body>
+</html>

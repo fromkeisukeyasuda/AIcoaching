@@ -30,39 +30,39 @@ const speakAnim = {
 /* ── Emotion → image path mappings ── */
 const EMOTION_MAPS: Record<string, Record<string, string>> = {
   tanaka: {
-    idle:      "/characters/tanaka.png",
-    neutral:   "/characters/tanaka_neutral.png",
-    happy:     "/characters/tanaka_happy.png",
-    smile:     "/characters/tanaka_smile.png",
-    worried:   "/characters/tanaka_worried.png",
-    sad:       "/characters/tanaka_sad.png",
-    surprised: "/characters/tanaka_surprised.png",
-    serious:   "/characters/tanaka_serious.png",
-    angry:     "/characters/tanaka_serious.png",  // fallback to serious
+    idle:      "/characters/tanaka.webp",
+    neutral:   "/characters/tanaka_neutral.webp",
+    happy:     "/characters/tanaka_happy.webp",
+    smile:     "/characters/tanaka_smile.webp",
+    worried:   "/characters/tanaka_worried.webp",
+    sad:       "/characters/tanaka_sad.webp",
+    surprised: "/characters/tanaka_surprised.webp",
+    serious:   "/characters/tanaka_serious.webp",
+    angry:     "/characters/tanaka_serious.webp",  // fallback to serious
   },
   sato: {
-    idle:      "/characters/sato.png",
-    neutral:   "/characters/sato_neutral.png",
-    happy:     "/characters/sato_happy.png",
-    smile:     "/characters/sato_smile.png",
-    worried:   "/characters/sato_worried.png",
-    sad:       "/characters/sato_sad.png",
-    surprised: "/characters/sato_surprised.png",
-    angry:     "/characters/sato_angry.png",
-    serious:   "/characters/sato_neutral.png",
+    idle:      "/characters/sato.webp",
+    neutral:   "/characters/sato_neutral.webp",
+    happy:     "/characters/sato_happy.webp",
+    smile:     "/characters/sato_smile.webp",
+    worried:   "/characters/sato_worried.webp",
+    sad:       "/characters/sato_sad.webp",
+    surprised: "/characters/sato_surprised.webp",
+    angry:     "/characters/sato_angry.webp",
+    serious:   "/characters/sato_neutral.webp",
   },
   suzuki: {
-    idle:      "/characters/suzuki.png",
-    neutral:   "/characters/suzuki.png",
-    happy:     "/characters/suzuki_happy.png",
-    smile:     "/characters/suzuki_smile.png",
-    worried:   "/characters/suzuki_sad.png",   // no worried → sad
-    sad:       "/characters/suzuki_sad.png",
-    surprised: "/characters/suzuki_surprised.png",
-    angry:     "/characters/suzuki_angry.png",
-    serious:   "/characters/suzuki.png",
-    smirk:     "/characters/suzuki_smirk.png",
-    warm:      "/characters/suzuki_warm.png",
+    idle:      "/characters/suzuki.webp",
+    neutral:   "/characters/suzuki.webp",
+    happy:     "/characters/suzuki_happy.webp",
+    smile:     "/characters/suzuki_smile.webp",
+    worried:   "/characters/suzuki_sad.webp",   // no worried → sad
+    sad:       "/characters/suzuki_sad.webp",
+    surprised: "/characters/suzuki_surprised.webp",
+    angry:     "/characters/suzuki_angry.webp",
+    serious:   "/characters/suzuki.webp",
+    smirk:     "/characters/suzuki_smirk.webp",
+    warm:      "/characters/suzuki_warm.webp",
   },
 };
 
@@ -89,7 +89,7 @@ function CharacterImage({
   const radius = size === "xl" ? 24  : size === "lg" ? 18  : 14;
 
   const map       = EMOTION_MAPS[charType] ?? {};
-  const targetSrc = map[emotion] ?? map["idle"] ?? `/characters/${charType}.png`;
+  const targetSrc = map[emotion] ?? map["idle"] ?? `/characters/${charType}.webp`;
 
   /* フェードトランジション */
   const [displaySrc, setDisplaySrc] = React.useState(targetSrc);

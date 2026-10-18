@@ -82,7 +82,7 @@ export function getCoach(id: string | null | undefined): Coach | undefined {
   return coaches.find((c) => c.id === id);
 }
 
-/* ── 面談練習: 相談者役の3キャラ（既存シナリオに対応） ── */
+/* ── 面談練習(/session): 相談者役の3キャラ（既存シナリオに対応） ── */
 export const clients: Coach[] = [
   {
     id: "tanaka",
@@ -148,20 +148,3 @@ export const clients: Coach[] = [
     },
   },
 ];
-
-/* カスタムシナリオ用の相談者（画像なし） */
-export function customClient(s: { id: string; clientName: string; clientRole: string; description: string; tags: string[]; icon: string }): Coach {
-  return {
-    id: `custom_${s.id}`,
-    name: s.clientName,
-    tagline: s.description,
-    role: s.clientRole,
-    tags: s.tags,
-    greeting: "",
-    persona: "",
-    voicePrefs: [],
-    scenarioId: s.id,
-    images: null,
-    icon: s.icon,
-  };
-}

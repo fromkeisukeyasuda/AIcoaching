@@ -1,18 +1,8 @@
-/* /talk 用のローカル保存（localStorage）。SSR中は呼ばないこと。 */
+/* 相談(/talk)の呼び名・年代と、面談練習(/session)のカウンセリングLv の保存（localStorage）。SSR中は呼ばないこと。 */
 
 export interface TalkProfile {
   nickname: string; // 空文字 = 入力しない
   ageGroup: string; // 空文字 = 答えない
-}
-
-export interface DiaryEntry {
-  id: string;        // `${date}_${coachId}`
-  date: string;      // yyyy-mm-dd（ローカル日付）
-  coachId: string;
-  summary: string;
-  mood: string;
-  topics: string[];
-  updatedAt: string;
 }
 
 export interface Counseling {
@@ -21,9 +11,7 @@ export interface Counseling {
 }
 
 const PROFILE_KEY = "talk_profile";
-const DIARY_KEY = "talk_diary";
 const COUNSELING_KEY = "talk_counseling";
-const MAX_DIARY = 90;
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -38,32 +26,12 @@ function write(key: string, value: unknown) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* 容量超過などは無視 */ }
 }
 
-export function todayStr(d = new Date()): string {
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${day}`;
-}
-
 /* ── プロフィール ── */
 export function getProfile(): TalkProfile | null {
   return read<TalkProfile | null>(PROFILE_KEY, null);
 }
 export function saveProfile(p: TalkProfile) { write(PROFILE_KEY, p); }
 export function clearProfile() { try { localStorage.removeItem(PROFILE_KEY); } catch { /* noop */ } }
-
-/* ── 日記（会話の要点） ── */
-export function getDiary(): DiaryEntry[] {
-  return read<DiaryEntry[]>(DIARY_KEY, []).sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
-}
-export function upsertDiary(e: Omit<DiaryEntry, "id" | "updatedAt">) {
-  const id = `${e.date}_${e.coachId}`;
-  const list = read<DiaryEntry[]>(DIARY_KEY, []).filter((x) => x.id !== id);
-  list.push({ ...e, id, updatedAt: new Date().toISOString() });
-  write(DIARY_KEY, list.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1)).slice(0, MAX_DIARY));
-}
-export function deleteDiary(id: string) {
-  write(DIARY_KEY, read<DiaryEntry[]>(DIARY_KEY, []).filter((x) => x.id !== id));
-}
 
 /* ── カウンセリングLv（面談練習モード） ── */
 export const XP_PER_COACH_MESSAGE = 10;

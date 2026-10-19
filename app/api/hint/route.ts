@@ -3,8 +3,8 @@ import { Message, Scenario } from "@/types";
 
 export const maxDuration = 60;
 
-// 表示は、スマホでも4行以内に収める（解説1行・受け止め2行・次の問い1行ほど）
-const MAX = { explain: 20, acknowledge: 40, question: 20 } as const;
+// 表示ボックスの大きさは変えず、スマホで5行ぶん（解説2行・受け止め2行・次の問い1行）に収める
+const MAX = { explain: 38, acknowledge: 40, question: 20 } as const;
 const TOTAL_MAX = MAX.explain + MAX.acknowledge + MAX.question;
 
 interface RawHint { explain?: string; acknowledge?: string; question?: string }
@@ -42,12 +42,12 @@ export async function POST(req: Request) {
 ${log}
 
 【ヒントの基本構成（この3つを、この順で、各1文）】
-1. explain（発言の解説）: 相談者の直近の発言が、何を意味しているか。語られた内容の核心や、その奥にある思いを、短く解説する
+1. explain（発言の解説）: 相談者の直近の発言の背景にある心理状態を、心理カウンセラーが使う専門用語を1〜2個使って解説する（例: 自己概念、自己不一致、閉塞感、役割葛藤、防衛、価値の条件、内的葛藤、無力感）。断定せず「〜がうかがえる」などの言い方にする
 2. acknowledge（事実と感情の受け止め）: 相談者が話した「事実」と「感情」を、コーチがそのまま受け止める言い方。相談者の言葉を使い、「〜という状況で、〜と感じているのですね」の形にする
 3. question（次の問い）: 次に投げかけるオープンな質問を1つ。「」でそのまま使える形にする
 
 【ルール】
-- 文字数の上限（厳守）: explain は${MAX.explain}文字以内、acknowledge は${MAX.acknowledge}文字以内、question は${MAX.question}文字以内。各1文。日本語。見出しやMarkdownは使わない
+- 文字数の上限（厳守）: explain は30〜${MAX.explain}文字（短すぎず、専門用語を使って背景まで解説する）、acknowledge は${MAX.acknowledge}文字以内、question は${MAX.question}文字以内。各1文。日本語。見出しやMarkdownは使わない
 - 短くするため、前置きや言い換えは省き、核心だけを書く
 - 答えを教え込まず、相手が自分で気づくための関わりにする
 

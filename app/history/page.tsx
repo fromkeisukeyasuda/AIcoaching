@@ -492,9 +492,6 @@ function ReflectionSheetView({
       </section>
 
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <Link href="/evaluation?demo=1" className="btn-ghost" style={{ fontSize: 12, color: V.ink2, textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", padding: "9px 16px", borderRadius: 999, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.14)" }}>
-          詳細レポート
-        </Link>
         <span style={{ fontSize: 11, color: V.ink3 }}>自己採点・テーマ・メモは、入力すると自動で保存されます</span>
         <div style={{ flex: 1 }} />
         <button onClick={onDelete} style={{ fontSize: 11, color: V.ink3, background: "transparent", border: `1px solid ${V.border}`, borderRadius: 999, padding: "7px 14px", cursor: "pointer", fontFamily: V.sans }}>
@@ -513,6 +510,9 @@ export default function HistoryPage() {
   useEffect(() => {
     const raw = localStorage.getItem("sessionHistory");
     if (raw) setRecords(JSON.parse(raw));
+    // 面談の終了後は、できたばかりの記録を開いた状態で表示する
+    const open = new URLSearchParams(window.location.search).get("open");
+    if (open) setExpanded(new Set([open]));
     setLoaded(true);
   }, []);
 

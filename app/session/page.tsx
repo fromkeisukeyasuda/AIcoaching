@@ -495,16 +495,14 @@ export default function SessionPage() {
               ))}
               {isLoading && <TypingIndicator clientName={selectedScenario.clientName} />}
               {(hintParts || hintError) && (
-                <div className="rounded-xl border border-amber-300/30 bg-amber-400/10 px-4 py-3 text-[13px] leading-relaxed text-amber-100">
-                  <div className="mb-1 flex items-center justify-between text-xs font-bold text-amber-200">
-                    <span>💡 ヒント</span>
-                    <button onClick={() => { setHintParts(null); setHintError(null); }} className="text-white/50 hover:text-white" aria-label="ヒントを閉じる">✕</button>
-                  </div>
+                <div className="relative rounded-xl border border-amber-300/30 bg-amber-400/10 py-3 pl-4 pr-8 text-[12.5px] leading-[1.35] text-amber-100">
+                  <button onClick={() => { setHintParts(null); setHintError(null); }} className="absolute right-2.5 top-2 text-xs text-white/50 hover:text-white" aria-label="ヒントを閉じる">✕</button>
                   {hintParts ? (
                     <ul className="space-y-1">
                       {hintParts.map((p) => (
-                        <li key={p.label}>
-                          <span className="mr-2 text-[11px] font-bold text-amber-300">{p.label}</span>{p.text}
+                        <li key={p.label} className="flex gap-2">
+                          <span className="w-[4.6em] flex-shrink-0 whitespace-nowrap pt-px text-[11px] font-bold leading-[1.45] text-amber-300">{p.label}</span>
+                          <span className="min-w-0 flex-1">{p.text}</span>
                         </li>
                       ))}
                     </ul>
@@ -535,7 +533,7 @@ export default function SessionPage() {
                 )}
 
                 {/* テキスト入力 */}
-                <div className={`flex flex-1 items-end rounded-xl border transition-all ${
+                <div className={`flex flex-1 items-end rounded-xl border transition-colors [-webkit-tap-highlight-color:transparent] ${
                   voice.status === "recording"
                     ? "bg-red-400/10 border-red-300/40"
                     : "bg-[#14121f] border-white/10 focus-within:border-pink-300 focus-within:bg-[#241f3a]"
@@ -551,7 +549,7 @@ export default function SessionPage() {
                         : "メッセージを入力"
                     }
                     rows={1}
-                    className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm text-white/90 placeholder-white/35 resize-none outline-none"
+                    className="min-w-0 flex-1 bg-transparent px-4 py-[10px] text-base leading-6 text-white/90 placeholder-white/35 resize-none outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] md:py-3 md:text-sm md:leading-5"
                     disabled={isLoading || isStarting || voice.status === "recording"}
                   />
                   {/* 音声入力ボタン（入力ボックスの右端） */}
@@ -561,7 +559,7 @@ export default function SessionPage() {
                       disabled={isLoading || isStarting}
                       title={voice.status === "recording" ? "録音を停止" : "音声入力"}
                       aria-label={voice.status === "recording" ? "録音を停止" : "音声入力"}
-                      className={`mb-1.5 mr-1.5 flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                      className={`mb-1 mr-1 flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all ${
                         voice.status === "recording"
                           ? "bg-red-500 text-white shadow-lg shadow-red-500/30"
                           : "text-white/55 hover:bg-white/10 hover:text-white disabled:opacity-30"

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Message, Scenario, SessionRecord } from "@/types";
+import { Message, Scenario } from "@/types";
 import { scenarios as builtInScenarios } from "@/lib/scenarios";
 import ChatMessage from "@/components/ChatMessage";
 import TypingIndicator from "@/components/TypingIndicator";
@@ -86,11 +86,10 @@ export default function SessionPage() {
   const [sessionStartTime, setSessionStartTime] = useState<string | null>(null);
   const [customScenarios, setCustomScenarios] = useState<Scenario[]>([]);
   const [emotion, setEmotion] = useState("idle");
-  const [levelUpItems, setLevelUpItems] = useState<string[]>([]);
   const [counseling, setCounseling] = useState<Counseling>({ lv: 1, xp: 0 });
   const [levelFlash, setLevelFlash] = useState(false);
   const [hintEnabled, setHintEnabled] = useState(false);
-  const [hintText, setHintText] = useState<string | null>(null);
+  const [hintParts, setHintParts] = useState<{ label: string; text: string }[] | null>(null);
   const [hintLoading, setHintLoading] = useState(false);
   const [hintError, setHintError] = useState<string | null>(null);
 
@@ -105,7 +104,7 @@ export default function SessionPage() {
 
   /* 会話が進んだら、前のヒントは消す */
   useEffect(() => {
-    setHintText(null);
+    setHintParts(null);
     setHintError(null);
   }, [messages.length]);
 
@@ -120,8 +119,8 @@ export default function SessionPage() {
         body: JSON.stringify({ messages, scenario: selectedScenario }),
       });
       const data = await res.json();
-      if (!res.ok || !data.hint) throw new Error(data.error || "ヒントを作れませんでした。");
-      setHintText(data.hint);
+      if (!res.ok || !Array.isArray(data.parts)) throw new Error(data.error || "ヒントを作れませんでした。");
+      setHintParts(data.parts);
     } catch (e) {
       setHintError(e instanceof Error ? e.message : "ヒントを作れませんでした。");
     } finally {
@@ -133,18 +132,6 @@ export default function SessionPage() {
     setCounseling(getCounseling());
     const stored = localStorage.getItem("customScenarios");
     if (stored) setCustomScenarios(JSON.parse(stored));
-  }, []);
-
-  /* 前回セッションの改善点をレベルアップ目標として読み込む */
-  useEffect(() => {
-    const raw = localStorage.getItem("sessionHistory");
-    if (raw) {
-      const history: SessionRecord[] = JSON.parse(raw);
-      if (history.length > 0) {
-        const items = history[0].evaluation.improvements.slice(0, 3);
-        setLevelUpItems(items);
-      }
-    }
   }, []);
 
   const scenarios = [...builtInScenarios, ...customScenarios];
@@ -160,7 +147,7 @@ export default function SessionPage() {
     const el = messagesContainerRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, hintParts, hintError]);
 
   /* AIの返答が完了したら感情を検出 */
   useEffect(() => {
@@ -507,44 +494,31 @@ export default function SessionPage() {
                 <ChatMessage key={i} message={msg} clientName={selectedScenario.clientName} />
               ))}
               {isLoading && <TypingIndicator clientName={selectedScenario.clientName} />}
+              {(hintParts || hintError) && (
+                <div className="rounded-xl border border-amber-300/30 bg-amber-400/10 px-4 py-3 text-[13px] leading-relaxed text-amber-100">
+                  <div className="mb-1 flex items-center justify-between text-xs font-bold text-amber-200">
+                    <span>💡 ヒント</span>
+                    <button onClick={() => { setHintParts(null); setHintError(null); }} className="text-white/50 hover:text-white" aria-label="ヒントを閉じる">✕</button>
+                  </div>
+                  {hintParts ? (
+                    <ul className="space-y-1">
+                      {hintParts.map((p) => (
+                        <li key={p.label}>
+                          <span className="mr-2 text-[11px] font-bold text-amber-300">{p.label}</span>{p.text}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-red-300">{hintError}</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-
-          {/* ── レベルアップ目標（前回セッションの改善点） ── */}
-          {levelUpItems.length > 0 && (
-            <div className="flex-shrink-0 bg-amber-400/10 border-t border-amber-300/30 px-5 py-2.5">
-              <div className="max-w-2xl mx-auto">
-                <div className="flex items-start gap-2.5">
-                  <span className="text-xs font-bold text-amber-200 flex-shrink-0 mt-0.5 flex items-center gap-1">
-                    🎯 レベルアップ目標
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {levelUpItems.map((item, i) => (
-                      <span
-                        key={i}
-                        className="text-xs text-amber-200 bg-amber-400/20 border border-amber-300/30 px-2.5 py-0.5 rounded-full leading-relaxed"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* ── 入力バー ── */}
           <div className="flex-shrink-0 border-t border-white/10 bg-[#1d1a2e] px-4 py-3 md:px-5 md:py-4">
             <div className="max-w-2xl mx-auto">
-              {(hintText || hintError) && (
-                <div className="mb-3 rounded-xl border border-amber-300/30 bg-amber-400/10 px-4 py-3 text-sm leading-relaxed text-amber-100">
-                  <div className="mb-1 flex items-center justify-between text-xs font-bold text-amber-200">
-                    <span>💡 ヒント</span>
-                    <button onClick={() => { setHintText(null); setHintError(null); }} className="text-white/50 hover:text-white" aria-label="ヒントを閉じる">✕</button>
-                  </div>
-                  {hintText ?? <span className="text-red-300">{hintError}</span>}
-                </div>
-              )}
               <div className="flex items-end gap-2">
 
                 {/* ヒントボタン（マイページで、オンのとき） */}
@@ -554,39 +528,14 @@ export default function SessionPage() {
                     disabled={isLoading || isStarting || hintLoading || messages.length < 2}
                     title="次の一手のヒントを見る"
                     aria-label="ヒントを見る"
-                    className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-white/10 text-base border border-white/10 hover:bg-amber-400/20 disabled:opacity-30 transition-all"
+                    className="flex-shrink-0 w-[46px] h-[46px] rounded-xl flex items-center justify-center bg-white/10 text-xl border border-white/10 hover:bg-amber-400/20 disabled:opacity-30 transition-all"
                   >
-                    {hintLoading ? <span className="text-xs animate-pulse">…</span> : "💡"}
-                  </button>
-                )}
-
-                {/* 音声入力ボタン */}
-                {voice.status !== "unsupported" && (
-                  <button
-                    onClick={voice.toggle}
-                    disabled={isLoading || isStarting}
-                    title={voice.status === "recording" ? "録音を停止" : "音声入力"}
-                    className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                      voice.status === "recording"
-                        ? "bg-red-500 text-white shadow-lg shadow-red-500/30 scale-110"
-                        : "bg-white/10 text-white/45 border border-white/10 hover:bg-white/20 hover:text-white disabled:opacity-30"
-                    }`}
-                  >
-                    {voice.status === "recording" ? (
-                      <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#1d1a2e] opacity-75" />
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-[#1d1a2e]" />
-                      </span>
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                      </svg>
-                    )}
+                    {hintLoading ? <span className="text-base animate-pulse">…</span> : "💡"}
                   </button>
                 )}
 
                 {/* テキスト入力 */}
-                <div className={`flex-1 rounded-xl border transition-all ${
+                <div className={`flex flex-1 items-end rounded-xl border transition-all ${
                   voice.status === "recording"
                     ? "bg-red-400/10 border-red-300/40"
                     : "bg-[#14121f] border-white/10 focus-within:border-pink-300 focus-within:bg-[#241f3a]"
@@ -602,19 +551,44 @@ export default function SessionPage() {
                         : "メッセージを入力"
                     }
                     rows={1}
-                    className="w-full bg-transparent px-4 py-3 text-sm text-white/90 placeholder-white/35 resize-none outline-none"
+                    className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm text-white/90 placeholder-white/35 resize-none outline-none"
                     disabled={isLoading || isStarting || voice.status === "recording"}
                   />
+                  {/* 音声入力ボタン（入力ボックスの右端） */}
+                  {voice.status !== "unsupported" && (
+                    <button
+                      onClick={voice.toggle}
+                      disabled={isLoading || isStarting}
+                      title={voice.status === "recording" ? "録音を停止" : "音声入力"}
+                      aria-label={voice.status === "recording" ? "録音を停止" : "音声入力"}
+                      className={`mb-1.5 mr-1.5 flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                        voice.status === "recording"
+                          ? "bg-red-500 text-white shadow-lg shadow-red-500/30"
+                          : "text-white/55 hover:bg-white/10 hover:text-white disabled:opacity-30"
+                      }`}
+                    >
+                      {voice.status === "recording" ? (
+                        <span className="relative flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
+                        </span>
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                        </svg>
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 {/* 送信ボタン */}
                 <button
                   onClick={sendMessage}
                   disabled={!input.trim() || isLoading || isStarting || voice.status === "recording"}
-                  className="flex-shrink-0 w-10 h-10 disabled:bg-white/10 disabled:text-white/30 text-white rounded-xl flex items-center justify-center transition-all shadow-sm"
+                  className="flex-shrink-0 w-[46px] h-[46px] disabled:bg-white/10 disabled:text-white/30 text-white rounded-xl flex items-center justify-center transition-all shadow-sm"
                   style={{ background: !input.trim() || isLoading || isStarting || voice.status === "recording" ? undefined : "linear-gradient(135deg, #F472B6 0%, #D946EF 100%)" }}
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
                 </button>

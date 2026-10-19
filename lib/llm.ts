@@ -3,8 +3,8 @@
 
      AI_CHAT_MODEL = anthropic                      （既定: claude-sonnet-5-5）
      AI_CHAT_MODEL = anthropic:claude-haiku-5-5
-     AI_CHAT_MODEL = gemini                         （既定: gemini-2.5-flash）
-     AI_CHAT_MODEL = gemini:gemini-2.5-flash
+     AI_CHAT_MODEL = gemini                         （既定: gemini-3.8-flash）
+     AI_CHAT_MODEL = gemini:gemini-3.8-flash
      AI_EVAL_MODEL = ...                            （評価・振り返りシート用。geminiの既定は gemini-2.5-pro）
      AI_MODEL      = ...                            （上の2つが未設定のときの共通設定）
 
@@ -27,7 +27,7 @@ export interface LlmTarget {
 
 const DEFAULT_MODELS: Record<Provider, Record<LlmRole, string>> = {
   anthropic: { chat: "claude-sonnet-5-5", eval: "claude-sonnet-5-5" },
-  gemini: { chat: "gemini-2.5-flash", eval: "gemini-2.5-pro" },
+  gemini: { chat: "gemini-3.8-flash", eval: "gemini-2.5-pro" }, // 使えない旧モデルは、APIが勧める新しいモデルに自動で切り替える
 };
 
 /** 環境変数から、使うAIとモデルを決める */
@@ -73,10 +73,12 @@ interface GeminiChunk {
   promptFeedback?: { blockReason?: string };
 }
 
-function geminiBody(opts: { model: string; role: LlmRole; system?: string; messages: LlmMessage[]; maxTokens: number; json?: boolean }) {
+type GeminiOpts = { model: string; role: LlmRole; system?: string; messages: LlmMessage[]; maxTokens: number; json?: boolean; dropThinking?: boolean };
+
+function geminiBody(opts: GeminiOpts) {
   const generationConfig: Record<string, unknown> = {};
   const flash = /flash/i.test(opts.model);
-  if (opts.role === "chat" && flash) {
+  if (opts.role === "chat" && flash && !opts.dropThinking) {
     // 会話は、考える時間を使わない（速く、安く）
     generationConfig.thinkingConfig = { thinkingBudget: 0 };
     generationConfig.maxOutputTokens = opts.maxTokens;
@@ -95,18 +97,53 @@ function geminiBody(opts: { model: string; role: LlmRole; system?: string; messa
 const geminiText = (chunk: GeminiChunk) =>
   (chunk.candidates?.[0]?.content?.parts ?? []).filter((p) => !p.thought).map((p) => p.text ?? "").join("");
 
-async function geminiError(res: Response): Promise<Error> {
-  const body = await res.text().catch(() => "");
-  return new Error(`${res.status} Gemini API error: ${body.slice(0, 300)}`);
+/** 「このモデルは使えなくなった」と言われたモデル → APIが勧める新しいモデル（同じ実行中は、覚えておく） */
+const MODEL_REDIRECTS = new Map<string, string>();
+/** 「考える設定」を受け付けなかったモデル（同じ実行中は、最初から付けない） */
+const NO_THINKING_CONFIG = new Set<string>();
+
+/** エラー文に出てくる「models/gemini-…」のうち、いま使っているもの以外の、最後のものを選ぶ */
+function recommendedModel(body: string, current: string): string | null {
+  const names = [...body.matchAll(/models\/(gemini-[A-Za-z0-9._-]+)/g)].map((m) => m[1]).filter((n) => n !== current);
+  return names.length ? names[names.length - 1] : null;
 }
 
-async function* geminiStream(opts: Parameters<typeof geminiBody>[0]): AsyncGenerator<string> {
-  const res = await fetch(`${geminiBase()}/models/${opts.model}:streamGenerateContent?alt=sse`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey() },
-    body: JSON.stringify(geminiBody(opts)),
-  });
-  if (!res.ok || !res.body) throw await geminiError(res);
+/** Geminiを呼ぶ。旧モデルが使えないときは、勧められた新しいモデルで、考える設定が拒否されたときは、その設定なしで、やり直す */
+async function geminiRequest(opts: GeminiOpts, endpoint: (model: string) => string): Promise<Response> {
+  let model = MODEL_REDIRECTS.get(opts.model) ?? opts.model;
+  let dropThinking = NO_THINKING_CONFIG.has(MODEL_REDIRECTS.get(opts.model) ?? opts.model);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await fetch(`${geminiBase()}/models/${endpoint(model)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey() },
+      body: JSON.stringify(geminiBody({ ...opts, model, dropThinking })),
+    });
+    if (res.ok) return res;
+    const text = await res.text().catch(() => "");
+    if (res.status === 404 && /no longer available|not found|is not supported/i.test(text)) {
+      const next = recommendedModel(text, model);
+      if (next) {
+        console.warn(`[llm] Gemini model ${model} is unavailable; switching to ${next}`);
+        MODEL_REDIRECTS.set(opts.model, next);
+        model = next;
+        dropThinking = NO_THINKING_CONFIG.has(model);
+        continue;
+      }
+    }
+    if (res.status === 400 && /thinking/i.test(text) && !dropThinking) {
+      console.warn(`[llm] Gemini model ${model} rejected thinkingConfig; retrying without it`);
+      dropThinking = true;
+      NO_THINKING_CONFIG.add(model);
+      continue;
+    }
+    throw new Error(`${res.status} Gemini API error: ${text.slice(0, 300)}`);
+  }
+  throw new Error("Gemini API error: モデルを切り替えても、呼び出せませんでした。");
+}
+
+async function* geminiStream(opts: GeminiOpts): AsyncGenerator<string> {
+  const res = await geminiRequest(opts, (m) => `${m}:streamGenerateContent?alt=sse`);
+  if (!res.body) throw new Error("Gemini API error: 返答が空でした。");
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
@@ -135,13 +172,8 @@ async function* geminiStream(opts: Parameters<typeof geminiBody>[0]): AsyncGener
   if (!produced && blocked) throw new Error(`AI が内容をブロックしました（${blocked}）。別の言い方で、もう一度お試しください。`);
 }
 
-async function geminiComplete(opts: Parameters<typeof geminiBody>[0]): Promise<string> {
-  const res = await fetch(`${geminiBase()}/models/${opts.model}:generateContent`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey() },
-    body: JSON.stringify(geminiBody(opts)),
-  });
-  if (!res.ok) throw await geminiError(res);
+async function geminiComplete(opts: GeminiOpts): Promise<string> {
+  const res = await geminiRequest(opts, (m) => `${m}:generateContent`);
   const chunk = (await res.json()) as GeminiChunk;
   const text = geminiText(chunk);
   if (chunk.candidates?.[0]?.finishReason === "MAX_TOKENS") throw new LlmTruncatedError();

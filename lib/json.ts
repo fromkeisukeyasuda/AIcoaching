@@ -1,4 +1,4 @@
-import { completeText } from "@/lib/llm";
+import { completeText, LlmTruncatedError } from "@/lib/llm";
 
 /** AIが返したJSONの、よくある崩れ（文字列内の引用符・改行、末尾のカンマ）を直す */
 function repairJson(src: string): string {
@@ -46,16 +46,23 @@ export function parseJsonLoose<T = unknown>(text: string): T {
   }
 }
 
-/** AIにJSONを作らせる。読めなかったときは、1回だけ作り直す */
+/** AIにJSONを作らせる。読めない・途中で切れたときは、出力の上限を2倍にして、1回だけ作り直す */
 export async function completeJson<T = unknown>(opts: Parameters<typeof completeText>[0]): Promise<T> {
   let lastError: unknown;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const text = await completeText({ ...opts, json: true });
     try {
+      const text = await completeText({ ...opts, maxTokens: opts.maxTokens * (attempt + 1), json: true });
       return parseJsonLoose<T>(text);
     } catch (e) {
+      const retryable = e instanceof LlmTruncatedError || (e instanceof SyntaxError) || (e instanceof Error && e.message.startsWith("JSONの解析"));
+      if (!retryable) throw e;
+      console.error(`[completeJson] attempt ${attempt + 1} failed:`, e instanceof Error ? e.message : e);
       lastError = e;
     }
   }
-  throw lastError instanceof Error ? new Error("AIの返答を読み取れませんでした。もう一度お試しください。") : lastError;
+  throw new Error(
+    lastError instanceof LlmTruncatedError
+      ? "AIの返答が長すぎて、評価を作りきれませんでした。会話を少し短くして、もう一度お試しください。"
+      : "AIの返答を読み取れませんでした。もう一度お試しください。"
+  );
 }

@@ -162,6 +162,116 @@ function TextArea({ value, onChange, placeholder, rows = 3 }: { value: string; o
   );
 }
 
+/** 発言ごとの評価（コーチの発言1つずつに、点数・良かった点・高めるポイント） */
+function UtteranceFeedbackView({
+  record, onUpdate,
+}: {
+  record: SessionRecord;
+  onUpdate: (patch: Partial<SessionRecord>) => void;
+}) {
+  const items = record.utterances;
+  const messages = record.session.messages;
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const evaluable = messages.filter((m, i) => m.role === "user" && i > 0 && m.content.trim()).length;
+
+  const generate = async () => {
+    setGenerating(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages, scenario: record.session.scenario }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error ?? "発言ごとの評価を作れませんでした");
+      onUpdate({ utterances: data.items });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "発言ごとの評価を作れませんでした");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <section>
+      <SheetTitle badge="発言" title="発言ごとの評価" sub="あなたの発言を、1つずつ振り返ります" />
+      {!items ? (
+        <div style={{ ...SHEET_BOX, padding: "22px", textAlign: "center" }}>
+          <p style={{ margin: "0 0 14px", fontSize: 12.5, color: V.ink3, lineHeight: 1.8 }}>
+            あなたの発言ごとに、点数・良かった点・さらに高めるポイントをまとめます。
+          </p>
+          <button
+            onClick={generate}
+            disabled={generating || evaluable === 0}
+            className="btn-primary"
+            style={{ border: "none", cursor: generating ? "default" : "pointer", background: V.accent, color: "white", fontWeight: 700, fontSize: 13, padding: "11px 24px", borderRadius: 999, opacity: generating || evaluable === 0 ? 0.5 : 1, fontFamily: V.sans }}
+          >
+            {generating ? "評価中…（1分ほどかかります）" : "発言ごとの評価を作成する"}
+          </button>
+          {evaluable === 0 && <p style={{ margin: "10px 0 0", fontSize: 11.5, color: V.ink3 }}>評価できる発言がありません。</p>}
+          {error && <p style={{ margin: "10px 0 0", fontSize: 12, color: V.coral }}>{error}</p>}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {items.map((it, n) => (
+            <div key={it.index} style={{ ...SHEET_BOX, padding: "16px 18px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14, marginBottom: 10 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.06em", color: V.ink3, marginBottom: 4 }}>発言 {n + 1}</div>
+                  <p style={{ margin: 0, fontSize: 13, color: V.ink, lineHeight: 1.75, wordBreak: "break-word" }}>{messages[it.index]?.content}</p>
+                </div>
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <span className="tnum" style={{ fontFamily: V.round, fontSize: 28, fontWeight: 800, lineHeight: 1, color: scoreColor(it.score) }}>{it.score}</span>
+                  <span style={{ fontSize: 11.5, color: V.ink3 }}> / 100点</span>
+                </div>
+              </div>
+              {it.headline && <p style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 700, color: V.ink, lineHeight: 1.75 }}>{it.headline}</p>}
+              {it.goods.length > 0 && (
+                <div style={{ marginBottom: it.improves.length > 0 ? 12 : 0 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 800, color: V.greenDk, marginBottom: 6 }}>良かった点</div>
+                  <ul style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 6 }}>
+                    {it.goods.map((g, i) => (
+                      <li key={i} style={{ fontSize: 12.5, color: V.ink2, lineHeight: 1.8 }}>
+                        <strong style={{ color: V.ink }}>{g.title}</strong>{g.title && g.body ? "　" : ""}{g.body}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {it.improves.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 11.5, fontWeight: 800, color: V.amber, marginBottom: 6 }}>さらに完成度を高めるためのポイント</div>
+                  <ul style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 6 }}>
+                    {it.improves.map((g, i) => (
+                      <li key={i} style={{ fontSize: 12.5, color: V.ink2, lineHeight: 1.8 }}>
+                        <strong style={{ color: V.ink }}>{g.title}</strong>{g.title && g.body ? "　" : ""}{g.body}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ))}
+          <div style={{ textAlign: "right" }}>
+            <button
+              onClick={generate}
+              disabled={generating}
+              className="btn-ghost"
+              style={{ border: "none", cursor: generating ? "default" : "pointer", background: "transparent", color: "#F9A8D4", fontSize: 11.5, fontWeight: 700, padding: "6px 12px", borderRadius: 999, boxShadow: "inset 0 0 0 1px rgba(244,114,182,0.35)", fontFamily: V.sans, opacity: generating ? 0.5 : 1 }}
+            >
+              {generating ? "評価中…（1分ほどかかります）" : "評価をやり直す"}
+            </button>
+            {error && <p style={{ margin: "8px 0 0", fontSize: 12, color: V.coral }}>{error}</p>}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 /** 1件分の振り返りシート */
 function ReflectionSheetView({
   record, onUpdate, onDelete,
@@ -211,6 +321,9 @@ function ReflectionSheetView({
           <Field label="相談場面・導入状況">{sheet?.situation || sc.situation || "—"}</Field>
         </div>
       </section>
+
+      {/* ── 発言ごとの評価 ── */}
+      <UtteranceFeedbackView record={record} onUpdate={onUpdate} />
 
       {!sheet ? (
         <section style={{ ...SHEET_BOX, padding: "22px", textAlign: "center" }}>

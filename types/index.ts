@@ -80,10 +80,20 @@ export interface SessionData {
   endedAt: string;
 }
 
+/** コーチ（ユーザー）の発言1つぶんの評価 */
+export interface UtteranceFeedback {
+  index: number;      // session.messages 内の位置
+  score: number;      // 0-100
+  headline: string;   // 発言への総評（1〜2文）
+  goods: { title: string; body: string }[];     // 良かった点
+  improves: { title: string; body: string }[];  // さらに完成度を高めるためのポイント
+}
+
 export interface SessionRecord {
   id: string;          // = session.startedAt（セッション一意キー）
   session: SessionData;
   evaluation: EvaluationResult;
   savedAt: string;
   reflection?: ReflectionNotes;
+  utterances?: UtteranceFeedback[];
 }

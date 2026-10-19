@@ -3,6 +3,8 @@ import { Message, Scenario, EvaluationResult } from "@/types";
 import { sheetInstructions, SHEET_JSON_EXAMPLE, normalizeSheet } from "@/lib/sheet";
 
 
+export const maxDuration = 120; // 評価は、長い会話だと1分近くかかる
+
 export async function POST(req: Request) {
   const {
     messages,
@@ -66,7 +68,7 @@ ${sheetInstructions(scenario)}
 }`;
 
   try {
-    const result = await completeJson<EvaluationResult>({ role: "eval", prompt, maxTokens: 6000 });
+    const result = await completeJson<EvaluationResult>({ role: "eval", prompt, maxTokens: 8000 });
     result.sheet = normalizeSheet(result.sheet);
 
     return Response.json(result);

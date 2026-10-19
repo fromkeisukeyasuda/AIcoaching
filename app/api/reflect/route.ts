@@ -3,6 +3,8 @@ import { Message, Scenario } from "@/types";
 import { sheetInstructions, SHEET_JSON_EXAMPLE, normalizeSheet } from "@/lib/sheet";
 
 
+export const maxDuration = 120; // 評価は、長い会話だと1分近くかかる
+
 export async function POST(req: Request) {
   const { messages, scenario }: { messages: Message[]; scenario: Scenario } = await req.json();
 
@@ -24,7 +26,7 @@ ${conversation}
 ${SHEET_JSON_EXAMPLE}`;
 
   try {
-    const sheet = normalizeSheet(await completeJson({ role: "eval", prompt, maxTokens: 4500 }));
+    const sheet = normalizeSheet(await completeJson({ role: "eval", prompt, maxTokens: 6000 }));
     if (!sheet) throw new Error("シートの形式が正しくありません");
     return Response.json(sheet);
   } catch (error) {

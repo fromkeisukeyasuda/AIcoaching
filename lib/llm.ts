@@ -45,6 +45,14 @@ export function resolveTarget(role: LlmRole): LlmTarget {
   return { provider, model };
 }
 
+/** 出力の上限に達して、返答が途中で切れたとき */
+export class LlmTruncatedError extends Error {
+  constructor() {
+    super("AIの返答が長すぎて、途中で切れました。");
+    this.name = "LlmTruncatedError";
+  }
+}
+
 /* ───────── Anthropic ───────── */
 let anthropicClient: Anthropic | null = null;
 const anthropic = () => (anthropicClient ??= new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }));
@@ -136,6 +144,7 @@ async function geminiComplete(opts: Parameters<typeof geminiBody>[0]): Promise<s
   if (!res.ok) throw await geminiError(res);
   const chunk = (await res.json()) as GeminiChunk;
   const text = geminiText(chunk);
+  if (chunk.candidates?.[0]?.finishReason === "MAX_TOKENS") throw new LlmTruncatedError();
   if (!text && chunk.promptFeedback?.blockReason) {
     throw new Error(`AI が内容をブロックしました（${chunk.promptFeedback.blockReason}）。`);
   }
@@ -194,6 +203,8 @@ export async function completeText(opts: {
     ...(opts.system ? { system: opts.system } : {}),
     messages,
   });
+  // 思考ブロックも出力の上限に数えられるため、足りないと、本文が途中で切れる
+  if (response.stop_reason === "max_tokens") throw new LlmTruncatedError();
   // 思考ブロックが先頭に来ることがあるため、テキストブロックをすべて連結する
   return response.content.map((c) => (c.type === "text" ? c.text : "")).join("");
 }

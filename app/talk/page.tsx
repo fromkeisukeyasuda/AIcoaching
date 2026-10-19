@@ -394,31 +394,44 @@ export default function ConsultPage() {
             ) : (
               <>
                 <div className="flex items-end gap-2">
-                  {voice.status !== "unsupported" && (
-                    <button
-                      onClick={voice.toggle}
-                      disabled={isLoading}
-                      title="音声入力"
-                      className={`flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all ${
-                        voice.status === "recording" ? "bg-pink-500 shadow-lg shadow-pink-500/40 scale-110" : "bg-white/10 hover:bg-white/15 disabled:opacity-30"
-                      }`}
-                    >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                      </svg>
-                    </button>
-                  )}
-                  <textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(input); }
-                    }}
-                    rows={1}
-                    disabled={busy}
-                    placeholder={voice.status === "recording" ? "🎙 聞いてるよ…" : `${coach.name}に話しかける`}
-                    className="flex-1 resize-none rounded-2xl bg-white/10 px-4 py-3 text-sm text-white placeholder-white/35 outline-none focus:bg-white/15 max-h-28"
-                  />
+                  {/* 入力ボックス（音声入力は、右端の内側。面談練習と同じ） */}
+                  <div className="flex flex-1 items-end rounded-2xl bg-white/10 transition-colors focus-within:bg-white/15 [-webkit-tap-highlight-color:transparent]">
+                    <textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(input); }
+                      }}
+                      rows={1}
+                      disabled={busy}
+                      placeholder={voice.status === "recording" ? "🎙 聞いてるよ…" : `${coach.name}に話しかける`}
+                      className="min-w-0 flex-1 resize-none bg-transparent px-4 py-3 text-sm text-white placeholder-white/35 outline-none focus-visible:outline-none max-h-28"
+                    />
+                    {voice.status !== "unsupported" && (
+                      <button
+                        onClick={voice.toggle}
+                        disabled={isLoading}
+                        title={voice.status === "recording" ? "録音を停止" : "音声入力"}
+                        aria-label={voice.status === "recording" ? "録音を停止" : "音声入力"}
+                        className={`mb-1 mr-1 flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                          voice.status === "recording"
+                            ? "bg-red-500 text-white shadow-lg shadow-red-500/30"
+                            : "text-white/55 hover:bg-white/10 hover:text-white disabled:opacity-30"
+                        }`}
+                      >
+                        {voice.status === "recording" ? (
+                          <span className="relative flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
+                          </span>
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                  </div>
                   <button
                     onClick={() => send(input)}
                     disabled={!input.trim() || busy}

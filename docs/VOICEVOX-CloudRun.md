@@ -18,23 +18,20 @@ gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudb
 
 ## 1. デプロイ（最大インスタンス 1・使わない間は 0）
 
+Cloud Run は、Docker Hub のイメージを直接は取得できないことがあるため、Artifact Registry の「リモートリポジトリ」を経由します。
+
 ```bash
-gcloud run deploy voicevox \
-  --image=voicevox/voicevox_engine:cpu-latest \
-  --region=asia-northeast1 \
-  --port=50021 \
-  --cpu=2 --memory=4Gi \
-  --min-instances=0 \
-  --max-instances=1 \
-  --concurrency=4 \
-  --timeout=60 \
-  --no-allow-unauthenticated
+gcloud artifacts repositories create dockerhub   --repository-format=docker --mode=remote-repository   --remote-docker-repo=DOCKER-HUB --location=asia-northeast1
+```
+
+```bash
+gcloud run deploy voicevox   --image=asia-northeast1-docker.pkg.dev/$(gcloud config get-value project)/dockerhub/voicevox/voicevox_engine:cpu-latest   --region=asia-northeast1   --port=50021   --cpu=2 --memory=4Gi   --min-instances=0   --max-instances=1   --concurrency=4   --timeout=60   --no-allow-unauthenticated
 ```
 
 - `--max-instances=1` : 同時に起動するのは 1 台まで（費用の暴走を防ぐ）
 - `--min-instances=0` : 使わない間は課金されない（起動は 10〜30 秒かかる。アプリ側のウォームアップで吸収）
 - `--no-allow-unauthenticated` : 認証必須。URL を知られても使われない
-- Docker Hub のイメージが取得できない場合は、Artifact Registry の remote repository 経由にしてください
+- 「Allow unauthenticated invocations?」と聞かれたら、`N` を選びます
 
 デプロイ後に表示される Service URL を控えます（`https://voicevox-xxxxx-an.a.run.app`）。
 

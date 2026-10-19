@@ -171,6 +171,7 @@ export default function SessionPage() {
       const decoder = new TextDecoder();
       let fullText = "";
       let ttsBuf = "";
+      let spokeFirst = false; // 最初の1文は、長いとき、読点で区切って、早く声を出し始める
 
       setMessages([...msgHistory, { role: "assistant", content: "" }]);
 
@@ -197,9 +198,18 @@ export default function SessionPage() {
           setMessages([...msgHistory, { role: "assistant", content: fullText }]);
           while (true) {
             const match = ttsBuf.match(/^([\s\S]*?[。！？])/);
-            if (!match) break;
+            if (!match) {
+              const early = spokeFirst ? null : ttsBuf.match(/^([\s\S]{10,}?、)/);
+              if (early) {
+                tts.pushChunk(early[1].trim());
+                spokeFirst = true;
+                ttsBuf = ttsBuf.slice(early[1].length);
+                continue;
+              }
+              break;
+            }
             const sentence = match[1].trim();
-            if (sentence.length >= 2) tts.pushChunk(sentence);
+            if (sentence.length >= 2) { tts.pushChunk(sentence); spokeFirst = true; }
             ttsBuf = ttsBuf.slice(match[1].length);
           }
         }
@@ -212,6 +222,7 @@ export default function SessionPage() {
   const sendMessageWithText = useCallback(
     async (text: string) => {
       if (!text.trim() || isLoading || isStarting || !selectedScenario) return;
+      tts.unlock();
       tts.stop();
       const userMessage: Message = { role: "user", content: text.trim() };
       const newMessages = [...messages, userMessage];
@@ -253,18 +264,12 @@ export default function SessionPage() {
   /* ── Start session ── */
   const startSession = useCallback(
     async (scenario: Scenario) => {
-      if (tts.voiceBoxAvailable && tts.speakerStyles.length > 0) {
-        // 作成時に選んだ見た目があれば、その声を優先する
-        const prefs = avatarVoicePrefs(scenario.avatar).length > 0
-          ? avatarVoicePrefs(scenario.avatar)
-          : Object.entries(CHARACTER_VOICE_PREFS).find(([name]) => scenario.clientName.includes(name))?.[1] ?? [];
-        for (const speakerName of prefs) {
-          const found =
-            tts.speakerStyles.find((s) => s.speakerName === speakerName && s.name === "ノーマル") ??
-            tts.speakerStyles.find((s) => s.speakerName === speakerName);
-          if (found) { tts.setSelectedSpeakerId(found.id); break; }
-        }
-      }
+      tts.unlock(); // タップの中で、スマホの自動再生の制限を解除しておく
+      // 作成時に選んだ見た目があれば、その声を優先する（VoiceBox の確認前でも、確認後に反映される）
+      const prefs = avatarVoicePrefs(scenario.avatar).length > 0
+        ? avatarVoicePrefs(scenario.avatar)
+        : Object.entries(CHARACTER_VOICE_PREFS).find(([name]) => scenario.clientName.includes(name))?.[1] ?? [];
+      tts.setVoicePrefs(prefs);
 
       setIsStarting(true);
       setSelectedScenario(scenario);

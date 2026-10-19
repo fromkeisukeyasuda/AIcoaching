@@ -131,14 +131,8 @@ export default function ConsultPage() {
     setObName("");
     setObNameAnswer(null);
     setCoach(c);
-    if (tts.voiceBoxAvailable && tts.speakerStyles.length > 0) {
-      for (const name of c.voicePrefs) {
-        const found =
-          tts.speakerStyles.find((s) => s.speakerName === name && s.name === "ノーマル") ??
-          tts.speakerStyles.find((s) => s.speakerName === name);
-        if (found) { tts.setSelectedSpeakerId(found.id); break; }
-      }
-    }
+    tts.unlock(); // タップの中で、スマホの自動再生の制限を解除しておく
+    tts.setVoicePrefs(c.voicePrefs); // VoiceBox の確認前でも、確認後に反映される
   };
 
   const leaveChat = () => {
@@ -150,6 +144,7 @@ export default function ConsultPage() {
     async (text: string) => {
       const body = text.trim();
       if (!body || isLoading || !coach) return;
+      tts.unlock();
       tts.stop();
       const history: Message[] = [...messages, { role: "user", content: body }];
       setMessages(history);
@@ -169,6 +164,7 @@ export default function ConsultPage() {
         let raw = "";
         let spoken = 0;
         let ttsBuf = "";
+        let spokeFirst = false; // 最初の1文は、長いとき、読点で区切って、早く声を出し始める
         setMessages([...history, { role: "assistant", content: "" }]);
 
         while (true) {
@@ -183,9 +179,18 @@ export default function ConsultPage() {
           spoken = shown.length;
           while (true) {
             const m = ttsBuf.match(/^([\s\S]*?[。！？])/);
-            if (!m) break;
+            if (!m) {
+              const early = spokeFirst ? null : ttsBuf.match(/^([\s\S]{10,}?、)/);
+              if (early) {
+                tts.pushChunk(early[1].trim());
+                spokeFirst = true;
+                ttsBuf = ttsBuf.slice(early[1].length);
+                continue;
+              }
+              break;
+            }
             const s = m[1].trim();
-            if (s.length >= 2) tts.pushChunk(s);
+            if (s.length >= 2) { tts.pushChunk(s); spokeFirst = true; }
             ttsBuf = ttsBuf.slice(m[1].length);
           }
         }

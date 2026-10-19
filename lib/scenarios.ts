@@ -1,5 +1,8 @@
 import { Scenario } from "@/types";
 
+/** 評価に必要な、コーチ側（ユーザー）の発言の最小数。練習の「終了」と評価画面で共有する */
+export const MIN_EVAL_USER_MESSAGES = 2;
+
 export const scenarios: Scenario[] = [
   {
     id: "team-management",

@@ -9,8 +9,10 @@ import ChatMessage from "@/components/ChatMessage";
 import TypingIndicator from "@/components/TypingIndicator";
 import CharacterAvatar from "@/components/CharacterAvatar";
 import { clients } from "@/lib/coaches";
+import { voiceCredit } from "@/lib/voiceCredit";
 import { Counseling, addCounselingXp, getCounseling, xpNeeded, XP_PER_COACH_MESSAGE } from "@/lib/talkStore";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { getSettings } from "@/lib/settings";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
 /* ── カウンセリングLv（面談練習でコーチ役として話すほど上がる） ── */
@@ -87,11 +89,45 @@ export default function SessionPage() {
   const [levelUpItems, setLevelUpItems] = useState<string[]>([]);
   const [counseling, setCounseling] = useState<Counseling>({ lv: 1, xp: 0 });
   const [levelFlash, setLevelFlash] = useState(false);
+  const [hintEnabled, setHintEnabled] = useState(false);
+  const [hintText, setHintText] = useState<string | null>(null);
+  const [hintLoading, setHintLoading] = useState(false);
+  const [hintError, setHintError] = useState<string | null>(null);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const tts = useTextToSpeech();
   const sendWithTextRef = useRef<(text: string) => void>(() => {});
+
+  useEffect(() => {
+    setHintEnabled(getSettings().hint);
+  }, []);
+
+  /* 会話が進んだら、前のヒントは消す */
+  useEffect(() => {
+    setHintText(null);
+    setHintError(null);
+  }, [messages.length]);
+
+  const requestHint = async () => {
+    if (!selectedScenario || hintLoading || messages.length === 0) return;
+    setHintLoading(true);
+    setHintError(null);
+    try {
+      const res = await fetch("/api/hint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages, scenario: selectedScenario }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.hint) throw new Error(data.error || "ヒントを作れませんでした。");
+      setHintText(data.hint);
+    } catch (e) {
+      setHintError(e instanceof Error ? e.message : "ヒントを作れませんでした。");
+    } finally {
+      setHintLoading(false);
+    }
+  };
 
   useEffect(() => {
     setCounseling(getCounseling());
@@ -283,6 +319,7 @@ export default function SessionPage() {
   };
 
   const userMsgCount = messages.filter((m) => m.role === "user").length;
+  const voiceName = tts.speakerStyles.find((s) => s.id === tts.selectedSpeakerId)?.speakerName;
 
   /* ══════════════════════════════
      シナリオ選択画面
@@ -416,7 +453,7 @@ export default function SessionPage() {
           {/* 終了ボタン */}
           <button
             onClick={endSession}
-            disabled={messages.length < 2}
+            disabled={messages.length === 0 || isStarting}
             className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white/10 text-white/60 hover:bg-red-400/10 hover:text-red-300 border border-white/10 hover:border-red-300/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             終了
@@ -428,10 +465,10 @@ export default function SessionPage() {
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
 
         {/* ═══ 左パネル：アバター（ダークネイビー — コーチング集中空間） ═══ */}
-        <div className="w-full h-[34%] md:h-auto md:w-1/2 flex-shrink-0 flex flex-col bg-[#0f0d1a] overflow-hidden">
+        <div className="w-full h-[24%] min-h-[120px] md:min-h-0 md:h-auto md:w-1/2 flex-shrink-0 flex flex-col bg-[#0f0d1a] overflow-hidden">
 
           {/* 画像エリア */}
-          <div className="flex-1 min-h-0 p-4 pb-2">
+          <div className="flex-1 min-h-0 p-2 pb-1 md:p-4 md:pb-2">
             <CharacterAvatar
               clientName={selectedScenario.clientName}
               speaking={tts.speaking && !isStarting}
@@ -442,11 +479,14 @@ export default function SessionPage() {
           </div>
 
           {/* 下部バー: 音声波形 + ステータス */}
-          <div className="flex-shrink-0 flex flex-col items-center gap-1.5 pb-3 px-4">
-            <SoundWave active={tts.speaking && !isStarting} />
+          <div className="flex-shrink-0 flex flex-col items-center gap-1 md:gap-1.5 pb-2 md:pb-3 px-4">
+            <div className="hidden md:block"><SoundWave active={tts.speaking && !isStarting} /></div>
             <LevelBar c={counseling} flash={levelFlash} />
+            {tts.voiceBoxAvailable && tts.enabled && voiceName && (
+              <p className="text-[10px] text-white/45">{voiceCredit(voiceName)}</p>
+            )}
             {levelFlash && <p className="text-center text-xs text-pink-200">レベルアップ。カウンセリング Lv.{counseling.lv}</p>}
-            <div className="h-4 flex items-center justify-center">
+            <div className={`h-4 items-center justify-center ${isStarting ? "flex" : "hidden md:flex"}`}>
               <p className="text-white/35 text-xs">
                 {isStarting ? "セッションを準備中..." : userMsgCount > 0 ? `${userMsgCount}往復` : ""}
               </p>
@@ -494,9 +534,31 @@ export default function SessionPage() {
           )}
 
           {/* ── 入力バー ── */}
-          <div className="flex-shrink-0 border-t border-white/10 bg-[#1d1a2e] px-5 py-4">
+          <div className="flex-shrink-0 border-t border-white/10 bg-[#1d1a2e] px-4 py-3 md:px-5 md:py-4">
             <div className="max-w-2xl mx-auto">
+              {(hintText || hintError) && (
+                <div className="mb-3 rounded-xl border border-amber-300/30 bg-amber-400/10 px-4 py-3 text-sm leading-relaxed text-amber-100">
+                  <div className="mb-1 flex items-center justify-between text-xs font-bold text-amber-200">
+                    <span>💡 ヒント</span>
+                    <button onClick={() => { setHintText(null); setHintError(null); }} className="text-white/50 hover:text-white" aria-label="ヒントを閉じる">✕</button>
+                  </div>
+                  {hintText ?? <span className="text-red-300">{hintError}</span>}
+                </div>
+              )}
               <div className="flex items-end gap-2">
+
+                {/* ヒントボタン（マイページで、オンのとき） */}
+                {hintEnabled && (
+                  <button
+                    onClick={requestHint}
+                    disabled={isLoading || isStarting || hintLoading || messages.length < 2}
+                    title="次の一手のヒントを見る"
+                    aria-label="ヒントを見る"
+                    className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-white/10 text-base border border-white/10 hover:bg-amber-400/20 disabled:opacity-30 transition-all"
+                  >
+                    {hintLoading ? <span className="text-xs animate-pulse">…</span> : "💡"}
+                  </button>
+                )}
 
                 {/* 音声入力ボタン */}
                 {voice.status !== "unsupported" && (
@@ -537,7 +599,7 @@ export default function SessionPage() {
                     placeholder={
                       voice.status === "recording"
                         ? "🎙 聞き取り中..."
-                        : "メッセージを入力（Enter で送信 / Shift+Enter で改行）"
+                        : "メッセージを入力"
                     }
                     rows={1}
                     className="w-full bg-transparent px-4 py-3 text-sm text-white/90 placeholder-white/35 resize-none outline-none"
@@ -561,10 +623,10 @@ export default function SessionPage() {
               {voice.errorMsg ? (
                 <p className="text-xs text-red-300 mt-2 px-1 leading-relaxed whitespace-pre-line">{voice.errorMsg}</p>
               ) : (
-                <p className="text-xs text-white/45 mt-2 px-1">
+                <p className={`text-xs text-white/45 mt-2 px-1 ${voice.status === "recording" ? "" : "hidden md:block"}`}>
                   {voice.status === "recording"
                     ? "🎙 話し終わると自動送信されます"
-                    : `コーチとして ${selectedScenario.clientName}さんをサポートしてください`}
+                    : `コーチとして ${selectedScenario.clientName}さんをサポートしてください ・ Enter で送信 / Shift+Enter で改行`}
                 </p>
               )}
             </div>

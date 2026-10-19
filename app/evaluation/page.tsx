@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SessionData, SessionRecord, EvaluationResult } from "@/types";
+import { buildReport, downloadText } from "@/lib/report";
+import { MIN_EVAL_USER_MESSAGES } from "@/lib/scenarios";
 
 /* ══════════════════════════════════════════════════════════════════════
    デザイントークン（v3）
@@ -377,7 +379,7 @@ export default function EvaluationPage() {
     const prevImprovements = prevRecord?.evaluation.improvements ?? [];
 
     const userMsgs = sessionData.messages.filter(m => m.role === "user");
-    if (userMsgs.length < 2) {
+    if (userMsgs.length < MIN_EVAL_USER_MESSAGES) {
       setError("セッションのメッセージが少なすぎます。もう少し会話してから評価してください。");
       setIsLoading(false);
       return;
@@ -800,7 +802,11 @@ export default function EvaluationPage() {
             {/* アクションボタン */}
             <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
               <button
-                onClick={() => alert("ダウンロード機能は準備中です")}
+                onClick={() => {
+                  const d = new Date(session.endedAt ?? session.startedAt);
+                  const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                  downloadText(`練習レポート_${ymd}.md`, buildReport(session, result, ymd));
+                }}
                 style={{
                   padding: "12px 22px",
                   borderRadius: 12,

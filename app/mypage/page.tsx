@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { getSettings, saveSettings } from "@/lib/settings";
+import { usedVoiceNames, voiceCredit, VOICEVOX_SITE } from "@/lib/voiceCredit";
 
 /* ── デザイントークン ── */
 const V = {
@@ -111,30 +113,23 @@ function SegmentedControl({
 ══════════════════════════════════════════════ */
 export default function MyPage() {
   const [freq, setFreq] = useState(FREQ_OPTIONS[0]);
-  const [remind, setRemind] = useState(true);
   const [hint, setHint] = useState(true);
-  const [voice, setVoice] = useState(false);
+  const [voice, setVoice] = useState(true);
   const [favoriteThemes, setFavoriteThemes] = useState<string[]>(["マネジメント", "傾聴", "目標設定"]);
   const [quote, setQuote] = useState(QUOTES[0]);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
-    try {
-      const raw = localStorage.getItem("mypageSettings");
-      if (raw) {
-        const s = JSON.parse(raw);
-        if (s.freq) setFreq(s.freq);
-        if (typeof s.remind === "boolean") setRemind(s.remind);
-        if (typeof s.hint === "boolean") setHint(s.hint);
-        if (typeof s.voice === "boolean") setVoice(s.voice);
-        if (Array.isArray(s.favoriteThemes)) setFavoriteThemes(s.favoriteThemes);
-      }
-    } catch { /* ignore */ }
+    const st = getSettings();
+    setFreq(st.freq);
+    setHint(st.hint);
+    setVoice(st.voice);
+    setFavoriteThemes(st.favoriteThemes);
   }, []);
 
-  function saveSettings() {
-    localStorage.setItem("mypageSettings", JSON.stringify({ freq, remind, hint, voice, favoriteThemes }));
+  function handleSave() {
+    saveSettings({ freq, hint, voice, favoriteThemes });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -214,9 +209,8 @@ export default function MyPage() {
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {[
-              { icon: "🔔", label: "練習リマインド", desc: "設定した頻度でプッシュ通知をお届けします。", checked: remind, onChange: setRemind },
-              { icon: "💡", label: "AIヒント表示",   desc: "練習中にリアルタイムでコーチングのヒントを表示します。", checked: hint,   onChange: setHint   },
-              { icon: "🔊", label: "音声読み上げ（TTS）", desc: "クライアントの返答を音声で読み上げます。VOICEVOXが必要です。", checked: voice, onChange: setVoice },
+              { icon: "💡", label: "AIヒント表示",   desc: "練習中に「ヒント」ボタンを表示し、押すと、次の一手のヒントをAIが出します。", checked: hint,   onChange: setHint   },
+              { icon: "🔊", label: "音声読み上げ（TTS）", desc: "相談・練習の返答を音声で読み上げます。VOICEVOXがない場合は、ブラウザの音声を使います。", checked: voice, onChange: setVoice },
             ].map((item, i, arr) => (
               <div
                 key={item.label}
@@ -317,16 +311,24 @@ export default function MyPage() {
             background: V.bg, borderRadius: 12, padding: "14px 16px",
             fontSize: 13, color: V.ink2, lineHeight: 1.7, marginBottom: 14,
           }}>
-            <strong style={{ color: V.navy }}>データの保存場所:</strong> すべての会話・評価データはブラウザのローカルストレージにのみ保存されます。外部サーバーへの個人データ送信は行いません。
+            <strong style={{ color: V.navy }}>保存場所:</strong> 会話・評価・設定は、この端末のブラウザ（ローカルストレージ）にだけ保存します。アプリ側のサーバーには残しません。
+            <br />
+            <strong style={{ color: V.navy }}>外部への送信:</strong> 返答の生成と評価のため、会話の内容をAIサービス（Anthropic、または Google）に送ります。音声読み上げでは、返答の文章を音声合成エンジン（VOICEVOX）に送ります。名前や会社名など、特定できる情報は入力しないでください。
           </div>
           <button
             onClick={() => {
               if (confirm("すべての練習履歴・設定を削除しますか？この操作は取り消せません。")) {
-                localStorage.removeItem("sessionHistory");
-                localStorage.removeItem("coachingSession");
-                localStorage.removeItem("mypageSettings");
-                localStorage.removeItem("customScenarios");
+                try {
+                  // 相談の会話・プロフィール・レベル（talk_ で始まるもの）と、練習の履歴・設定を、すべて消す
+                  const keys = ["sessionHistory", "coachingSession", "mypageSettings", "customScenarios"];
+                  for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (k?.startsWith("talk_")) keys.push(k);
+                  }
+                  keys.forEach((k) => localStorage.removeItem(k));
+                } catch { /* 削除できない環境では、そのまま進む */ }
                 alert("データを削除しました。");
+                window.location.reload();
               }
             }}
             style={{
@@ -340,8 +342,21 @@ export default function MyPage() {
           </button>
         </div>
 
+        {/* クレジット */}
+        <div className="reveal" style={{ ...card, padding: "24px 30px", gridColumn: "1 / -1", gridRow: 3, ["--i" as string]: 5 } as React.CSSProperties}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: V.navy, fontFamily: V.round, marginBottom: 10 }}>クレジット</div>
+          <p style={{ margin: "0 0 10px", fontSize: 12.5, color: V.ink3, lineHeight: 1.8 }}>
+            音声の合成に、<a href={VOICEVOX_SITE} target="_blank" rel="noopener noreferrer" style={{ color: "#F9A8D4", textDecoration: "none", fontWeight: 600 }}>VOICEVOX</a> を使っています。
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {usedVoiceNames().map((n) => (
+              <span key={n} style={{ fontSize: 12, color: V.ink2, background: "rgba(255,255,255,0.06)", borderRadius: 999, padding: "5px 12px" }}>{voiceCredit(n)}</span>
+            ))}
+          </div>
+        </div>
+
         {/* 保存ボタン */}
-        <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 6 }}>
+        <div style={{ gridColumn: "1 / -1", gridRow: 4, display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 6 }}>
           <Link
             href="/"
             className="btn-ghost"
@@ -355,7 +370,7 @@ export default function MyPage() {
             ← ホームへ
           </Link>
           <button
-            onClick={saveSettings}
+            onClick={handleSave}
             className="btn-primary"
             style={{
               padding: "13px 30px", borderRadius: 999,

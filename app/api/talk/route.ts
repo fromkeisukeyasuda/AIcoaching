@@ -1,15 +1,17 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { streamChat } from "@/lib/llm";
 import { Message } from "@/types";
 import { getCoach } from "@/lib/coaches";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 interface Profile { nickname?: string; ageGroup?: string }
 
 function userContext(profile?: Profile) {
   if (!profile?.nickname && !profile?.ageGroup) return "";
   const lines = ["【相談者について】"];
-  if (profile.nickname) lines.push(`- 呼び名: ${profile.nickname}（自然な場面で呼びかける。毎回は呼ばない）`);
+  if (profile.nickname) {
+    const called = /(さん|くん|君|ちゃん)$/.test(profile.nickname) ? profile.nickname : `${profile.nickname}さん`;
+    lines.push(`- 呼び名: ${called}（自然な場面で呼びかける。毎回は呼ばない。呼ぶときは必ず「${called}」と言い、「さん」を外したり、別の呼び方にしたりしない）`);
+  }
   if (profile.ageGroup) lines.push(`- 年代: ${profile.ageGroup}（話題や言葉選びの参考にするだけで、決めつけない）`);
   return `\n\n${lines.join("\n")}`;
 }
@@ -38,23 +40,13 @@ export async function POST(req: Request) {
   const readable = new ReadableStream({
     async start(controller) {
       try {
-        const stream = client.messages.stream({
-          model: "claude-sonnet-5-5",
-          max_tokens: 500,
+        for await (const text of streamChat({
+          role: "chat",
           system: consultPrompt(coach.persona, profile),
-          messages: messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        });
-
-        for await (const chunk of stream) {
-          if (
-            chunk.type === "content_block_delta" &&
-            chunk.delta.type === "text_delta"
-          ) {
-            controller.enqueue(encoder.encode(chunk.delta.text));
-          }
+          messages: messages,
+          maxTokens: 500,
+        })) {
+          controller.enqueue(encoder.encode(text));
         }
       } catch (error) {
         const errorMessage =

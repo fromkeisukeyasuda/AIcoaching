@@ -1,7 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { streamChat } from "@/lib/llm";
 import { Message, Scenario } from "@/types";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(req: Request) {
   const { messages, scenario }: { messages: Message[]; scenario: Scenario } =
@@ -28,23 +27,13 @@ export async function POST(req: Request) {
   const readable = new ReadableStream({
     async start(controller) {
       try {
-        const stream = client.messages.stream({
-          model: "claude-sonnet-5-5",
-          max_tokens: 600,
+        for await (const text of streamChat({
+          role: "chat",
           system: systemPrompt,
-          messages: messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        });
-
-        for await (const chunk of stream) {
-          if (
-            chunk.type === "content_block_delta" &&
-            chunk.delta.type === "text_delta"
-          ) {
-            controller.enqueue(encoder.encode(chunk.delta.text));
-          }
+          messages: messages,
+          maxTokens: 600,
+        })) {
+          controller.enqueue(encoder.encode(text));
         }
       } catch (error) {
         const errorMessage =

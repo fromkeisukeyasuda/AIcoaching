@@ -1,8 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { completeText } from "@/lib/llm";
 import { Message, Scenario } from "@/types";
 import { sheetInstructions, SHEET_JSON_EXAMPLE, normalizeSheet } from "@/lib/sheet";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(req: Request) {
   const { messages, scenario }: { messages: Message[]; scenario: Scenario } = await req.json();
@@ -25,12 +24,7 @@ ${conversation}
 ${SHEET_JSON_EXAMPLE}`;
 
   try {
-    const response = await client.messages.create({
-      model: "claude-sonnet-5-5",
-      max_tokens: 4500,
-      messages: [{ role: "user", content: prompt }],
-    });
-    const text = response.content.map((c) => (c.type === "text" ? c.text : "")).join("");
+    const text = await completeText({ role: "eval", prompt, maxTokens: 4500, json: true });
     const json = text.match(/\{[\s\S]*\}/)?.[0];
     if (!json) throw new Error("JSONの解析に失敗しました");
     const sheet = normalizeSheet(JSON.parse(json));

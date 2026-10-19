@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { getSettings, saveSettings } from "@/lib/settings";
 
 export interface VoiceBoxSpeakerStyle {
   id: number;
@@ -32,6 +33,8 @@ export function useTextToSpeech() {
   const isProcessingRef = useRef(false);
 
   useEffect(() => { enabledRef.current = enabled; }, [enabled]);
+  // 保存済みの設定（マイページ）を反映
+  useEffect(() => { setEnabled(getSettings().voice); }, []);
   useEffect(() => { voiceBoxRef.current = voiceBoxAvailable; }, [voiceBoxAvailable]);
   useEffect(() => { speakerIdRef.current = selectedSpeakerId; }, [selectedSpeakerId]);
 
@@ -163,7 +166,10 @@ export function useTextToSpeech() {
 
   const toggle = useCallback(() => {
     if (speaking) stop();
-    setEnabled((prev) => !prev);
+    const next = !enabledRef.current;
+    enabledRef.current = next;
+    setEnabled(next);
+    saveSettings({ voice: next }); // マイページの設定と、同じものを使う
   }, [speaking, stop]);
 
   return {

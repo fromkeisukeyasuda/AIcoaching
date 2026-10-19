@@ -1,8 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { completeText } from "@/lib/llm";
 import { Message, Scenario, EvaluationResult } from "@/types";
 import { sheetInstructions, SHEET_JSON_EXAMPLE, normalizeSheet } from "@/lib/sheet";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(req: Request) {
   const {
@@ -67,14 +66,7 @@ ${sheetInstructions(scenario)}
 }`;
 
   try {
-    const response = await client.messages.create({
-      model: "claude-sonnet-5-5",
-      max_tokens: 6000,
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    // 思考ブロックが先頭に来ることがあるため、テキストブロックをすべて連結する
-    const text = response.content.map((c) => (c.type === "text" ? c.text : "")).join("");
+    const text = await completeText({ role: "eval", prompt, maxTokens: 6000, json: true });
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {

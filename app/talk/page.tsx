@@ -6,6 +6,7 @@ import { Coach, CoachEmotion, coaches, portraitOf, EMOTION_TAG_RE } from "@/lib/
 import { TalkProfile, getProfile, saveProfile } from "@/lib/talkStore";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
+import { voiceCredit } from "@/lib/voiceCredit";
 
 const AGE_GROUPS = ["10代", "20代", "30代", "40代", "50代", "60代以上"];
 const MAX_STORED = 60;
@@ -285,6 +286,7 @@ export default function ConsultPage() {
   }
 
   /* ══════ 会話画面 ══════ */
+  const voiceName = tts.speakerStyles.find((s) => s.id === tts.selectedSpeakerId)?.speakerName;
   const busy = isLoading || voice.status === "recording";
   const nick = profile?.nickname;
   const greeting = nick ? `${nick}さん、${coach.greeting}` : coach.greeting;
@@ -321,6 +323,9 @@ export default function ConsultPage() {
           <div className="absolute left-4 bottom-3">
             <p className="text-lg font-bold leading-none">{coach.name}</p>
             <p className="text-[11px] text-white/60 mt-1">{coach.role}</p>
+            {tts.voiceBoxAvailable && tts.enabled && voiceName && (
+              <p className="text-[10px] text-white/45 mt-1">{voiceCredit(voiceName)}</p>
+            )}
           </div>
         </div>
 

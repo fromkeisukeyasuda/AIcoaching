@@ -122,9 +122,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const LAYER_META = [
-  { key: "role" as const, name: "役割層", hint: "べき論・他者評価・鎧", color: V.coral },
-  { key: "action" as const, name: "行動層", hint: "業務内容・時間・成果", color: V.amber },
-  { key: "being" as const, name: "存在層", hint: "原動力・価値観・生きた証", color: "#F472B6" },
+  { key: "action" as const, name: "行動層", hint: "やりがい・達成感", color: V.amber },
+  { key: "role" as const, name: "役割層", hint: "役割・責任", color: V.coral },
+  { key: "being" as const, name: "存在層", hint: "生きがい・価値観", color: "#F472B6" },
 ];
 
 function dimmed(v: string) {

@@ -4,12 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Scenario } from "@/types";
-
-const ICON_OPTIONS = [
-  "💼", "👔", "🏢", "💡", "🎯", "🚀", "⚖️", "👥",
-  "🌱", "💪", "🔑", "🧭", "🎓", "💬", "❤️", "🌟",
-  "🔥", "🧩", "📈", "🤝", "🏆", "✨", "🎨", "🌈",
-];
+import { AVATAR_OPTIONS, DEFAULT_AVATAR } from "@/lib/avatars";
 
 interface FormData {
   title: string;
@@ -19,7 +14,7 @@ interface FormData {
   emotion: string;
   description: string;
   tags: string;
-  icon: string;
+  avatar: string;
 }
 
 const EMPTY_FORM: FormData = {
@@ -30,7 +25,7 @@ const EMPTY_FORM: FormData = {
   emotion: "",
   description: "",
   tags: "",
-  icon: "💼",
+  avatar: DEFAULT_AVATAR,
 };
 
 function SectionHeader({
@@ -118,7 +113,8 @@ export default function NewScenarioPage() {
         .split(/[,、]/)
         .map((t) => t.trim())
         .filter(Boolean),
-      icon: form.icon,
+      icon: "👤", // 画像が読み込めないときの代わり
+      avatar: form.avatar,
       isCustom: true,
     };
 
@@ -165,26 +161,31 @@ export default function NewScenarioPage() {
             <SectionHeader
               step="1"
               title="見た目の設定"
-              description="シナリオ一覧に表示するアイコンとタイトルを決めます"
+              description="相談者の見た目とタイトルを決めます"
             />
             <div className="space-y-5">
               <div>
-                <FieldLabel label="アイコン" />
-                <div className="flex flex-wrap gap-2">
-                  {ICON_OPTIONS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setForm((prev) => ({ ...prev, icon: emoji }))}
-                      className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all ${
-                        form.icon === emoji
-                          ? "bg-pink-400/15 ring-2 ring-pink-300 scale-110"
-                          : "bg-[#14121f] hover:bg-white/15 border border-white/5"
-                      }`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
+                <FieldLabel label="見た目" />
+                <div className="grid grid-cols-3 gap-3" role="radiogroup" aria-label="相談者の見た目">
+                  {AVATAR_OPTIONS.map((a) => {
+                    const selected = form.avatar === a.id;
+                    return (
+                      <button
+                        key={a.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => setForm((prev) => ({ ...prev, avatar: a.id }))}
+                        className={`overflow-hidden rounded-2xl text-left transition-all ${
+                          selected ? "ring-2 ring-pink-300 bg-pink-400/10" : "bg-[#14121f] border border-white/5 hover:bg-white/10"
+                        }`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={a.src} alt={a.name} className="aspect-square w-full object-cover" style={{ objectPosition: "50% 20%" }} />
+                        <div className={`px-3 py-2 text-center text-sm font-semibold ${selected ? "text-pink-200" : "text-white/70"}`}>{a.name}</div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

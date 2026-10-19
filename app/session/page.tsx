@@ -13,6 +13,7 @@ import { voiceCredit } from "@/lib/voiceCredit";
 import { Counseling, addCounselingXp, getCounseling, xpNeeded, XP_PER_COACH_MESSAGE } from "@/lib/talkStore";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { getSettings } from "@/lib/settings";
+import { avatarSrc } from "@/lib/avatars";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
 /* ── カウンセリングLv（面談練習でコーチ役として話すほど上がる） ── */
@@ -335,7 +336,7 @@ export default function SessionPage() {
           {/* 相談者カード（PCでは画面の高さいっぱいに収める） */}
           <div className="fit-rows mt-4 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
             {scenarios.map((scenario, idx) => {
-              const portrait = clients.find((c) => c.scenarioId === scenario.id)?.images?.idle ?? null;
+              const portrait = clients.find((c) => c.scenarioId === scenario.id)?.images?.idle ?? avatarSrc(scenario.avatar);
               return (
                 <div key={scenario.id} className="reveal group/card relative min-h-0" style={{ ["--i" as string]: idx + 1 }}>
                   <button
@@ -462,6 +463,7 @@ export default function SessionPage() {
               loading={(isStarting || isLoading) && !tts.speaking}
               emotion={isStarting ? "idle" : emotion}
               size="fill"
+              imageSrc={avatarSrc(selectedScenario.avatar) ?? undefined}
             />
           </div>
 

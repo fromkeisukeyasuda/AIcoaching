@@ -8,6 +8,7 @@ interface CharacterAvatarProps {
   loading?: boolean;
   emotion?: string;   // idle | neutral | happy | smile | worried | sad | surprised | serious | angry | smirk | warm
   size?: "md" | "lg" | "xl" | "fill"; // md=148px, lg=240px, xl=400px, fill=親要素に合わせる
+  imageSrc?: string;  // 作成時に選んだ画像（表情の差分なし。名前による判定より優先する）
 }
 
 /* ── SVG animation styles — DefaultCharacter のみ使用 ── */
@@ -77,19 +78,21 @@ function CharacterImage({
   alt,
   speaking,
   size = "md",
+  fixedSrc,
 }: {
   charType: string;
   emotion?: string;
   alt: string;
   speaking: boolean;
   size?: "md" | "lg" | "xl" | "fill";
+  fixedSrc?: string;
 }) {
   const isFill = size === "fill";
   const dim    = size === "xl" ? 400 : size === "lg" ? 240 : 148;
   const radius = size === "xl" ? 24  : size === "lg" ? 18  : 14;
 
   const map       = EMOTION_MAPS[charType] ?? {};
-  const targetSrc = map[emotion] ?? map["idle"] ?? `/characters/${charType}.webp`;
+  const targetSrc = fixedSrc ?? map[emotion] ?? map["idle"] ?? `/characters/${charType}.webp`;
 
   /* フェードトランジション */
   const [displaySrc, setDisplaySrc] = React.useState(targetSrc);
@@ -194,8 +197,11 @@ export default function CharacterAvatar({
   loading = false,
   emotion = "idle",
   size = "md",
+  imageSrc,
 }: CharacterAvatarProps) {
-  const charType = clientName.includes("田中")
+  const charType = imageSrc
+    ? "custom"
+    : clientName.includes("田中")
     ? "tanaka"
     : clientName.includes("佐藤")
     ? "sato"
@@ -227,7 +233,7 @@ export default function CharacterAvatar({
               animation: "spin 1s linear infinite",
             }} />
         )}
-        <CharacterImage charType={charType} emotion={emotion} alt={clientName} speaking={speaking} size="fill" />
+        <CharacterImage charType={charType} emotion={emotion} alt={clientName} speaking={speaking} size="fill" fixedSrc={imageSrc} />
       </div>
     );
   }
@@ -304,6 +310,7 @@ export default function CharacterAvatar({
             alt={clientName}
             speaking={speaking}
             size={size}
+            fixedSrc={imageSrc}
           />
         ) : (
           <DefaultCharacter speaking={speaking} />

@@ -13,6 +13,7 @@ export interface Scenario {
   description: string;
   tags: string[];
   icon: string;
+  avatar?: string;   // 作成時に選んだ見た目（lib/avatars.ts の id）
   isCustom?: boolean;
 }
 

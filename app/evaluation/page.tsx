@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { EvaluationResult, SessionData, SessionRecord } from "@/types";
 import { MIN_EVAL_USER_MESSAGES } from "@/lib/scenarios";
+import { track } from "@/lib/track";
 
 /* 面談の終了後に、AIが評価と振り返りシートを作る待ち画面。
    できあがったら、記録（振り返り）の画面を開く。評価の結果の表示は、記録の画面だけで行う */
@@ -58,6 +59,7 @@ export default function EvaluationPage() {
         try {
           localStorage.setItem("sessionHistory", JSON.stringify([record, ...history].slice(0, 50)));
         } catch { /* 容量超過などは無視。記録の画面には、保存できた分だけ出る */ }
+        track("eval", "practice");
         router.replace(`/history?open=${encodeURIComponent(record.id)}`);
       })
       .catch((e: Error) => setError(e.message));

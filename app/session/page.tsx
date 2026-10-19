@@ -14,6 +14,7 @@ import { Counseling, addCounselingXp, getCounseling, xpNeeded, XP_PER_COACH_MESS
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { getSettings } from "@/lib/settings";
 import { avatarSrc, avatarVoicePrefs } from "@/lib/avatars";
+import { track } from "@/lib/track";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
 /* ── カウンセリングLv（面談練習でコーチ役として話すほど上がる） ── */
@@ -223,6 +224,7 @@ export default function SessionPage() {
     async (text: string) => {
       if (!text.trim() || isLoading || isStarting || !selectedScenario) return;
       tts.unlock();
+      track("turn", "practice");
       tts.stop();
       const userMessage: Message = { role: "user", content: text.trim() };
       const newMessages = [...messages, userMessage];
@@ -265,6 +267,7 @@ export default function SessionPage() {
   const startSession = useCallback(
     async (scenario: Scenario) => {
       tts.unlock(); // タップの中で、スマホの自動再生の制限を解除しておく
+      track("session", "practice");
       // 作成時に選んだ見た目があれば、その声を優先する（VoiceBox の確認前でも、確認後に反映される）
       const prefs = avatarVoicePrefs(scenario.avatar).length > 0
         ? avatarVoicePrefs(scenario.avatar)

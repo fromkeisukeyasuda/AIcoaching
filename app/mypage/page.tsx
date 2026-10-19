@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getSettings, saveSettings } from "@/lib/settings";
+import { getUid } from "@/lib/track";
 import { usedVoiceNames, voiceCredit, VOICEVOX_SITE } from "@/lib/voiceCredit";
 
 /* ── デザイントークン ── */
@@ -61,11 +62,13 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
 export default function MyPage() {
   const [hint, setHint] = useState(true);
   const [voice, setVoice] = useState(true);
+  const [uid, setUid] = useState("");
 
   useEffect(() => {
     const st = getSettings();
     setHint(st.hint);
     setVoice(st.voice);
+    setUid(getUid());
   }, []);
 
   // 切り替えたら、その場で保存する
@@ -113,6 +116,15 @@ export default function MyPage() {
           </div>
         </section>
 
+        {/* 利用者ID */}
+        <section className="reveal" style={{ ...card, ["--i" as string]: 3 } as React.CSSProperties}>
+          <div style={cardTitle}>利用者ID</div>
+          <p style={{ margin: "0 0 10px", fontSize: 12.5, color: V.ink3, lineHeight: 1.8 }}>
+            感想や不具合を連絡するときに、このIDを添えてもらえると、状況を確認しやすくなります。名前や連絡先とは、結びついていません。
+          </p>
+          <span style={{ fontFamily: "monospace", fontSize: 18, fontWeight: 700, color: V.ink, background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "6px 14px", letterSpacing: "0.08em" }}>{uid || "—"}</span>
+        </section>
+
         {/* クレジット */}
         <section className="reveal" style={{ ...card, ["--i" as string]: 2 } as React.CSSProperties}>
           <div style={cardTitle}>クレジット</div>
@@ -135,6 +147,8 @@ export default function MyPage() {
           }}>
             <strong style={{ color: V.navy }}>保存場所:</strong> 会話・評価・設定は、この端末のブラウザ（ローカルストレージ）にだけ保存します。アプリ側のサーバーには残しません。
             <br />
+            <strong style={{ color: V.navy }}>利用状況の記録:</strong> 開発の改善のため、匿名の利用者IDごとに、使った回数（練習・相談の回数と、会話の往復数）だけを記録します。会話の内容は、記録しません。
+            <br />
             <strong style={{ color: V.navy }}>外部への送信:</strong> 返答の生成と評価のため、会話の内容をAIサービス（Anthropic、または Google）に送ります。音声読み上げでは、返答の文章を音声合成エンジン（VOICEVOX）に送ります。名前や会社名など、特定できる情報は入力しないでください。
           </div>
           <button
@@ -142,7 +156,7 @@ export default function MyPage() {
               if (confirm("すべての練習履歴・設定を削除しますか？この操作は取り消せません。")) {
                 try {
                   // 相談の会話・プロフィール・レベル（talk_ で始まるもの）と、練習の履歴・設定を、すべて消す
-                  const keys = ["sessionHistory", "coachingSession", "mypageSettings", "customScenarios"];
+                  const keys = ["sessionHistory", "coachingSession", "mypageSettings", "customScenarios", "rm_uid"];
                   for (let i = 0; i < localStorage.length; i++) {
                     const k = localStorage.key(i);
                     if (k?.startsWith("talk_")) keys.push(k);

@@ -5,6 +5,7 @@ import { Message } from "@/types";
 import { Coach, CoachEmotion, coaches, portraitOf, EMOTION_TAG_RE } from "@/lib/coaches";
 import { TalkProfile, getProfile, saveProfile } from "@/lib/talkStore";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { track } from "@/lib/track";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { voiceCredit } from "@/lib/voiceCredit";
 
@@ -132,6 +133,7 @@ export default function ConsultPage() {
     setObNameAnswer(null);
     setCoach(c);
     tts.unlock(); // タップの中で、スマホの自動再生の制限を解除しておく
+    track("session", "consult");
     tts.setVoicePrefs(c.voicePrefs); // VoiceBox の確認前でも、確認後に反映される
   };
 
@@ -145,6 +147,7 @@ export default function ConsultPage() {
       const body = text.trim();
       if (!body || isLoading || !coach) return;
       tts.unlock();
+      track("turn", "consult");
       tts.stop();
       const history: Message[] = [...messages, { role: "user", content: body }];
       setMessages(history);

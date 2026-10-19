@@ -97,6 +97,7 @@ export default function SessionPage() {
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const startedRef = useRef(false); // 開始ボタンの二重タップで、セッションを2回始めない
   const tts = useTextToSpeech();
   const sendWithTextRef = useRef<(text: string) => void>(() => {});
 
@@ -266,6 +267,8 @@ export default function SessionPage() {
   /* ── Start session ── */
   const startSession = useCallback(
     async (scenario: Scenario) => {
+      if (startedRef.current) return;
+      startedRef.current = true;
       tts.unlock(); // タップの中で、スマホの自動再生の制限を解除しておく
       track("session", "practice");
       // 作成時に選んだ見た目があれば、その声を優先する（VoiceBox の確認前でも、確認後に反映される）

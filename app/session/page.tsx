@@ -13,7 +13,7 @@ import { voiceCredit } from "@/lib/voiceCredit";
 import { Counseling, addCounselingXp, getCounseling, xpNeeded, XP_PER_COACH_MESSAGE } from "@/lib/talkStore";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { getSettings } from "@/lib/settings";
-import { avatarSrc } from "@/lib/avatars";
+import { avatarSrc, avatarVoicePrefs } from "@/lib/avatars";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
 /* ── カウンセリングLv（面談練習でコーチ役として話すほど上がる） ── */
@@ -254,9 +254,10 @@ export default function SessionPage() {
   const startSession = useCallback(
     async (scenario: Scenario) => {
       if (tts.voiceBoxAvailable && tts.speakerStyles.length > 0) {
-        const prefs = Object.entries(CHARACTER_VOICE_PREFS).find(
-          ([name]) => scenario.clientName.includes(name)
-        )?.[1] ?? [];
+        // 作成時に選んだ見た目があれば、その声を優先する
+        const prefs = avatarVoicePrefs(scenario.avatar).length > 0
+          ? avatarVoicePrefs(scenario.avatar)
+          : Object.entries(CHARACTER_VOICE_PREFS).find(([name]) => scenario.clientName.includes(name))?.[1] ?? [];
         for (const speakerName of prefs) {
           const found =
             tts.speakerStyles.find((s) => s.speakerName === speakerName && s.name === "ノーマル") ??
@@ -463,7 +464,7 @@ export default function SessionPage() {
               loading={(isStarting || isLoading) && !tts.speaking}
               emotion={isStarting ? "idle" : emotion}
               size="fill"
-              imageSrc={avatarSrc(selectedScenario.avatar) ?? undefined}
+              avatarId={selectedScenario.avatar}
             />
           </div>
 

@@ -1,4 +1,5 @@
 import { clients, coaches } from "@/lib/coaches";
+import { AVATAR_OPTIONS } from "@/lib/avatars";
 
 /** VOICEVOXのキャラクターの声を使うときの、クレジット表記（例: VOICEVOX:四国めたん） */
 export function voiceCredit(speakerName: string): string {
@@ -7,7 +8,7 @@ export function voiceCredit(speakerName: string): string {
 
 /** アプリで使っている声（各キャラの第1候補）の一覧。マイページのクレジット欄に出す */
 export function usedVoiceNames(): string[] {
-  const names = [...coaches, ...clients].map((c) => c.voicePrefs[0]).filter(Boolean);
+  const names = [...coaches, ...clients].map((c) => c.voicePrefs[0]).concat(AVATAR_OPTIONS.map((a) => a.voicePrefs[0])).filter(Boolean);
   return Array.from(new Set(names));
 }
 

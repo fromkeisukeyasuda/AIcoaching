@@ -7,7 +7,7 @@ export interface AvatarOption {
 }
 
 export const AVATAR_OPTIONS: AvatarOption[] = [
-  { id: "HINA", name: "HINA", src: "/characters/HINA.webp", voicePrefs: ["東北イタコ", "東北ずん子", "東北きりたん"] },
+  { id: "HINA", name: "HINA", src: "/characters/HINA.webp", voicePrefs: ["東北ずん子", "東北イタコ", "東北きりたん"] },
   { id: "MIKA", name: "MIKA", src: "/characters/MIKA.webp", voicePrefs: ["夜語トバリ"] },
   { id: "HARU", name: "HARU", src: "/characters/HARU.webp", voicePrefs: ["ユーレイちゃん"] },
 ];

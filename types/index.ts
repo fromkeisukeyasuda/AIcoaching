@@ -43,13 +43,13 @@ export interface ReflectionSheet {
   layers: { role: string; action: string; being: string }; // 役割層・行動層・存在層
   phases: SheetPhase[];                            // A. 面談プロセス分析
   oral: {                                          // B. 口頭試問 整合性マトリクス
-    complaint: string;  // ① 主訴
-    view: string;       // ② CC視点の見立て
-    done: string;       // ③ できたこと
-    improve: string;    // ④ やり残した点・改善点
-    plan: string;       // ④ 次回以降の具体的支援
+    done: string;       // ① できたこと
+    improve: string;    // ② 改善点
+    complaint: string;  // ③ 主訴
+    view: string;       // ④ 見立て
+    plan: string;       // ⑤ 今後の面談方針
   };
-  consistency: string;                             // 4問の整合性コメント
+  consistency: string;                             // 5問の整合性コメント
   keyQuestions: { label: string; question: string; effect: string }[]; // C. キークエスチョン
   nextTheme: string;                               // D. 次回へ持ち越す実践テーマ（AI案）
 }

@@ -366,7 +366,7 @@ function ReflectionSheetView({
               </div>
               {sheet.phases.map((p, i) => (
                 <div key={p.phase} className="sheet-row" style={{ opacity: dimmed(p.change) ? 0.55 : 1 }}>
-                  <div className="sheet-phase"><span className="tnum" style={{ color: "#F9A8D4", marginRight: 6 }}>{i + 1}</span>{p.phase}</div>
+                  <div className="sheet-phase"><span className="tnum" style={{ color: "#F9A8D4", marginRight: 6 }}>{i + 1}</span>{p.phase.replace("（役割・行動層）", "").replace("（価値観）", "")}</div>
                   <div><span className="sheet-lab">クライエントの状態・発言の要点</span>{p.client}</div>
                   <div><span className="sheet-lab">CCの意図的な関わり・発問</span>{p.cc}</div>
                   <div><span className="sheet-lab">変化・内省の深化度</span>{p.change}</div>
@@ -377,12 +377,14 @@ function ReflectionSheetView({
 
           {/* ── B. 口頭試問 整合性マトリクス ── */}
           <section>
-            <SheetTitle badge="B" title="口頭試問 整合性マトリクス" sub="4問が一つのストーリーになっているか" />
+            <SheetTitle badge="B" title="口頭試問 整合性マトリクス" sub="5問が一つのストーリーになっているか" />
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
-                { n: "①", title: "クライエントの主訴", hint: "客観的事実＋主観的苦悩・葛藤", body: sheet.oral.complaint },
-                { n: "②", title: "CC視点の見立て", hint: "心理的課題・自己概念の歪み", body: sheet.oral.view },
-                { n: "③", title: "できたこと", hint: "CCの具体的介入 → クライエントの気づき", body: sheet.oral.done },
+                { n: "①", title: "できたこと", hint: "CCの具体的介入 → クライエントの気づき", body: sheet.oral.done },
+                { n: "②", title: "改善点", hint: "やり残した点・もう一歩寄り添えた感情", body: sheet.oral.improve },
+                { n: "③", title: "主訴", hint: "客観的事実＋主観的苦悩・葛藤", body: sheet.oral.complaint },
+                { n: "④", title: "見立て", hint: "心理的課題・自己概念の歪み", body: sheet.oral.view },
+                { n: "⑤", title: "今後の面談方針", hint: "次回以降の具体的支援（スモールステップ）", body: sheet.oral.plan },
               ].map((o) => (
                 <div key={o.n} style={{ ...SHEET_BOX, padding: "13px 16px" }}>
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "2px 10px", marginBottom: 6 }}>
@@ -392,19 +394,6 @@ function ReflectionSheetView({
                   <p style={{ margin: 0, fontSize: 13, color: V.ink2, lineHeight: 1.85 }}>{o.body || "—"}</p>
                 </div>
               ))}
-              <div style={{ ...SHEET_BOX, padding: "13px 16px" }}>
-                <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 8 }}><span style={{ color: "#F9A8D4", marginRight: 6 }}>④</span>改善点・今後の方針</div>
-                <div className="rs-grid-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <div style={{ background: V.coralLt, borderRadius: 12, padding: "11px 13px" }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: V.coral, marginBottom: 4 }}>やり残した点・改善点</div>
-                    <p style={{ margin: 0, fontSize: 12.5, color: V.ink2, lineHeight: 1.8 }}>{sheet.oral.improve || "—"}</p>
-                  </div>
-                  <div style={{ background: V.greenLt, borderRadius: 12, padding: "11px 13px" }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: V.greenDk, marginBottom: 4 }}>次回以降の具体的支援</div>
-                    <p style={{ margin: 0, fontSize: 12.5, color: V.ink2, lineHeight: 1.8 }}>{sheet.oral.plan || "—"}</p>
-                  </div>
-                </div>
-              </div>
               {sheet.consistency && (
                 <div style={{ borderRadius: 14, background: V.navyLt, padding: "11px 14px" }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: "#F9A8D4", marginRight: 8 }}>整合性</span>

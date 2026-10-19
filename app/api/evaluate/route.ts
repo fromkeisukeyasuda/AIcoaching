@@ -1,4 +1,4 @@
-import { completeText } from "@/lib/llm";
+import { completeJson } from "@/lib/json";
 import { Message, Scenario, EvaluationResult } from "@/types";
 import { sheetInstructions, SHEET_JSON_EXAMPLE, normalizeSheet } from "@/lib/sheet";
 
@@ -66,14 +66,7 @@ ${sheetInstructions(scenario)}
 }`;
 
   try {
-    const text = await completeText({ role: "eval", prompt, maxTokens: 6000, json: true });
-
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("JSONの解析に失敗しました");
-    }
-
-    const result: EvaluationResult = JSON.parse(jsonMatch[0]);
+    const result = await completeJson<EvaluationResult>({ role: "eval", prompt, maxTokens: 6000 });
     result.sheet = normalizeSheet(result.sheet);
 
     return Response.json(result);

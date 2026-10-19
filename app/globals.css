@@ -295,6 +295,10 @@ body > * { position: relative; z-index: 1; }
     overflow: hidden;
   }
   .fit-grid { flex: 1; min-height: 0; }
+
+  /* 練習の相談者一覧: 3人は画面内に収める。4人目以降は、同じ大きさのカードを次の列に並べ、スクロールで見る */
+  .fit-scroll { overflow-y: auto; }
+  .fit-rows { grid-auto-rows: calc(max(calc(100dvh - 64px - 40px), 520px) - 120px); }
 }
 
 

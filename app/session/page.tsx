@@ -326,8 +326,8 @@ export default function SessionPage() {
   ══════════════════════════════ */
   if (!selectedScenario) {
     return (
-      <main className="fit-page px-5 sm:px-8 pb-10 pt-4 sm:pt-5">
-        <div className="mx-auto flex w-full max-w-[1100px] flex-col md:min-h-0 md:flex-1">
+      <main className="fit-page fit-scroll px-5 sm:px-8 pb-10 pt-4 sm:pt-5">
+        <div className="mx-auto flex w-full max-w-[1100px] flex-col">
 
           {/* ヘッダー（1行にまとめて、カードを画面内に収める） */}
           <div className="reveal flex min-h-[44px] md:h-11 flex-wrap items-center justify-between gap-x-6 gap-y-3" style={{ ["--i" as string]: 0 }}>
@@ -346,7 +346,7 @@ export default function SessionPage() {
           </div>
 
           {/* 相談者カード（PCでは画面の高さいっぱいに収める） */}
-          <div className="fit-grid mt-4 grid grid-cols-1 gap-4 md:grid-cols-3 md:grid-rows-[minmax(0,1fr)] md:gap-5">
+          <div className="fit-rows mt-4 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
             {scenarios.map((scenario, idx) => {
               const portrait = clients.find((c) => c.scenarioId === scenario.id)?.images?.idle ?? null;
               return (

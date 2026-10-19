@@ -1,4 +1,4 @@
-import { completeText } from "@/lib/llm";
+import { completeJson } from "@/lib/json";
 import { Message, Scenario } from "@/types";
 import { sheetInstructions, SHEET_JSON_EXAMPLE, normalizeSheet } from "@/lib/sheet";
 
@@ -24,10 +24,7 @@ ${conversation}
 ${SHEET_JSON_EXAMPLE}`;
 
   try {
-    const text = await completeText({ role: "eval", prompt, maxTokens: 4500, json: true });
-    const json = text.match(/\{[\s\S]*\}/)?.[0];
-    if (!json) throw new Error("JSONの解析に失敗しました");
-    const sheet = normalizeSheet(JSON.parse(json));
+    const sheet = normalizeSheet(await completeJson({ role: "eval", prompt, maxTokens: 4500 }));
     if (!sheet) throw new Error("シートの形式が正しくありません");
     return Response.json(sheet);
   } catch (error) {

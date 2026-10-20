@@ -10,6 +10,7 @@ interface CharacterAvatarProps {
   emotion?: string;   // idle | neutral | happy | smile | worried | sad | surprised | serious | angry | smirk | warm
   size?: "md" | "lg" | "xl" | "fill"; // md=148px, lg=240px, xl=400px, fill=親要素に合わせる
   avatarId?: string;  // 作成時に選んだ見た目（lib/avatars.ts の id）。名前による判定より優先する
+  imageSrc?: string;  // 表情の差分がない、1枚の画像（面接官など）。いちばん優先する
 }
 
 /* ── SVG animation styles — DefaultCharacter のみ使用 ── */
@@ -79,19 +80,21 @@ function CharacterImage({
   alt,
   speaking,
   size = "md",
+  fixedSrc,
 }: {
   charType: string;
   emotion?: string;
   alt: string;
   speaking: boolean;
   size?: "md" | "lg" | "xl" | "fill";
+  fixedSrc?: string;
 }) {
   const isFill = size === "fill";
   const dim    = size === "xl" ? 400 : size === "lg" ? 240 : 148;
   const radius = size === "xl" ? 24  : size === "lg" ? 18  : 14;
 
   const map       = EMOTION_MAPS[charType] ?? (isAvatarId(charType) ? avatarEmotionMap(charType) : {});
-  const targetSrc = map[emotion] ?? map["idle"] ?? `/characters/${charType}.webp`;
+  const targetSrc = fixedSrc ?? map[emotion] ?? map["idle"] ?? `/characters/${charType}.webp`;
 
   /* フェードトランジション */
   const [displaySrc, setDisplaySrc] = React.useState(targetSrc);
@@ -197,8 +200,11 @@ export default function CharacterAvatar({
   emotion = "idle",
   size = "md",
   avatarId,
+  imageSrc,
 }: CharacterAvatarProps) {
-  const charType = isAvatarId(avatarId)
+  const charType = imageSrc
+    ? "fixed"
+    : isAvatarId(avatarId)
     ? avatarId
     : clientName.includes("田中")
     ? "tanaka"
@@ -232,7 +238,7 @@ export default function CharacterAvatar({
               animation: "spin 1s linear infinite",
             }} />
         )}
-        <CharacterImage charType={charType} emotion={emotion} alt={clientName} speaking={speaking} size="fill" />
+        <CharacterImage charType={charType} emotion={emotion} alt={clientName} speaking={speaking} size="fill" fixedSrc={imageSrc} />
       </div>
     );
   }
@@ -309,6 +315,7 @@ export default function CharacterAvatar({
             alt={clientName}
             speaking={speaking}
             size={size}
+            fixedSrc={imageSrc}
           />
         ) : (
           <DefaultCharacter speaking={speaking} />

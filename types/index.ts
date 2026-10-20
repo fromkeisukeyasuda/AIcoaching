@@ -97,4 +97,29 @@ export interface SessionRecord {
   savedAt: string;
   reflection?: ReflectionNotes;
   utterances?: UtteranceFeedback[];
+  oral?: OralResult;            // 口頭試問と面接官評価（受けた場合）
+}
+
+/** 口頭試問の項目（振り返りシートの口頭試問と同じ5項目） */
+export type OralKey = "done" | "improve" | "complaint" | "view" | "plan";
+
+/** 口頭試問の、1問ぶんの結果（質問・あなたの答え・面接官の採点と講評） */
+export interface OralItem {
+  key: OralKey;
+  question: string;
+  answer: string;
+  score?: number;      // 0-100。評価を作れなかったときは、なし
+  headline?: string;   // 面接官の一言
+  good?: string;       // 良かった点
+  improve?: string;    // 補うとよい点
+}
+
+/** 口頭試問と面接官評価の全体 */
+export interface OralResult {
+  items: OralItem[];
+  overall: number;          // 総合点（各問の平均）
+  summary: string;          // 面接官の総評
+  strengths: string[];
+  improvements: string[];
+  consistency: string;      // 5問がひとつの筋として整合しているかの所見
 }

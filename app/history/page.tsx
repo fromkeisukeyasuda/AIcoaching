@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ReflectionNotes, SessionRecord } from "@/types";
+import { OralResult, ReflectionNotes, SessionRecord } from "@/types";
+import { ORAL_QUESTIONS } from "@/lib/oral";
 
 /* ══════════════════════════════════════════════════════════════════════
    デザイントークン（v3）
@@ -159,6 +160,89 @@ function TextArea({ value, onChange, placeholder, rows = 3 }: { value: string; o
       onChange={(e) => onChange(e.target.value)}
       style={{ width: "100%", resize: "vertical", borderRadius: 14, border: "none", outline: "none", background: "rgba(255,255,255,0.07)", color: V.ink, fontSize: 13, lineHeight: 1.8, padding: "11px 14px", fontFamily: V.sans }}
     />
+  );
+}
+
+/** 口頭試問と面接官評価（口頭試問を受けた場合だけ） */
+function OralResultView({ oral }: { oral: OralResult }) {
+  const meta = Object.fromEntries(ORAL_QUESTIONS.map((q) => [q.key, q])) as Record<string, (typeof ORAL_QUESTIONS)[number]>;
+  const list = (items: string[], color: string) =>
+    items.length > 0 && (
+      <ul style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 4 }}>
+        {items.map((t, i) => (
+          <li key={i} style={{ fontSize: 12.5, color: V.ink2, lineHeight: 1.8 }}><span style={{ color }}>{t}</span></li>
+        ))}
+      </ul>
+    );
+
+  return (
+    <section>
+      <SheetTitle badge="面接官" title="口頭試問と面接官評価" sub="面接官の5つの質問への答えを、評価しました" />
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ ...SHEET_BOX, padding: "16px 18px" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8 }}>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: V.ink3 }}>総合</span>
+            <span className="tnum" style={{ fontFamily: V.round, fontSize: 30, fontWeight: 800, lineHeight: 1, color: scoreColor(oral.overall) }}>{oral.overall}</span>
+            <span style={{ fontSize: 11.5, color: V.ink3 }}>/ 100点</span>
+          </div>
+          {oral.summary && <p style={{ margin: "0 0 12px", fontSize: 13, color: V.ink, lineHeight: 1.85 }}>{oral.summary}</p>}
+          {oral.strengths.length > 0 && (
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: V.greenDk, marginBottom: 4 }}>強み</div>
+              {list(oral.strengths, V.ink2)}
+            </div>
+          )}
+          {oral.improvements.length > 0 && (
+            <div style={{ marginBottom: oral.consistency ? 10 : 0 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: V.amber, marginBottom: 4 }}>次に向けた課題</div>
+              {list(oral.improvements, V.ink2)}
+            </div>
+          )}
+          {oral.consistency && (
+            <div style={{ borderRadius: 12, background: V.navyLt, padding: "9px 12px" }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#F9A8D4", marginRight: 8 }}>整合性</span>
+              <span style={{ fontSize: 12.5, color: V.ink, lineHeight: 1.8 }}>{oral.consistency}</span>
+            </div>
+          )}
+        </div>
+
+        {oral.items.map((it) => {
+          const m = meta[it.key];
+          return (
+            <div key={it.key} style={{ ...SHEET_BOX, padding: "14px 18px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14, marginBottom: 8 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "2px 10px" }}>
+                    <span style={{ fontSize: 13, fontWeight: 800 }}><span style={{ color: "#F9A8D4", marginRight: 6 }}>{m?.n}</span>{m?.title}</span>
+                    <span style={{ fontSize: 10.5, color: V.ink3 }}>{m?.hint}</span>
+                  </div>
+                </div>
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <span className="tnum" style={{ fontFamily: V.round, fontSize: 24, fontWeight: 800, lineHeight: 1, color: typeof it.score === "number" ? scoreColor(it.score) : V.ink3 }}>{typeof it.score === "number" ? it.score : "—"}</span>
+                  <span style={{ fontSize: 11, color: V.ink3 }}> / 100点</span>
+                </div>
+              </div>
+              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.06em", color: V.ink3, marginBottom: 2 }}>あなたの答え</div>
+              <p style={{ margin: "0 0 10px", fontSize: 12.5, color: V.ink2, lineHeight: 1.85, wordBreak: "break-word" }}>{it.answer || "（無回答）"}</p>
+              {it.headline && <p style={{ margin: "0 0 8px", fontSize: 13, fontWeight: 700, color: V.ink, lineHeight: 1.75 }}>{it.headline}</p>}
+              {it.good && (
+                <p style={{ margin: "0 0 6px", fontSize: 12.5, color: V.ink2, lineHeight: 1.85 }}>
+                  <strong style={{ color: V.greenDk, marginRight: 8 }}>良かった点</strong>{it.good}
+                </p>
+              )}
+              {it.improve && (
+                <p style={{ margin: 0, fontSize: 12.5, color: V.ink2, lineHeight: 1.85 }}>
+                  <strong style={{ color: V.amber, marginRight: 8 }}>補うとよい点</strong>{it.improve}
+                </p>
+              )}
+              {!it.headline && !it.good && !it.improve && (
+                <p style={{ margin: 0, fontSize: 12, color: V.ink3 }}>この質問の評価を、作れませんでした。</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -321,6 +405,9 @@ function ReflectionSheetView({
           <Field label="相談場面・導入状況">{sheet?.situation || sc.situation || "—"}</Field>
         </div>
       </section>
+
+      {/* ── 口頭試問と面接官評価（受けた場合） ── */}
+      {record.oral && <OralResultView oral={record.oral} />}
 
       {/* ── 発言ごとの評価 ── */}
       <UtteranceFeedbackView record={record} onUpdate={onUpdate} />

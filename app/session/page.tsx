@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Message, Scenario } from "@/types";
-import { scenarios as builtInScenarios } from "@/lib/scenarios";
+import { scenarios as builtInScenarios, MIN_EVAL_USER_MESSAGES } from "@/lib/scenarios";
 import ChatMessage from "@/components/ChatMessage";
 import TypingIndicator from "@/components/TypingIndicator";
 import CharacterAvatar from "@/components/CharacterAvatar";
@@ -15,6 +15,8 @@ import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { getSettings } from "@/lib/settings";
 import { avatarSrc, avatarVoicePrefs } from "@/lib/avatars";
 import { track } from "@/lib/track";
+import { useOralExam } from "@/hooks/useOralExam";
+import { INTERVIEWER_IMAGE, INTERVIEWER_NAME } from "@/lib/oral";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
 /* ── カウンセリングLv（面談練習でコーチ役として話すほど上がる） ── */
@@ -100,6 +102,7 @@ export default function SessionPage() {
   const startedRef = useRef(false); // 開始ボタンの二重タップで、セッションを2回始めない
   const tts = useTextToSpeech();
   const sendWithTextRef = useRef<(text: string) => void>(() => {});
+  const oralRef = useRef<{ phase: string; submitAnswer: (t: string) => void } | null>(null);
 
   useEffect(() => {
     setHintEnabled(getSettings().hint);
@@ -223,6 +226,8 @@ export default function SessionPage() {
   /* ── Send with text ── */
   const sendMessageWithText = useCallback(
     async (text: string) => {
+      // 口頭試問の最中は、入力が、面接官への答えになる
+      if (oralRef.current?.phase === "oral") { oralRef.current.submitAnswer(text); return; }
       if (!text.trim() || isLoading || isStarting || !selectedScenario) return;
       tts.unlock();
       track("turn", "practice");
@@ -309,7 +314,8 @@ export default function SessionPage() {
     e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
   };
 
-  const endSession = () => {
+  /** 口頭試問を受けない終了（これまでどおり。評価の待ち画面へ） */
+  const endWithoutOral = () => {
     if (!selectedScenario || messages.length === 0) return;
     tts.stop();
     localStorage.setItem("coachingSession", JSON.stringify({
@@ -319,6 +325,25 @@ export default function SessionPage() {
   };
 
   const userMsgCount = messages.filter((m) => m.role === "user").length;
+
+  /* 終了後の、口頭試問と面接官評価（「はい」を選んだとき） */
+  const oral = useOralExam({ tts, scenario: selectedScenario, messages, startedAt: sessionStartTime, onSkip: endWithoutOral });
+  oralRef.current = oral;
+  const inOral = oral.phase === "oral" || oral.phase === "finishing" || oral.phase === "result";
+  const locked = isLoading || isStarting || oral.phase === "finishing" || oral.phase === "result";
+  const shownMessages = inOral ? oral.dialog : messages;
+
+  /* 評価に必要な会話があるときだけ、口頭試問を勧める。足りないときは、これまでどおり */
+  const onEndClick = () => {
+    if (userMsgCount >= MIN_EVAL_USER_MESSAGES) oral.openConfirm();
+    else endWithoutOral();
+  };
+
+  /* 口頭試問の会話が増えたら、下へスクロール */
+  useEffect(() => {
+    const el = messagesContainerRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [oral.dialog, oral.phase]);
   const voiceName = tts.speakerStyles.find((s) => s.id === tts.selectedSpeakerId)?.speakerName;
 
   /* ══════════════════════════════
@@ -415,12 +440,12 @@ export default function SessionPage() {
         {/* 左：クライアント情報 */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="min-w-0">
-            <p className="text-white text-sm font-semibold leading-tight truncate">{selectedScenario.clientName}</p>
-            <p className="text-white/45 text-xs truncate">{selectedScenario.clientRole}</p>
+            <p className="text-white text-sm font-semibold leading-tight truncate">{inOral ? INTERVIEWER_NAME : selectedScenario.clientName}</p>
+            <p className="text-white/45 text-xs truncate">{inOral ? (oral.phase === "result" ? "面接官評価" : `口頭試問（${Math.min(oral.step + 1, oral.total)} / ${oral.total}）`) : selectedScenario.clientRole}</p>
           </div>
           <div className="flex items-center gap-1.5 ml-1 flex-shrink-0">
             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-xs text-white/45">セッション中</span>
+            <span className="text-xs text-white/45">{oral.phase === "result" ? "評価" : inOral ? "口頭試問中" : "セッション中"}</span>
           </div>
         </div>
 
@@ -450,14 +475,25 @@ export default function SessionPage() {
             </svg>
           </button>
 
-          {/* 終了ボタン */}
-          <button
-            onClick={endSession}
-            disabled={messages.length === 0 || isStarting}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white/10 text-white/60 hover:bg-red-400/10 hover:text-red-300 border border-white/10 hover:border-red-300/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            終了
-          </button>
+          {/* 終了ボタン（口頭試問の最中は、「やめる」） */}
+          {inOral ? (
+            oral.phase === "oral" && (
+              <button
+                onClick={oral.cancel}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white/10 text-white/60 hover:bg-red-400/10 hover:text-red-300 border border-white/10 hover:border-red-300/40 transition-all"
+              >
+                やめる
+              </button>
+            )
+          ) : (
+            <button
+              onClick={onEndClick}
+              disabled={messages.length === 0 || isStarting || isLoading}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white/10 text-white/60 hover:bg-red-400/10 hover:text-red-300 border border-white/10 hover:border-red-300/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              終了
+            </button>
+          )}
         </div>
       </div>
 
@@ -470,26 +506,27 @@ export default function SessionPage() {
           {/* 画像エリア */}
           <div className="flex-1 min-h-0 p-2 pb-1 md:p-4 md:pb-2">
             <CharacterAvatar
-              clientName={selectedScenario.clientName}
+              clientName={inOral ? INTERVIEWER_NAME : selectedScenario.clientName}
               speaking={tts.speaking && !isStarting}
-              loading={(isStarting || isLoading) && !tts.speaking}
+              loading={(isStarting || isLoading || oral.phase === "finishing") && !tts.speaking}
               emotion={isStarting ? "idle" : emotion}
               size="fill"
-              avatarId={selectedScenario.avatar}
+              avatarId={inOral ? undefined : selectedScenario.avatar}
+              imageSrc={inOral ? INTERVIEWER_IMAGE : undefined}
             />
           </div>
 
           {/* 下部バー: 音声波形 + ステータス */}
           <div className="flex-shrink-0 flex flex-col items-center gap-1 md:gap-1.5 pb-2 md:pb-3 px-4">
             <div className="hidden md:block"><SoundWave active={tts.speaking && !isStarting} /></div>
-            <LevelBar c={counseling} flash={levelFlash} />
+            {!inOral && <LevelBar c={counseling} flash={levelFlash} />}
             {tts.voiceBoxAvailable && tts.enabled && voiceName && (
               <p className="text-[10px] text-white/45">{voiceCredit(voiceName)}</p>
             )}
             {levelFlash && <p className="text-center text-xs text-pink-200">レベルアップ。カウンセリング Lv.{counseling.lv}</p>}
             <div className={`h-4 items-center justify-center ${isStarting ? "flex" : "hidden md:flex"}`}>
               <p className="text-white/35 text-xs">
-                {isStarting ? "セッションを準備中..." : userMsgCount > 0 ? `${userMsgCount}往復` : ""}
+                {isStarting ? "セッションを準備中..." : inOral ? "" : userMsgCount > 0 ? `${userMsgCount}往復` : ""}
               </p>
             </div>
           </div>
@@ -501,14 +538,31 @@ export default function SessionPage() {
           {/* メッセージ一覧 */}
           <div ref={messagesContainerRef} className="flex-1 overflow-y-auto scrollbar-hide px-5 py-5">
             <div className="max-w-2xl mx-auto space-y-3">
-              {messages.length === 0 && !isLoading && !isStarting && (
+              {shownMessages.length === 0 && !isLoading && !isStarting && (
                 <p className="text-center text-white/45 text-sm py-16">会話がここに表示されます</p>
               )}
-              {messages.map((msg, i) => (
-                <ChatMessage key={i} message={msg} clientName={selectedScenario.clientName} />
+              {shownMessages.map((msg, i) => (
+                <ChatMessage key={i} message={msg} clientName={inOral ? INTERVIEWER_NAME : selectedScenario.clientName} />
               ))}
-              {isLoading && <TypingIndicator clientName={selectedScenario.clientName} />}
-              {(hintParts || hintError) && (
+              {(isLoading || oral.phase === "finishing") && <TypingIndicator clientName={inOral ? INTERVIEWER_NAME : selectedScenario.clientName} />}
+              {oral.phase === "finishing" && (
+                <p className="text-center text-xs text-white/50">面接官が、評価をまとめています。1分ほどかかります…</p>
+              )}
+              {oral.phase === "result" && oral.result && (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-center">
+                  <p className="text-[11px] font-bold text-white/45">面接官評価（総合）</p>
+                  <p className="mt-1 text-4xl font-extrabold text-white">{oral.result.overall}<span className="ml-1 text-sm font-medium text-white/45">/ 100点</span></p>
+                  <button
+                    onClick={oral.review}
+                    disabled={!oral.ready}
+                    className="mt-3 w-full rounded-xl bg-white py-3 text-sm font-bold text-black hover:bg-white/90 disabled:opacity-50"
+                  >
+                    {oral.ready ? "振り返りシートを見る" : "振り返りシートを準備中…"}
+                  </button>
+                  <p className="mt-2 text-[11px] text-white/45">問ごとの点数と講評は、振り返りシートに出ます。</p>
+                </div>
+              )}
+              {!inOral && (hintParts || hintError) && (
                 <div className="relative rounded-xl border border-amber-300/30 bg-amber-400/10 py-3 pl-4 pr-8 text-[12.5px] leading-[1.35] text-amber-100">
                   <button onClick={() => { setHintParts(null); setHintError(null); }} className="absolute right-2.5 top-2 text-xs text-white/50 hover:text-white" aria-label="ヒントを閉じる">✕</button>
                   {hintParts ? (
@@ -529,12 +583,12 @@ export default function SessionPage() {
           </div>
 
           {/* ── 入力バー ── */}
-          <div className="flex-shrink-0 border-t border-white/10 bg-[#1d1a2e] px-4 py-3 md:px-5 md:py-4">
+          <div className={`flex-shrink-0 border-t border-white/10 bg-[#1d1a2e] px-4 py-3 md:px-5 md:py-4 ${oral.phase === "result" ? "hidden" : ""}`}>
             <div className="max-w-2xl mx-auto">
               <div className="flex items-end gap-2">
 
                 {/* ヒントボタン（マイページで、オンのとき） */}
-                {hintEnabled && (
+                {hintEnabled && !inOral && (
                   <button
                     onClick={requestHint}
                     disabled={isLoading || isStarting || hintLoading || messages.length < 2}
@@ -560,17 +614,17 @@ export default function SessionPage() {
                     placeholder={
                       voice.status === "recording"
                         ? "🎙 聞き取り中..."
-                        : "メッセージを入力"
+                        : inOral ? "面接官への答えを入力" : "メッセージを入力"
                     }
                     rows={1}
                     className="min-w-0 flex-1 bg-transparent px-4 py-[10px] text-base leading-6 text-white/90 placeholder-white/35 resize-none outline-none focus-visible:outline-none [-webkit-tap-highlight-color:transparent] md:py-3 md:text-sm md:leading-5"
-                    disabled={isLoading || isStarting || voice.status === "recording"}
+                    disabled={locked || voice.status === "recording"}
                   />
                   {/* 音声入力ボタン（入力ボックスの右端） */}
                   {voice.status !== "unsupported" && (
                     <button
                       onClick={voice.toggle}
-                      disabled={isLoading || isStarting}
+                      disabled={locked}
                       title={voice.status === "recording" ? "録音を停止" : "音声入力"}
                       aria-label={voice.status === "recording" ? "録音を停止" : "音声入力"}
                       className={`mb-1 mr-1 flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all ${
@@ -596,9 +650,9 @@ export default function SessionPage() {
                 {/* 送信ボタン */}
                 <button
                   onClick={sendMessage}
-                  disabled={!input.trim() || isLoading || isStarting || voice.status === "recording"}
+                  disabled={!input.trim() || locked || voice.status === "recording"}
                   className="flex-shrink-0 w-[46px] h-[46px] disabled:bg-white/10 disabled:text-white/30 text-white rounded-xl flex items-center justify-center transition-all shadow-sm"
-                  style={{ background: !input.trim() || isLoading || isStarting || voice.status === "recording" ? undefined : "linear-gradient(135deg, #F472B6 0%, #D946EF 100%)" }}
+                  style={{ background: !input.trim() || locked || voice.status === "recording" ? undefined : "linear-gradient(135deg, #F472B6 0%, #D946EF 100%)" }}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -612,6 +666,8 @@ export default function SessionPage() {
                 <p className={`text-xs text-white/45 mt-2 px-1 ${voice.status === "recording" ? "" : "hidden md:block"}`}>
                   {voice.status === "recording"
                     ? "🎙 話し終わると自動送信されます"
+                    : inOral
+                    ? "面接官の質問に、答えを入力するか、マイクで話してください ・ Enter で送信 / Shift+Enter で改行"
                     : `コーチとして ${selectedScenario.clientName}さんをサポートしてください ・ Enter で送信 / Shift+Enter で改行`}
                 </p>
               )}
@@ -619,6 +675,26 @@ export default function SessionPage() {
           </div>
         </div>
       </div>
+
+      {/* ── 口頭試問を受けるかの確認 ── */}
+      {oral.phase === "confirm" && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-6" role="dialog" aria-modal="true" aria-labelledby="oral-title">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#1d1a2e] p-6 shadow-2xl">
+            <p id="oral-title" className="text-base font-bold text-white">口頭試問と面接官評価をもらいますか？</p>
+            <p className="mt-2 text-xs leading-relaxed text-white/55">
+              「はい」を選ぶと、面接官が、5つの質問をします。答えたあとに、面接官からの評価が届きます。
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button onClick={oral.decline} className="flex-1 rounded-xl bg-white/10 py-3 text-sm font-semibold text-white/80 hover:bg-white/15">
+                いいえ
+              </button>
+              <button onClick={oral.accept} className="flex-1 rounded-xl bg-white py-3 text-sm font-bold text-black hover:bg-white/90">
+                はい
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

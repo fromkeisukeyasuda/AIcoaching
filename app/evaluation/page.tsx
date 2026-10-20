@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { EvaluationResult, SessionData, SessionRecord } from "@/types";
 import { MIN_EVAL_USER_MESSAGES } from "@/lib/scenarios";
 import { track } from "@/lib/track";
+import { clearEvalCaches, fetchEvaluation, readCachedEvaluation, readCachedOral } from "@/lib/evalClient";
 
 /* 面談の終了後に、AIが評価と振り返りシートを作る待ち画面。
    できあがったら、記録（振り返り）の画面を開く。評価の結果の表示は、記録の画面だけで行う */
@@ -43,26 +44,22 @@ export default function EvaluationPage() {
       return;
     }
 
-    const prevImprovements = history[0]?.evaluation.improvements ?? [];
+    const save = (evaluation: EvaluationResult) => {
+      const oral = readCachedOral(session.startedAt) ?? undefined;
+      const record: SessionRecord = { id: session.startedAt, session, evaluation, savedAt: new Date().toISOString(), ...(oral ? { oral } : {}) };
+      try {
+        localStorage.setItem("sessionHistory", JSON.stringify([record, ...history].slice(0, 50)));
+      } catch { /* 容量超過などは無視。記録の画面には、保存できた分だけ出る */ }
+      clearEvalCaches();
+      track("eval", "practice");
+      router.replace(`/history?open=${encodeURIComponent(record.id)}`);
+    };
 
-    fetch("/api/evaluate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: session.messages, scenario: session.scenario, previousImprovements: prevImprovements }),
-    })
-      .then(async (res) => {
-        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "評価の取得に失敗しました"); }
-        return res.json() as Promise<EvaluationResult>;
-      })
-      .then((evaluation) => {
-        const record: SessionRecord = { id: session.startedAt, session, evaluation, savedAt: new Date().toISOString() };
-        try {
-          localStorage.setItem("sessionHistory", JSON.stringify([record, ...history].slice(0, 50)));
-        } catch { /* 容量超過などは無視。記録の画面には、保存できた分だけ出る */ }
-        track("eval", "practice");
-        router.replace(`/history?open=${encodeURIComponent(record.id)}`);
-      })
-      .catch((e: Error) => setError(e.message));
+    // 口頭試問の間に作っておいた評価があれば、それを使う
+    const cached = readCachedEvaluation(session.startedAt);
+    if (cached) { save(cached); return; }
+
+    fetchEvaluation(session, history).then(save).catch((e: Error) => setError(e.message));
   }, [router]);
 
   if (error) {

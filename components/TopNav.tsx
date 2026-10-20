@@ -46,7 +46,7 @@ const NAV_ITEMS: { href: string; label: string; shortLabel?: string; Icon: (p: {
   { href: "/",         label: "ホーム",     Icon: HomeIcon,     exact: true  },
   { href: "/session",  label: "練習",       Icon: ChatIcon,     exact: false },
   { href: "/talk",     label: "相談",       Icon: ChatIcon,     exact: false },
-  { href: "/history",  label: "ふりかえり", shortLabel: "記録", Icon: ChartIcon,    exact: false },
+  { href: "/history",  label: "ふりかえり", Icon: ChartIcon,    exact: false },
   { href: "/mypage",   label: "マイページ", Icon: UserIcon,     exact: false },
 ];
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { TALK_ENABLED } from "@/lib/features";
 
 /* ── デザイントークン ── */
 const C = {
@@ -52,7 +53,7 @@ function UserIcon({ active }: { active: boolean }) {
 const NAV_ITEMS: { href: string; label: string; shortLabel?: string; Icon: (p: { active: boolean }) => React.JSX.Element; exact: boolean }[] = [
   { href: "/",         label: "ホーム",     Icon: HomeIcon,     exact: true  },
   { href: "/session",  label: "練習",       Icon: ChatIcon,     exact: false },
-  { href: "/talk",     label: "相談",       Icon: ChatIcon,     exact: false },
+  ...(TALK_ENABLED ? [{ href: "/talk", label: "相談", Icon: ChatIcon, exact: false }] : []),
   { href: "/quiz",     label: "クイズ",     Icon: QuizIcon,     exact: false },
   { href: "/history",  label: "ふりかえり", Icon: ChartIcon,    exact: false },
   { href: "/mypage",   label: "マイページ", Icon: UserIcon,     exact: false },

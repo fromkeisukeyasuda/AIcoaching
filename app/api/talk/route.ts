@@ -1,6 +1,7 @@
 import { streamChat } from "@/lib/llm";
 import { Message } from "@/types";
 import { getCoach } from "@/lib/coaches";
+import { TALK_ENABLED } from "@/lib/features";
 
 
 interface Profile { nickname?: string; ageGroup?: string }
@@ -28,6 +29,7 @@ function consultPrompt(persona: string, profile?: Profile) {
 }
 
 export async function POST(req: Request) {
+  if (!TALK_ENABLED) return new Response("Not Found", { status: 404 });
   const { messages, coachId, profile }: { messages: Message[]; coachId: string; profile?: Profile } =
     await req.json();
 

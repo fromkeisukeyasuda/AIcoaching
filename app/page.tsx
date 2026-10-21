@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { SessionRecord } from "@/types";
+import { TALK_ENABLED } from "@/lib/features";
 
 /* ── デザイントークン ── */
 const V = {
@@ -63,16 +64,16 @@ export default function HomePage() {
 
             <p className="reveal" style={{ ...stagger(2), fontSize: 17, lineHeight: 1.9, color: V.ink2, margin: "28px 0 0", maxWidth: 460 }}>
               AIの相談者を相手に面談を練習して、すぐに評価をもらえる。<br />
-              {mounted && lastSession ? "前回の続きから、そのまま再開できます。" : "気軽に相談できるコーチもいて、考えごとの整理にも使えます。"}
+              {mounted && lastSession ? "前回の続きから、そのまま再開できます。" : "クイズで、主訴の捉え方や見立ての考え方も学べます。"}
             </p>
 
             <div className="reveal" style={{ ...stagger(3), display: "flex", gap: 12, flexWrap: "wrap", marginTop: 32 }}>
               <Link href="/session" className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: V.accent, color: "white", padding: "16px 30px", borderRadius: 999, fontWeight: 700, fontSize: 16, textDecoration: "none", boxShadow: V.accentShadow }}>
                 練習をはじめる
               </Link>
-              <Link href="/talk" className="btn-ghost" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: V.ink2, padding: "16px 26px", borderRadius: 999, fontWeight: 600, fontSize: 15, textDecoration: "none", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.14)" }}>
+              {TALK_ENABLED && <Link href="/talk" className="btn-ghost" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: V.ink2, padding: "16px 26px", borderRadius: 999, fontWeight: 600, fontSize: 15, textDecoration: "none", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.14)" }}>
                 コーチに相談する
-              </Link>
+              </Link>}
             </div>
           </div>
 

@@ -114,17 +114,7 @@ export default function QuizPage() {
     const ok = order[pos] === question.answer;
     setPicked(pos);
     setResults((r) => [...r, { q: question, ok }]);
-    // ○×が下のタブバーに隠れない分だけ、スクロールする（次の問題は、先頭に戻るので、スクロールなしで見える）
-    setTimeout(() => {
-      const el = feedbackRef.current;
-      if (!el) return;
-      const r = el.firstElementChild?.getBoundingClientRect() ?? el.getBoundingClientRect();
-      const tabTop = document.querySelector(".bottom-tabs")?.getBoundingClientRect().top ?? window.innerHeight;
-      const navBottom = document.querySelector(".topnav")?.getBoundingClientRect().bottom ?? 0;
-      const need = r.bottom - (tabTop - 12);
-      const room = r.top - (navBottom + 8);
-      if (need > 0) window.scrollBy({ top: Math.min(need, Math.max(room, 0)), behavior: "instant" });
-    }, 80);
+    setTimeout(() => feedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   };
 
   const next = () => {
@@ -220,7 +210,7 @@ export default function QuizPage() {
             <p className="mt-3 text-[13px] leading-relaxed text-white/65">{message}</p>
           </div>
 
-          <ul className="mt-4 space-y-2">
+          <ul className="mt-2 space-y-0.5 sm:mt-4 sm:space-y-2">
             {results.map((r, i) => (
               <li key={i} className="flex items-start gap-3 rounded-2xl bg-white/[0.05] px-4 py-3">
                 <span className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${r.ok ? "bg-[#5FD3A0]/20 text-[#7EE0B5]" : "bg-[#FF8A80]/20 text-[#FF8A80]"}`}>
@@ -301,46 +291,46 @@ export default function QuizPage() {
         </div>
 
         {answered && (
-          <div ref={feedbackRef} className="mt-4 scroll-mt-16 space-y-4 sm:mt-6">
+          <div ref={feedbackRef} className="mt-3 scroll-mt-14 space-y-2.5 sm:mt-6 sm:space-y-4">
             {/* ○× */}
-            <div className={`reveal flex items-center gap-4 rounded-2xl px-5 py-4 ${correct ? "bg-[#5FD3A0]/12 ring-1 ring-[#5FD3A0]/40" : "bg-[#FF8A80]/12 ring-1 ring-[#FF8A80]/40"}`}>
-              <span className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full text-4xl font-extrabold ${correct ? "bg-[#5FD3A0] text-black" : "bg-[#FF8A80] text-black"}`} aria-hidden>
+            <div className={`reveal flex items-center gap-3 rounded-2xl px-4 py-2 sm:gap-4 sm:px-5 sm:py-4 ${correct ? "bg-[#5FD3A0]/12 ring-1 ring-[#5FD3A0]/40" : "bg-[#FF8A80]/12 ring-1 ring-[#FF8A80]/40"}`}>
+              <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-2xl font-extrabold sm:h-14 sm:w-14 sm:text-4xl ${correct ? "bg-[#5FD3A0] text-black" : "bg-[#FF8A80] text-black"}`} aria-hidden>
                 {correct ? "○" : "×"}
               </span>
               <div>
-                <p className={`text-lg font-extrabold ${correct ? "text-[#7EE0B5]" : "text-[#FF8A80]"}`}>{correct ? "正解です" : "不正解です"}</p>
+                <p className={`text-base font-extrabold sm:text-lg ${correct ? "text-[#7EE0B5]" : "text-[#FF8A80]"}`}>{correct ? "正解です" : "不正解です"}</p>
                 {!correct && <p className="text-[12.5px] text-white/60">正解は、緑の選択肢です。</p>}
               </div>
             </div>
 
             {/* 考え方 */}
-            <section className="glass reveal rounded-[22px] p-5 sm:p-6" style={{ ["--i" as string]: 1 }}>
-              <h3 className="text-[15px] font-extrabold text-white">○を選ぶための考え方</h3>
-              <ol className="mt-3 space-y-2.5">
+            <section className="glass reveal rounded-[18px] p-3 sm:rounded-[22px] sm:p-6" style={{ ["--i" as string]: 1 }}>
+              <h3 className="text-[13.5px] font-extrabold text-white sm:text-[15px]">○を選ぶための考え方</h3>
+              <ol className="mt-1.5 space-y-1 sm:mt-3 sm:space-y-2.5">
                 {q.steps.map((s, i) => (
-                  <li key={i} className="flex gap-3 text-[13.5px] leading-[1.8] text-white/80">
+                  <li key={i} className="flex gap-2 text-[11.5px] leading-[1.5] text-white/80 sm:gap-3 sm:text-[13.5px] sm:leading-[1.8]">
                     <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white/85">{i + 1}</span>
                     <span>{s}</span>
                   </li>
                 ))}
               </ol>
-              <div className="mt-4 rounded-xl bg-white/[0.05] px-4 py-3">
+              <div className="mt-2 rounded-xl bg-white/[0.05] px-3 py-1.5 sm:mt-4 sm:px-4 sm:py-3">
                 <p className="text-[11px] font-bold text-white/50">ほかの選択肢が、適切でない理由</p>
-                <p className="mt-1 text-[13px] leading-[1.8] text-white/75">{q.whyNot}</p>
+                <p className="mt-0.5 text-[11px] leading-[1.5] text-white/75 sm:mt-1 sm:text-[13px] sm:leading-[1.8]">{q.whyNot}</p>
               </div>
               {q.terms.length > 0 && (
-                <dl className="mt-4 space-y-2">
+                <dl className="mt-2 space-y-0.5 sm:mt-4 sm:space-y-2">
                   {q.terms.map((t) => (
                     <div key={t.term} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                       <dt className="rounded-md bg-pink-400/15 px-2 py-0.5 text-[12px] font-bold text-pink-200">{t.term}</dt>
-                      <dd className="min-w-0 flex-1 text-[12.5px] leading-[1.75] text-white/65">{t.meaning}</dd>
+                      <dd className="min-w-0 flex-1 text-[11px] leading-[1.45] text-white/65 sm:text-[12.5px] sm:leading-[1.75]">{t.meaning}</dd>
                     </div>
                   ))}
                 </dl>
               )}
             </section>
 
-            <button onClick={next} className="w-full rounded-xl bg-white py-3.5 text-sm font-bold text-black hover:bg-white/90">
+            <button onClick={next} className="w-full rounded-xl bg-white py-2.5 text-sm font-bold text-black hover:bg-white/90 sm:py-3.5">
               {idx + 1 >= total ? "結果を見る" : "次の問題へ"}
             </button>
           </div>

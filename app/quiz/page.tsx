@@ -210,7 +210,7 @@ export default function QuizPage() {
             <p className="mt-3 text-[13px] leading-relaxed text-white/65">{message}</p>
           </div>
 
-          <ul className="mt-2 space-y-0.5 sm:mt-4 sm:space-y-2">
+          <ul className="mt-3 space-y-1 sm:mt-4 sm:space-y-2">
             {results.map((r, i) => (
               <li key={i} className="flex items-start gap-3 rounded-2xl bg-white/[0.05] px-4 py-3">
                 <span className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${r.ok ? "bg-[#5FD3A0]/20 text-[#7EE0B5]" : "bg-[#FF8A80]/20 text-[#FF8A80]"}`}>
@@ -246,24 +246,24 @@ export default function QuizPage() {
   const total = run.questions.length;
 
   return (
-    <main className="screen-minh px-3.5 pb-8 pt-2 sm:px-8 sm:pt-5">
+    <main className="screen-minh px-3.5 pb-8 pt-3 sm:px-8 sm:pt-5">
       <div className="mx-auto w-full max-w-[760px]">
         <div className="flex items-center justify-between gap-3">
           <button onClick={backToGroups} className="text-[13px] font-semibold text-white/55 hover:text-white">← グループ選択</button>
           <span className="text-[13px] font-bold text-white/70">{run.group.title}{run.review ? "（復習）" : ""}　{idx + 1} / {total}</span>
         </div>
-        <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/10">
+        <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
           <div className="h-full rounded-full bg-gradient-to-r from-pink-400 to-fuchsia-500 transition-all duration-300" style={{ width: `${((idx + (answered ? 1 : 0)) / total) * 100}%` }} />
         </div>
 
-        <section className="glass mt-2 rounded-[16px] p-3 sm:mt-4 sm:rounded-[22px] sm:p-6">
+        <section className="glass mt-3 rounded-[16px] p-3.5 sm:mt-4 sm:rounded-[22px] sm:p-6">
           <p className="text-[10px] font-bold tracking-wider text-white/45 sm:text-[11px]">相談者の語り</p>
-          <p className="mt-0.5 text-[13.5px] leading-[1.6] text-white/90 sm:mt-2 sm:text-[14.5px] sm:leading-[1.9]">{q.scene}</p>
+          <p className="mt-1 text-[13.5px] leading-[1.7] text-white/90 sm:mt-2 sm:text-[14.5px] sm:leading-[1.9]">{q.scene}</p>
         </section>
 
-        <p className="mt-2 text-[13px] font-bold text-white sm:mt-5 sm:text-[15px]">{run.group.prompt}</p>
+        <p className="mt-3.5 text-[13px] font-bold text-white sm:mt-5 sm:text-[15px]">{run.group.prompt}</p>
 
-        <div className="mt-1.5 space-y-1.5 sm:mt-3 sm:space-y-2.5">
+        <div className="mt-2 space-y-2.5 sm:mt-3 sm:space-y-2.5">
           {order.map((orig, pos) => {
             const isPicked = picked === pos;
             const isAnswer = orig === q.answer;
@@ -279,7 +279,7 @@ export default function QuizPage() {
                 onClick={() => choose(pos)}
                 disabled={answered}
                 aria-pressed={isPicked}
-                className={`flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] leading-[1.55] transition-colors sm:gap-3 sm:px-4 sm:py-3.5 sm:text-[13.5px] sm:leading-[1.75] ${style} disabled:cursor-default`}
+                className={`flex w-full items-start gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] leading-[1.6] transition-colors sm:gap-3 sm:px-4 sm:py-3.5 sm:text-[13.5px] sm:leading-[1.75] ${style} disabled:cursor-default`}
               >
                 <span className={`mt-px flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold sm:mt-0.5 sm:h-6 sm:w-6 sm:text-[12px] ${answered && isAnswer ? "bg-[#5FD3A0] text-black" : answered && isPicked ? "bg-[#FF8A80] text-black" : "bg-white/15 text-white/80"}`}>
                   {LETTERS[pos]}
@@ -291,9 +291,9 @@ export default function QuizPage() {
         </div>
 
         {answered && (
-          <div ref={feedbackRef} className="mt-3 scroll-mt-14 space-y-2.5 sm:mt-6 sm:space-y-4">
+          <div ref={feedbackRef} className="mt-4 scroll-mt-14 space-y-3 sm:mt-6 sm:space-y-4">
             {/* ○× */}
-            <div className={`reveal flex items-center gap-3 rounded-2xl px-4 py-2 sm:gap-4 sm:px-5 sm:py-4 ${correct ? "bg-[#5FD3A0]/12 ring-1 ring-[#5FD3A0]/40" : "bg-[#FF8A80]/12 ring-1 ring-[#FF8A80]/40"}`}>
+            <div className={`reveal flex items-center gap-3 rounded-2xl px-4 py-2.5 sm:gap-4 sm:px-5 sm:py-4 ${correct ? "bg-[#5FD3A0]/12 ring-1 ring-[#5FD3A0]/40" : "bg-[#FF8A80]/12 ring-1 ring-[#FF8A80]/40"}`}>
               <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-2xl font-extrabold sm:h-14 sm:w-14 sm:text-4xl ${correct ? "bg-[#5FD3A0] text-black" : "bg-[#FF8A80] text-black"}`} aria-hidden>
                 {correct ? "○" : "×"}
               </span>
@@ -304,22 +304,22 @@ export default function QuizPage() {
             </div>
 
             {/* 考え方 */}
-            <section className="glass reveal rounded-[18px] p-3 sm:rounded-[22px] sm:p-6" style={{ ["--i" as string]: 1 }}>
+            <section className="glass reveal rounded-[18px] p-3.5 sm:rounded-[22px] sm:p-6" style={{ ["--i" as string]: 1 }}>
               <h3 className="text-[13.5px] font-extrabold text-white sm:text-[15px]">○を選ぶための考え方</h3>
-              <ol className="mt-1.5 space-y-1 sm:mt-3 sm:space-y-2.5">
+              <ol className="mt-2 space-y-1.5 sm:mt-3 sm:space-y-2.5">
                 {q.steps.map((s, i) => (
-                  <li key={i} className="flex gap-2 text-[12px] leading-[1.5] text-white/80 sm:gap-3 sm:text-[13.5px] sm:leading-[1.8]">
+                  <li key={i} className="flex gap-2 text-[12px] leading-[1.6] text-white/80 sm:gap-3 sm:text-[13.5px] sm:leading-[1.8]">
                     <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white/85">{i + 1}</span>
                     <span>{s}</span>
                   </li>
                 ))}
               </ol>
-              <div className="mt-2 rounded-xl bg-white/[0.05] px-3 py-1.5 sm:mt-4 sm:px-4 sm:py-3">
+              <div className="mt-3 rounded-xl bg-white/[0.05] px-3 py-2 sm:mt-4 sm:px-4 sm:py-3">
                 <p className="text-[11px] font-bold text-white/50">ほかの選択肢が、適切でない理由</p>
                 <p className="mt-0.5 text-[11.5px] leading-[1.5] text-white/75 sm:mt-1 sm:text-[13px] sm:leading-[1.8]">{q.whyNot}</p>
               </div>
               {q.terms.length > 0 && (
-                <dl className="mt-2 space-y-0.5 sm:mt-4 sm:space-y-2">
+                <dl className="mt-3 space-y-1 sm:mt-4 sm:space-y-2">
                   {q.terms.map((t) => (
                     <div key={t.term} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                       <dt className="rounded-md bg-pink-400/15 px-2 py-0.5 text-[12px] font-bold text-pink-200">{t.term}</dt>
@@ -330,7 +330,7 @@ export default function QuizPage() {
               )}
             </section>
 
-            <button onClick={next} className="w-full rounded-xl bg-white py-2.5 text-sm font-bold text-black hover:bg-white/90 sm:py-3.5">
+            <button onClick={next} className="w-full rounded-xl bg-white py-3 text-sm font-bold text-black hover:bg-white/90 sm:py-3.5">
               {idx + 1 >= total ? "結果を見る" : "次の問題へ"}
             </button>
           </div>

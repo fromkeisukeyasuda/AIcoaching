@@ -42,8 +42,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const { users, daily } = data;
   const total = users.reduce(
     (a, u) => ({
-      sessions: a.sessions + u.practiceSessions + u.consultSessions,
-      turns: a.turns + u.practiceTurns + u.consultTurns,
+      sessions: a.sessions + u.practiceSessions,
+      turns: a.turns + u.practiceTurns,
       evals: a.evals + u.evals,
       quizAnswers: a.quizAnswers + u.quizAnswers,
       quizCorrect: a.quizCorrect + u.quizCorrect,
@@ -84,8 +84,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               <th style={th}>最後</th>
               <th style={th}>練習 セッション</th>
               <th style={th}>練習 ターン</th>
-              <th style={th}>相談 セッション</th>
-              <th style={th}>相談 ターン</th>
               <th style={th}>評価</th>
               <th style={th}>クイズ 回答</th>
               <th style={th}>クイズ 正解</th>
@@ -95,7 +93,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </thead>
           <tbody>
             {users.length === 0 && (
-              <tr><td style={{ ...td, textAlign: "left" }} colSpan={12}>まだ記録がありません。</td></tr>
+              <tr><td style={{ ...td, textAlign: "left" }} colSpan={10}>まだ記録がありません。</td></tr>
             )}
             {users.map((u) => (
               <tr key={u.uid}>
@@ -104,8 +102,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 <td style={td}>{fmt(u.last)}</td>
                 <td style={td}>{u.practiceSessions}</td>
                 <td style={td}>{u.practiceTurns}</td>
-                <td style={td}>{u.consultSessions}</td>
-                <td style={td}>{u.consultTurns}</td>
                 <td style={td}>{u.evals}</td>
                 <td style={td}>{u.quizAnswers}</td>
                 <td style={td}>{u.quizCorrect}</td>

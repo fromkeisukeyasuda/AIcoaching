@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { SessionRecord } from "@/types";
 import { TALK_ENABLED } from "@/lib/features";
 
 /* ── デザイントークン ── */
@@ -30,19 +28,6 @@ const V = {
 
 /* ── ホームページ ── */
 export default function HomePage() {
-  const [history, setHistory] = useState<SessionRecord[]>([]);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    try {
-      const raw = localStorage.getItem("sessionHistory");
-      if (raw) setHistory(JSON.parse(raw));
-    } catch { /* ignore */ }
-  }, []);
-
-  const lastSession   = history[0] ?? null;
-
   const stagger = (n: number) => ({ ["--i" as string]: n } as React.CSSProperties);
 
   return (
@@ -64,7 +49,7 @@ export default function HomePage() {
 
             <p className="reveal" style={{ ...stagger(2), fontSize: 17, lineHeight: 1.9, color: V.ink2, margin: "28px 0 0", maxWidth: 460 }}>
               AIの相談者を相手に面談を練習して、すぐに評価をもらえる。<br />
-              {mounted && lastSession ? "前回の続きから、そのまま再開できます。" : "クイズで、主訴の捉え方や見立ての考え方も学べます。"}
+              クイズで、主訴の捉え方や見立ての考え方も学べます。
             </p>
 
             <div className="reveal" style={{ ...stagger(3), display: "flex", gap: 12, flexWrap: "wrap", marginTop: 32 }}>

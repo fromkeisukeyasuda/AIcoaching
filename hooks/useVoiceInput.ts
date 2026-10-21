@@ -74,6 +74,7 @@ export function useVoiceInput(onResult: (text: string) => void, onInterim?: (tex
   const textRef = useRef("");                       // ここまでに認識した全文
   const doneRef = useRef(true);                     // 今回の認識の結果を、渡し終えたか
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hadErrorRef = useRef(false);                // 今回の認識で、エラーの表示が出ているか
 
   useEffect(() => { onResultRef.current = onResult; }, [onResult]);
   useEffect(() => { onInterimRef.current = onInterim; }, [onInterim]);
@@ -94,7 +95,11 @@ export function useVoiceInput(onResult: (text: string) => void, onInterim?: (tex
     const text = textRef.current.trim();
     textRef.current = "";
     if (text) onResultRef.current(text);
-    else onInterimRef.current?.("");
+    else {
+      onInterimRef.current?.("");
+      // 何も聞き取れずに終わったときは、反応がないように見えないよう、知らせる
+      if (!hadErrorRef.current) setErrorMsg("うまく聞き取れませんでした。もう一度、マイクボタンを押して話してください。");
+    }
   }, []);
 
   // 毎回新しいインスタンスを生成して接続をリフレッシュ
@@ -118,6 +123,7 @@ export function useVoiceInput(onResult: (text: string) => void, onInterim?: (tex
 
     r.onerror = (e: ISpeechRecognitionErrorEvent) => {
       setStatus("idle");
+      hadErrorRef.current = true;
 
       if (e.error === "network") {
         networkRetryRef.current += 1;
@@ -167,10 +173,21 @@ export function useVoiceInput(onResult: (text: string) => void, onInterim?: (tex
 
     textRef.current = "";
     doneRef.current = false;
+    hadErrorRef.current = false;
+    setErrorMsg("");
     const r = create(SR);
     activeRef.current = r;
     setStatus("recording");
-    try { r.start(); } catch { setStatus("idle"); doneRef.current = true; }
+    try {
+      r.start();
+    } catch {
+      // 前の認識が終わりきっていないと、開始に失敗することがある。少し待って、1回だけやり直す
+      setTimeout(() => {
+        const r2 = create(SR);
+        activeRef.current = r2;
+        try { r2.start(); } catch { setStatus("idle"); doneRef.current = true; setErrorMsg("音声入力を開始できませんでした。もう一度、お試しください。"); }
+      }, 300);
+    }
   }, [create]);
 
   const stop = useCallback(() => {

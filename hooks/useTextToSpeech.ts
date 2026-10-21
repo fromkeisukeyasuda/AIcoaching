@@ -46,6 +46,8 @@ export function useTextToSpeech() {
   const browserVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const queueRef = useRef<QueueItem[]>([]);
   const isProcessingRef = useRef(false);
+  const genRef = useRef(0);                              // stop() のたびに増やす。古い再生ループを止めるための世代番号
+  const fetchChainRef = useRef<Promise<unknown>>(Promise.resolve()); // 音声の取得を、1つずつ順に行う（まとめて頼むと、失敗しやすいため）
 
   useEffect(() => { enabledRef.current = enabled; }, [enabled]);
   // 保存済みの設定（マイページ）を反映
@@ -165,15 +167,16 @@ export function useTextToSpeech() {
   const processQueue = useCallback(async () => {
     if (isProcessingRef.current) return; // 既に実行中
     isProcessingRef.current = true;
+    const gen = genRef.current;
     setSpeaking(true);
 
-    while (queueRef.current.length > 0 && isProcessingRef.current) {
+    while (queueRef.current.length > 0 && gen === genRef.current) {
       const item = queueRef.current.shift()!;
 
       // プリフェッチ済みの Blob を await（既に終わっていれば即返る）
       const blob = await item.blobPromise;
 
-      if (!isProcessingRef.current) break; // stop() された
+      if (gen !== genRef.current) return; // stop() された（あとから始まった別の再生ループに、任せる）
 
       if (blob) {
         await playBlob(blob);
@@ -182,7 +185,7 @@ export function useTextToSpeech() {
       }
     }
 
-    if (isProcessingRef.current) {
+    if (gen === genRef.current) {
       isProcessingRef.current = false;
       setSpeaking(false);
     }
@@ -198,10 +201,18 @@ export function useTextToSpeech() {
       if (!enabledRef.current || !text.trim()) return;
 
       // VoiceBox の確認が終わるのを待ってから、取得を始める（最大 25 秒。それ以上は、ブラウザの声で読む）
-      const blobPromise = Promise.race([
+      const ready = Promise.race([
         readyRef.current!.promise,
         new Promise<void>((r) => setTimeout(r, 25_000)),
-      ]).then(() => (voiceBoxRef.current ? prefetch(text) : null));
+      ]);
+      // 前の文の取得が終わってから、次を取得する。失敗したら、1回だけやり直す
+      const blobPromise = fetchChainRef.current
+        .then(() => ready)
+        .then(async () => {
+          if (!voiceBoxRef.current) return null;
+          return (await prefetch(text)) ?? (await prefetch(text));
+        });
+      fetchChainRef.current = blobPromise.catch(() => null);
 
       queueRef.current.push({ text, blobPromise });
       processQueue(); // 既に処理中なら即return
@@ -213,6 +224,7 @@ export function useTextToSpeech() {
   const stop = useCallback(() => {
     queueRef.current = [];
     isProcessingRef.current = false;
+    genRef.current += 1;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;

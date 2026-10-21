@@ -632,7 +632,7 @@ export default function SessionPage() {
                   {/* 音声入力ボタン（入力ボックスの右端） */}
                   {voice.status !== "unsupported" && (
                     <button
-                      onClick={voice.toggle}
+                      onClick={() => { tts.stop(); voice.toggle(); }}
                       disabled={locked}
                       title={voice.status === "recording" ? "録音を停止" : "音声入力"}
                       aria-label={voice.status === "recording" ? "録音を停止" : "音声入力"}

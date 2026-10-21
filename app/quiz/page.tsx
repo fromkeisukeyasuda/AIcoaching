@@ -114,7 +114,17 @@ export default function QuizPage() {
     const ok = order[pos] === question.answer;
     setPicked(pos);
     setResults((r) => [...r, { q: question, ok }]);
-    setTimeout(() => feedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    // ○×が下のタブバーに隠れない分だけ、スクロールする（次の問題は、先頭に戻るので、スクロールなしで見える）
+    setTimeout(() => {
+      const el = feedbackRef.current;
+      if (!el) return;
+      const r = el.firstElementChild?.getBoundingClientRect() ?? el.getBoundingClientRect();
+      const tabTop = document.querySelector(".bottom-tabs")?.getBoundingClientRect().top ?? window.innerHeight;
+      const navBottom = document.querySelector(".topnav")?.getBoundingClientRect().bottom ?? 0;
+      const need = r.bottom - (tabTop - 12);
+      const room = r.top - (navBottom + 8);
+      if (need > 0) window.scrollBy({ top: Math.min(need, Math.max(room, 0)), behavior: "instant" });
+    }, 80);
   };
 
   const next = () => {
@@ -140,16 +150,13 @@ export default function QuizPage() {
   /* ───────── グループ選択 ───────── */
   if (!run) {
     return (
-      <main className="screen-minh px-5 pb-10 pt-6 sm:px-8">
+      <main className="screen-minh px-4 pb-10 pt-3 sm:px-8 sm:pt-6">
         <div className="mx-auto w-full max-w-[900px]">
           <div className="reveal" style={{ ["--i" as string]: 0 }}>
-            <h1 className="text-grad text-[30px] font-extrabold leading-tight tracking-tight sm:text-4xl">クイズ</h1>
-            <p className="mt-2 text-sm leading-relaxed text-white/60">
-              1問1答です。4つの選択肢から選ぶと、すぐに○×と、正解にたどりつく考え方が出ます。
-            </p>
+            <h1 className="text-grad text-[24px] font-extrabold leading-tight tracking-tight sm:text-4xl">クイズ</h1>
           </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="mt-3 grid gap-3 sm:mt-6 sm:grid-cols-2 sm:gap-4">
             {QUIZ_GROUPS.map((g, i) => {
               const p = progress[g.id];
               const counts = [...COUNT_OPTIONS.filter((n) => n < g.questions.length), g.questions.length];
@@ -157,7 +164,7 @@ export default function QuizPage() {
               return (
                 <div
                   key={g.id}
-                  className="glass reveal flex flex-col rounded-[24px] p-6"
+                  className="glass reveal flex flex-col rounded-[20px] p-4 sm:rounded-[24px] sm:p-6"
                   style={{ ["--i" as string]: i + 1 }}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -165,18 +172,18 @@ export default function QuizPage() {
                     <span className="flex-shrink-0 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/70">全{g.questions.length}問</span>
                   </div>
                   <p className="mt-1.5 text-[13px] text-white/60">{g.summary}</p>
-                  <p className="mt-3 rounded-xl bg-white/[0.05] px-3.5 py-2.5 text-[12px] leading-relaxed text-white/65">{g.point}</p>
-                  <p className="mt-3 text-[12px] text-white/50">
+                  <p className="mt-2 hidden rounded-xl bg-white/[0.05] px-3 py-2 text-[11.5px] sm:block leading-relaxed text-white/65">{g.point}</p>
+                  <p className="mt-2 text-[11.5px] text-white/50">
                     {p ? `最高 ${p.best.score} / ${p.best.total}（${Math.round(rate(p.best) * 100)}%）　挑戦 ${p.plays}回　未出題 ${remaining}問` : "まだ挑戦していません"}
                   </p>
-                  <div className="mt-3">
-                    <p className="mb-1.5 text-[11px] font-bold text-white/45">何問にチャレンジしますか？</p>
+                  <div className="mt-2">
+                    <p className="mb-1 text-[11px] font-bold text-white/45">何問にチャレンジしますか？</p>
                     <div className="flex flex-wrap gap-2">
                       {counts.map((n) => (
                         <button
                           key={n}
                           onClick={() => start(g, n)}
-                          className="flex-1 rounded-xl bg-white px-4 py-2.5 text-[13px] font-bold text-black hover:bg-white/90"
+                          className="flex-1 rounded-xl bg-white px-4 py-2 text-[13px] font-bold text-black hover:bg-white/90"
                         >
                           {n === g.questions.length ? `全${n}問` : `${n}問`}
                         </button>

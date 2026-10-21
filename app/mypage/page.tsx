@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getSettings, saveSettings } from "@/lib/settings";
+import { getSettings, saveSettings, VoiceWait, VOICE_WAIT_OPTIONS } from "@/lib/settings";
 import { getUid } from "@/lib/track";
 import { usedVoiceNames, voiceCredit, VOICEVOX_SITE } from "@/lib/voiceCredit";
 
@@ -62,18 +62,21 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
 export default function MyPage() {
   const [hint, setHint] = useState(true);
   const [voice, setVoice] = useState(true);
+  const [voiceWait, setVoiceWait] = useState<VoiceWait>("normal");
   const [uid, setUid] = useState("");
 
   useEffect(() => {
     const st = getSettings();
     setHint(st.hint);
     setVoice(st.voice);
+    setVoiceWait(st.voiceWait);
     setUid(getUid());
   }, []);
 
   // 切り替えたら、その場で保存する
   const changeHint = (v: boolean) => { setHint(v); saveSettings({ hint: v }); };
   const changeVoice = (v: boolean) => { setVoice(v); saveSettings({ voice: v }); };
+  const changeVoiceWait = (v: VoiceWait) => { setVoiceWait(v); saveSettings({ voiceWait: v }); };
 
   const items = [
     { icon: "💡", label: "AIヒント表示", desc: "練習中に「ヒント」ボタンを表示し、押すと、次の一手のヒントをAIが出します。", checked: hint, onChange: changeHint },
@@ -113,6 +116,38 @@ export default function MyPage() {
                 <Toggle checked={item.checked} onChange={item.onChange} label={item.label} />
               </div>
             ))}
+            <div style={{ padding: "15px 0 2px", borderTop: `1px solid ${V.border}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ width: 40, height: 40, background: V.bg, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>🎙</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: V.ink, marginBottom: 2 }}>音声入力の待ち時間</div>
+                  <div style={{ fontSize: 12, color: V.ink3 }}>話し終えたとみなすまでの、無音の長さです。考えながら話すときは、長めにしてください。</div>
+                </div>
+              </div>
+              <div role="radiogroup" aria-label="音声入力の待ち時間" style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                {VOICE_WAIT_OPTIONS.map((o) => {
+                  const on = voiceWait === o.value;
+                  return (
+                    <button
+                      key={o.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      onClick={() => changeVoiceWait(o.value)}
+                      style={{
+                        flex: 1, padding: "10px 4px", borderRadius: 12, cursor: "pointer", fontFamily: V.sans,
+                        border: on ? `1.5px solid ${V.green}` : `1px solid ${V.border}`,
+                        background: on ? "rgba(95,211,160,0.14)" : V.bg,
+                        color: on ? V.ink : V.ink2,
+                      }}
+                    >
+                      <div style={{ fontSize: 13.5, fontWeight: 700 }}>{o.label}</div>
+                      <div style={{ fontSize: 11, color: V.ink3, marginTop: 1 }}>{(o.ms / 1000).toFixed(1)}秒</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </section>
 

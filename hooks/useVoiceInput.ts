@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { getSettings, voiceWaitMs } from "@/lib/settings";
 
 export type VoiceInputStatus = "idle" | "recording" | "unsupported";
+
 
 // Web Speech API 型定義
 interface ISpeechRecognitionResult {
@@ -44,6 +46,11 @@ const ERROR_MESSAGES: Record<string, string> = {
   "aborted": "",
 };
 
+const NETWORK_ERROR =
+  "Chromeの音声認識サーバーへの接続に失敗しました。\n" +
+  "① Windowsの設定 → プライバシー → マイクで「アプリのアクセスを許可」を確認\n" +
+  "② chrome://settings/content/microphone でlocalhost が許可されているか確認";
+
 function getSR(): ISpeechRecognitionCtor | null {
   if (typeof window === "undefined") return null;
   const w = window as Window & {
@@ -53,31 +60,49 @@ function getSR(): ISpeechRecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-export function useVoiceInput(onResult: (text: string) => void) {
+/**
+ * 音声入力。話している間は、途中の認識結果を onInterim で返す。
+ * 無音がマイページで選んだ長さ（短め・ふつう・長め）続くか、停止ボタンを押すと、そこまでの全文を onResult で1回だけ返す。
+ */
+export function useVoiceInput(onResult: (text: string) => void, onInterim?: (text: string) => void) {
   const [status, setStatus] = useState<VoiceInputStatus>("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const onResultRef = useRef(onResult);
+  const onInterimRef = useRef(onInterim);
   const activeRef = useRef<ISpeechRecognition | null>(null);
   const networkRetryRef = useRef(0);
+  const textRef = useRef("");                       // ここまでに認識した全文
+  const doneRef = useRef(true);                     // 今回の認識の結果を、渡し終えたか
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { onResultRef.current = onResult; }, [onResult]);
+  useEffect(() => { onInterimRef.current = onInterim; }, [onInterim]);
 
   useEffect(() => {
     if (!getSR()) setStatus("unsupported");
   }, []);
 
+  const clearTimer = () => {
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+  };
+
+  /** 認識した全文を、1回だけ渡す */
+  const deliver = useCallback(() => {
+    clearTimer();
+    if (doneRef.current) return;
+    doneRef.current = true;
+    const text = textRef.current.trim();
+    textRef.current = "";
+    if (text) onResultRef.current(text);
+    else onInterimRef.current?.("");
+  }, []);
+
   // 毎回新しいインスタンスを生成して接続をリフレッシュ
-  const start = useCallback(() => {
-    const SR = getSR();
-    if (!SR) return;
-
-    // 前の認識を止める
-    try { activeRef.current?.abort(); } catch { /* ignore */ }
-
+  const create = useCallback((SR: ISpeechRecognitionCtor): ISpeechRecognition => {
     const r = new SR();
     r.lang = "ja-JP";
-    r.continuous = false;
-    r.interimResults = false;
+    r.continuous = true;        // 間を置いて話しても、切れない
+    r.interimResults = true;    // 話している途中の結果も受け取る
     r.maxAlternatives = 1;
 
     r.onstart = () => {
@@ -88,6 +113,7 @@ export function useVoiceInput(onResult: (text: string) => void) {
 
     r.onend = () => {
       setStatus("idle");
+      deliver();
     };
 
     r.onerror = (e: ISpeechRecognitionErrorEvent) => {
@@ -98,33 +124,13 @@ export function useVoiceInput(onResult: (text: string) => void) {
         if (networkRetryRef.current <= 2) {
           // 少し待ってから自動リトライ（最大2回）
           setTimeout(() => {
-            const r2 = new SR();
-            r2.lang = "ja-JP";
-            r2.continuous = false;
-            r2.interimResults = false;
-            r2.maxAlternatives = 1;
-            r2.onstart = r.onstart;
-            r2.onend = r.onend;
-            r2.onerror = (e2) => {
-              if (e2.error === "network") {
-                setErrorMsg(
-                  "Chromeの音声認識サーバーへの接続に失敗しました。\n" +
-                  "① Windowsの設定 → プライバシー → マイクで「アプリのアクセスを許可」を確認\n" +
-                  "② chrome://settings/content/microphone でlocalhost が許可されているか確認"
-                );
-              }
-            };
-            r2.onresult = r.onresult;
+            const r2 = create(SR);
             activeRef.current = r2;
             try { r2.start(); } catch { /* ignore */ }
           }, 500);
           return;
         }
-        setErrorMsg(
-          "Chromeの音声認識サーバーへの接続に失敗しました。\n" +
-          "① Windowsの設定 → プライバシー → マイクで「アプリのアクセスを許可」を確認\n" +
-          "② chrome://settings/content/microphone でlocalhost が許可されているか確認"
-        );
+        setErrorMsg(NETWORK_ERROR);
         return;
       }
 
@@ -133,20 +139,45 @@ export function useVoiceInput(onResult: (text: string) => void) {
     };
 
     r.onresult = (e: ISpeechRecognitionEvent) => {
-      const transcript = e.results[0][0].transcript;
-      if (transcript) onResultRef.current(transcript);
+      // 全部の結果をつなげる（確定した分も、認識中の分も）
+      let text = "";
+      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+      textRef.current = text;
       setErrorMsg("");
+      onInterimRef.current?.(text);
+
+      // 結果が出るたびに、無音の計測をやり直す。一定時間、何も出なければ、話し終えたとみなす
+      clearTimer();
+      timerRef.current = setTimeout(() => {
+        try { activeRef.current?.stop(); } catch { /* ignore */ }
+        deliver();
+      }, voiceWaitMs(getSettings().voiceWait));
     };
 
+    return r;
+  }, [deliver]);
+
+  const start = useCallback(() => {
+    const SR = getSR();
+    if (!SR) return;
+
+    // 前の認識を止める
+    clearTimer();
+    try { activeRef.current?.abort(); } catch { /* ignore */ }
+
+    textRef.current = "";
+    doneRef.current = false;
+    const r = create(SR);
     activeRef.current = r;
     setStatus("recording");
-    try { r.start(); } catch { setStatus("idle"); }
-  }, []);
+    try { r.start(); } catch { setStatus("idle"); doneRef.current = true; }
+  }, [create]);
 
   const stop = useCallback(() => {
     try { activeRef.current?.stop(); } catch { /* ignore */ }
     setStatus("idle");
-  }, []);
+    deliver(); // ここまでに認識した分を、渡す
+  }, [deliver]);
 
   const toggle = useCallback(() => {
     if (status === "recording") stop();
@@ -156,6 +187,7 @@ export function useVoiceInput(onResult: (text: string) => void) {
   // アンマウント時にクリーンアップ
   useEffect(() => {
     return () => {
+      clearTimer();
       try { activeRef.current?.abort(); } catch { /* ignore */ }
     };
   }, []);

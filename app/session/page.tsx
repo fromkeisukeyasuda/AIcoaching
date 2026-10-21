@@ -258,7 +258,7 @@ export default function SessionPage() {
 
   useEffect(() => { sendWithTextRef.current = sendMessageWithText; }, [sendMessageWithText]);
 
-  /* 音声認識結果 → 認識完了後400msで自動送信 */
+  /* 音声認識結果 → 話し終えて（無音が続いて）から400msで自動送信 */
   const onVoiceResult = useCallback((text: string) => {
     if (!text.trim()) return;
     setInput(text.trim());
@@ -267,7 +267,16 @@ export default function SessionPage() {
       sendWithTextRef.current(text.trim());
     }, 400);
   }, []);
-  const voice = useVoiceInput(onVoiceResult);
+  const onVoiceInterim = useCallback((text: string) => {
+    setInput(text); // 話している途中の結果を、入力欄に出す
+    requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      el.style.height = "auto";
+      el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+    });
+  }, []);
+  const voice = useVoiceInput(onVoiceResult, onVoiceInterim);
 
   /* ── Start session ── */
   const startSession = useCallback(

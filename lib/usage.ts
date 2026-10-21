@@ -5,7 +5,7 @@ import { createClient } from "redis";
 
    Redis の中身:
      users          … 利用者IDの集合
-     u:{id}         … ハッシュ。first / last / practice_sessions / practice_turns / consult_sessions / consult_turns / evals
+     u:{id}         … ハッシュ。first / last / practice_sessions / practice_turns / consult_sessions / consult_turns / evals / quiz_answers / quiz_correct
      d:{YYYY-MM-DD} … ハッシュ。その日の sessions / turns / evals
      da:{YYYY-MM-DD}… その日に使った利用者IDの集合 */
 
@@ -65,6 +65,22 @@ export async function recordUsage(uid: string, event: UsageEvent, mode: UsageMod
   return true;
 }
 
+/** クイズの回答を1回、数える（どの問題かは、記録しない。回数と、正解かどうかだけ） */
+export async function recordQuiz(uid: string, correct: boolean): Promise<boolean> {
+  const r = await getRedis();
+  if (!r) return false;
+  const now = new Date().toISOString();
+  const m = r
+    .multi()
+    .sAdd("users", uid)
+    .hSetNX(`u:${uid}`, "first", now)
+    .hSet(`u:${uid}`, "last", now)
+    .hIncrBy(`u:${uid}`, "quiz_answers", 1);
+  if (correct) m.hIncrBy(`u:${uid}`, "quiz_correct", 1);
+  await m.exec();
+  return true;
+}
+
 export interface UserUsage {
   uid: string;
   first: string;
@@ -74,6 +90,8 @@ export interface UserUsage {
   consultSessions: number;
   consultTurns: number;
   evals: number;
+  quizAnswers: number;
+  quizCorrect: number;
 }
 
 export interface DayUsage { date: string; sessions: number; turns: number; evals: number; users: number }
@@ -96,6 +114,8 @@ export async function readUsage(days = 14): Promise<{ users: UserUsage[]; daily:
       consultSessions: num(rows[i].consult_sessions),
       consultTurns: num(rows[i].consult_turns),
       evals: num(rows[i].evals),
+      quizAnswers: num(rows[i].quiz_answers),
+      quizCorrect: num(rows[i].quiz_correct),
     }))
     .sort((a, b) => b.last.localeCompare(a.last));
 

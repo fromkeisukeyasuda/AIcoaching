@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QUIZ_GROUPS, QuizGroup, QuizQuestion } from "@/lib/quiz";
+import { trackQuiz } from "@/lib/track";
 
 /* 1問1答クイズ。グループを選ぶ → 4択で答える → すぐに○×と考え方 → 結果 */
 
@@ -113,6 +114,7 @@ export default function QuizPage() {
     if (!question || picked !== null) return;
     const ok = order[pos] === question.answer;
     setPicked(pos);
+    trackQuiz(ok);
     setResults((r) => [...r, { q: question, ok }]);
     setTimeout(() => feedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   };

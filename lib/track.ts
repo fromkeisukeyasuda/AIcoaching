@@ -18,6 +18,20 @@ export function getUid(): string {
   }
 }
 
+/** クイズの回答を1回、記録する（正解かどうかだけ。どの問題かは、送らない） */
+export function trackQuiz(correct: boolean) {
+  try {
+    const uid = getUid();
+    if (!uid) return;
+    fetch("/api/track/quiz", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uid, correct }),
+      keepalive: true,
+    }).catch(() => { /* 記録できなくても、影響なし */ });
+  } catch { /* noop */ }
+}
+
 export function track(event: TrackEvent, mode: TrackMode) {
   try {
     const uid = getUid();

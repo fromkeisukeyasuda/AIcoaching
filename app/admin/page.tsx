@@ -10,6 +10,8 @@ const fmt = (iso: string) =>
     ? new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(iso))
     : "—";
 
+const pct = (c: number, n: number) => (n ? `${Math.round((c / n) * 100)}%` : "—");
+
 const th: React.CSSProperties = { textAlign: "right", padding: "8px 10px", fontSize: 11.5, color: "#8F8AA8", fontWeight: 700, whiteSpace: "nowrap" };
 const td: React.CSSProperties = { textAlign: "right", padding: "9px 10px", fontSize: 13, borderTop: "1px solid rgba(255,255,255,0.07)", whiteSpace: "nowrap" };
 const card: React.CSSProperties = { background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 18, padding: "18px 20px", overflowX: "auto" };
@@ -43,8 +45,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       sessions: a.sessions + u.practiceSessions + u.consultSessions,
       turns: a.turns + u.practiceTurns + u.consultTurns,
       evals: a.evals + u.evals,
+      quizAnswers: a.quizAnswers + u.quizAnswers,
+      quizCorrect: a.quizCorrect + u.quizCorrect,
     }),
-    { sessions: 0, turns: 0, evals: 0 }
+    { sessions: 0, turns: 0, evals: 0, quizAnswers: 0, quizCorrect: 0 }
   );
 
   return (
@@ -60,6 +64,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           ["セッション合計", total.sessions],
           ["会話ターン合計", total.turns],
           ["評価の作成", total.evals],
+          ["クイズ 回答", total.quizAnswers],
+          ["クイズ 正答率", pct(total.quizCorrect, total.quizAnswers)],
         ].map(([label, value]) => (
           <div key={String(label)} style={card}>
             <div style={{ fontSize: 11.5, color: "#8F8AA8", fontWeight: 700 }}>{label}</div>
@@ -81,12 +87,15 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               <th style={th}>相談 セッション</th>
               <th style={th}>相談 ターン</th>
               <th style={th}>評価</th>
+              <th style={th}>クイズ 回答</th>
+              <th style={th}>クイズ 正解</th>
+              <th style={th}>クイズ 正答率</th>
               <th style={th}></th>
             </tr>
           </thead>
           <tbody>
             {users.length === 0 && (
-              <tr><td style={{ ...td, textAlign: "left" }} colSpan={9}>まだ記録がありません。</td></tr>
+              <tr><td style={{ ...td, textAlign: "left" }} colSpan={12}>まだ記録がありません。</td></tr>
             )}
             {users.map((u) => (
               <tr key={u.uid}>
@@ -98,6 +107,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 <td style={td}>{u.consultSessions}</td>
                 <td style={td}>{u.consultTurns}</td>
                 <td style={td}>{u.evals}</td>
+                <td style={td}>{u.quizAnswers}</td>
+                <td style={td}>{u.quizCorrect}</td>
+                <td style={td}>{pct(u.quizCorrect, u.quizAnswers)}</td>
                 <td style={td}>
                   <form action={remove}>
                     <input type="hidden" name="key" value={key} />

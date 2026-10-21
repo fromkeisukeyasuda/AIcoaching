@@ -80,6 +80,8 @@ function detectEmotion(text: string): string {
   return "neutral";
 }
 
+const IN_PROGRESS_KEY = "sessionInProgress";
+
 export default function SessionPage() {
   const router = useRouter();
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
@@ -107,6 +109,34 @@ export default function SessionPage() {
   useEffect(() => {
     setHintEnabled(getSettings().hint);
   }, []);
+
+  /* 練習の途中の状態を、タブを閉じるまで、保持する（ほかのタブへ移って戻っても、続きから） */
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(IN_PROGRESS_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { scenario: Scenario; messages: Message[]; startedAt: string };
+      if (!saved?.scenario || !Array.isArray(saved.messages) || saved.messages.length === 0) return;
+      startedRef.current = true;
+      setSelectedScenario(saved.scenario);
+      setMessages(saved.messages);
+      setSessionStartTime(saved.startedAt);
+      const prefs = avatarVoicePrefs(saved.scenario.avatar).length > 0
+        ? avatarVoicePrefs(saved.scenario.avatar)
+        : Object.entries(CHARACTER_VOICE_PREFS).find(([name]) => saved.scenario.clientName.includes(name))?.[1] ?? [];
+      tts.setVoicePrefs(prefs);
+    } catch { /* 復元できなければ、最初から */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* 返答が終わるたびに、保存する（返答の途中は、保存しない） */
+  useEffect(() => {
+    if (!selectedScenario || !sessionStartTime || isLoading || isStarting || messages.length === 0) return;
+    if (messages[messages.length - 1].content === "") return;
+    try {
+      sessionStorage.setItem(IN_PROGRESS_KEY, JSON.stringify({ scenario: selectedScenario, messages, startedAt: sessionStartTime }));
+    } catch { /* 保存できなくても、練習は続けられる */ }
+  }, [selectedScenario, sessionStartTime, messages, isLoading, isStarting]);
 
   /* 会話が進んだら、前のヒントは消す */
   useEffect(() => {
@@ -327,6 +357,7 @@ export default function SessionPage() {
   const endWithoutOral = () => {
     if (!selectedScenario || messages.length === 0) return;
     tts.stop();
+    try { sessionStorage.removeItem(IN_PROGRESS_KEY); } catch { /* noop */ }
     localStorage.setItem("coachingSession", JSON.stringify({
       scenario: selectedScenario, messages, startedAt: sessionStartTime, endedAt: new Date().toISOString(),
     }));
@@ -347,6 +378,11 @@ export default function SessionPage() {
     if (userMsgCount >= MIN_EVAL_USER_MESSAGES) oral.openConfirm();
     else endWithoutOral();
   };
+
+  /* 口頭試問の評価まで終わったら、途中の保存は、いらない（口頭試問の途中は、練習の終わりから、やり直す） */
+  useEffect(() => {
+    if (oral.phase === "result") { try { sessionStorage.removeItem(IN_PROGRESS_KEY); } catch { /* noop */ } }
+  }, [oral.phase]);
 
   /* 口頭試問の会話が増えたら、下へスクロール */
   useEffect(() => {
@@ -658,10 +694,10 @@ export default function SessionPage() {
 
                 {/* 送信ボタン */}
                 <button
-                  onClick={sendMessage}
-                  disabled={!input.trim() || locked || voice.status === "recording"}
+                  onClick={voice.status === "recording" && voice.manualMode ? voice.finish : sendMessage}
+                  disabled={!input.trim() || locked || (voice.status === "recording" && !voice.manualMode)}
                   className="flex-shrink-0 w-[46px] h-[46px] disabled:bg-white/10 disabled:text-white/30 text-white rounded-xl flex items-center justify-center transition-all shadow-sm"
-                  style={{ background: !input.trim() || locked || voice.status === "recording" ? undefined : "linear-gradient(135deg, #F472B6 0%, #D946EF 100%)" }}
+                  style={{ background: !input.trim() || locked || (voice.status === "recording" && !voice.manualMode) ? undefined : "linear-gradient(135deg, #F472B6 0%, #D946EF 100%)" }}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -674,7 +710,7 @@ export default function SessionPage() {
               ) : (
                 <p className={`text-xs text-white/45 mt-2 px-1 ${voice.status === "recording" ? "" : "hidden md:block"}`}>
                   {voice.status === "recording"
-                    ? "🎙 話し終わると自動送信されます"
+                    ? voice.manualMode ? "🎙 話し終わったら、送信ボタンを押してください" : "🎙 話し終わると自動送信されます"
                     : inOral
                     ? "面接官の質問に、答えを入力するか、マイクで話してください ・ Enter で送信 / Shift+Enter で改行"
                     : `コーチとして ${selectedScenario.clientName}さんをサポートしてください ・ Enter で送信 / Shift+Enter で改行`}

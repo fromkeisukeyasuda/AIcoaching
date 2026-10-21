@@ -6,11 +6,12 @@ export interface AppSettings {
 }
 
 /** 音声入力の無音の長さ（短め・ふつう・長め） */
-export type VoiceWait = "short" | "normal" | "long";
-export const VOICE_WAIT_OPTIONS: { value: VoiceWait; label: string; ms: number }[] = [
-  { value: "short", label: "短め", ms: 1000 },
-  { value: "normal", label: "ふつう", ms: 2000 },
-  { value: "long", label: "長め", ms: 3000 },
+export type VoiceWait = "short" | "normal" | "long" | "manual";
+export const VOICE_WAIT_OPTIONS: { value: VoiceWait; label: string; sub: string; ms: number }[] = [
+  { value: "short", label: "短め", sub: "1.0秒", ms: 1000 },
+  { value: "normal", label: "ふつう", sub: "2.0秒", ms: 2000 },
+  { value: "long", label: "長め", sub: "3.0秒", ms: 3000 },
+  { value: "manual", label: "無制限", sub: "送信ボタンで送る", ms: 0 },   // 無音で送らず、送信ボタンを押すまで聞き続ける
 ];
 export const voiceWaitMs = (v: VoiceWait) => VOICE_WAIT_OPTIONS.find((o) => o.value === v)?.ms ?? 2000;
 
@@ -28,7 +29,7 @@ export function getSettings(): AppSettings {
     return {
       hint: typeof s.hint === "boolean" ? s.hint : DEFAULT_SETTINGS.hint,
       voice: typeof s.voice === "boolean" ? s.voice : DEFAULT_SETTINGS.voice,
-      voiceWait: s.voiceWait === "short" || s.voiceWait === "long" ? s.voiceWait : "normal",
+      voiceWait: s.voiceWait === "short" || s.voiceWait === "long" || s.voiceWait === "manual" ? s.voiceWait : "normal",
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

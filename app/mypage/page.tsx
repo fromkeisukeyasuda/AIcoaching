@@ -121,7 +121,7 @@ export default function MyPage() {
                 <div style={{ width: 40, height: 40, background: V.bg, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>🎙</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 14, color: V.ink, marginBottom: 2 }}>音声入力の待ち時間</div>
-                  <div style={{ fontSize: 12, color: V.ink3 }}>話し終えたとみなすまでの、無音の長さです。考えながら話すときは、長めにしてください。</div>
+                  <div style={{ fontSize: 12, color: V.ink3 }}>話し終えたとみなすまでの、無音の長さです。考えながら話すときは、長めにしてください。「無制限」は、送信ボタンを押すまで、聞き続けます。</div>
                 </div>
               </div>
               <div role="radiogroup" aria-label="音声入力の待ち時間" style={{ display: "flex", gap: 8, marginTop: 12 }}>
@@ -142,7 +142,7 @@ export default function MyPage() {
                       }}
                     >
                       <div style={{ fontSize: 13.5, fontWeight: 700 }}>{o.label}</div>
-                      <div style={{ fontSize: 11, color: V.ink3, marginTop: 1 }}>{(o.ms / 1000).toFixed(1)}秒</div>
+                      <div style={{ fontSize: 10.5, color: V.ink3, marginTop: 1 }}>{o.sub}</div>
                     </button>
                   );
                 })}

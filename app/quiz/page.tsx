@@ -258,7 +258,7 @@ export default function QuizPage() {
 
         <section className="glass mt-2 rounded-[16px] p-3 sm:mt-4 sm:rounded-[22px] sm:p-6">
           <p className="text-[10px] font-bold tracking-wider text-white/45 sm:text-[11px]">相談者の語り</p>
-          <p className="mt-0.5 text-[12.5px] leading-[1.6] text-white/90 sm:mt-2 sm:text-[14.5px] sm:leading-[1.9]">{q.scene}</p>
+          <p className="mt-0.5 text-[13.5px] leading-[1.6] text-white/90 sm:mt-2 sm:text-[14.5px] sm:leading-[1.9]">{q.scene}</p>
         </section>
 
         <p className="mt-2 text-[13px] font-bold text-white sm:mt-5 sm:text-[15px]">{run.group.prompt}</p>
@@ -279,7 +279,7 @@ export default function QuizPage() {
                 onClick={() => choose(pos)}
                 disabled={answered}
                 aria-pressed={isPicked}
-                className={`flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left text-[12px] leading-[1.55] transition-colors sm:gap-3 sm:px-4 sm:py-3.5 sm:text-[13.5px] sm:leading-[1.75] ${style} disabled:cursor-default`}
+                className={`flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] leading-[1.55] transition-colors sm:gap-3 sm:px-4 sm:py-3.5 sm:text-[13.5px] sm:leading-[1.75] ${style} disabled:cursor-default`}
               >
                 <span className={`mt-px flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold sm:mt-0.5 sm:h-6 sm:w-6 sm:text-[12px] ${answered && isAnswer ? "bg-[#5FD3A0] text-black" : answered && isPicked ? "bg-[#FF8A80] text-black" : "bg-white/15 text-white/80"}`}>
                   {LETTERS[pos]}
@@ -308,7 +308,7 @@ export default function QuizPage() {
               <h3 className="text-[13.5px] font-extrabold text-white sm:text-[15px]">○を選ぶための考え方</h3>
               <ol className="mt-1.5 space-y-1 sm:mt-3 sm:space-y-2.5">
                 {q.steps.map((s, i) => (
-                  <li key={i} className="flex gap-2 text-[11.5px] leading-[1.5] text-white/80 sm:gap-3 sm:text-[13.5px] sm:leading-[1.8]">
+                  <li key={i} className="flex gap-2 text-[12px] leading-[1.5] text-white/80 sm:gap-3 sm:text-[13.5px] sm:leading-[1.8]">
                     <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white/85">{i + 1}</span>
                     <span>{s}</span>
                   </li>
@@ -316,14 +316,14 @@ export default function QuizPage() {
               </ol>
               <div className="mt-2 rounded-xl bg-white/[0.05] px-3 py-1.5 sm:mt-4 sm:px-4 sm:py-3">
                 <p className="text-[11px] font-bold text-white/50">ほかの選択肢が、適切でない理由</p>
-                <p className="mt-0.5 text-[11px] leading-[1.5] text-white/75 sm:mt-1 sm:text-[13px] sm:leading-[1.8]">{q.whyNot}</p>
+                <p className="mt-0.5 text-[11.5px] leading-[1.5] text-white/75 sm:mt-1 sm:text-[13px] sm:leading-[1.8]">{q.whyNot}</p>
               </div>
               {q.terms.length > 0 && (
                 <dl className="mt-2 space-y-0.5 sm:mt-4 sm:space-y-2">
                   {q.terms.map((t) => (
                     <div key={t.term} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                       <dt className="rounded-md bg-pink-400/15 px-2 py-0.5 text-[12px] font-bold text-pink-200">{t.term}</dt>
-                      <dd className="min-w-0 flex-1 text-[11px] leading-[1.45] text-white/65 sm:text-[12.5px] sm:leading-[1.75]">{t.meaning}</dd>
+                      <dd className="min-w-0 flex-1 text-[12px] leading-[1.45] text-white/65 sm:text-[12.5px] sm:leading-[1.75]">{t.meaning}</dd>
                     </div>
                   ))}
                 </dl>

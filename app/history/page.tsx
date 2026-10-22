@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { OralResult, ReflectionNotes, SessionRecord } from "@/types";
 import { ORAL_QUESTIONS } from "@/lib/oral";
-import { getSettings, saveSettings, HistoryView } from "@/lib/settings";
+import { getSettings, HistoryView } from "@/lib/settings";
 import SkillDiagnosis from "@/components/SkillDiagnosis";
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -208,7 +208,7 @@ function OralResultView({ oral, basic = false }: { oral: OralResult; basic?: boo
           )}
         </div>
 
-        {/* ①できたこと 以降（5つの質問ごとの答えと講評）は、Standard だけで表示する */}
+        {/* ①できたこと 以降（5つの質問ごとの答えと講評）は、Pro だけで表示する */}
         {!basic && oral.items.map((it) => {
           const m = meta[it.key];
           return (
@@ -366,7 +366,7 @@ function ReflectionSheetView({
   record: SessionRecord;
   onUpdate: (patch: Partial<SessionRecord>) => void;
   onDelete: () => void;
-  basic: boolean;   // Basic: 基本情報と面接官評価だけ
+  basic: boolean;   // Free: 基本情報と面接官評価だけ
 }) {
   const sc = record.session.scenario;
   const ev = record.evaluation;
@@ -415,7 +415,7 @@ function ReflectionSheetView({
 
       {basic && !record.oral && (
         <p style={{ margin: 0, fontSize: 12.5, color: V.ink3, lineHeight: 1.8 }}>
-          このセッションは、口頭試問と面接官評価を受けていません。Standard に切り替えると、発言ごとの評価や振り返りシートを見られます。
+          このセッションは、口頭試問と面接官評価を受けていません。🔒 マイページで Pro に切り替えると、発言ごとの評価や振り返りシートを見られます。
         </p>
       )}
 
@@ -583,7 +583,7 @@ function ReflectionSheetView({
             {/* 左に、削除ボタンと同じ幅の見えない枠を置いて、文を行の中央に揃える */}
             <span aria-hidden style={{ visibility: "hidden", fontSize: 11, border: "1px solid transparent", padding: "7px 14px" }}>削除</span>
             <span style={{ flex: 1, minWidth: 0, textAlign: "center", fontSize: 13.5, fontWeight: 700, color: "#F9A8D4", lineHeight: 1.6 }}>
-              面談プロセス・発言ごとの評価・振り返りシートは、Standard で確認できます
+              🔒 面談プロセス・発言ごとの評価・振り返りシートは、Pro で確認できます
             </span>
           </>
         ) : (
@@ -604,9 +604,8 @@ export default function HistoryPage() {
   const [records, setRecords] = useState<SessionRecord[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [loaded, setLoaded] = useState(false);
-  const [view, setView] = useState<HistoryView>("standard");
+  const [view, setView] = useState<HistoryView>("basic"); // プランの切り替えは、マイページで行う
 
-  const changeView = (v: HistoryView) => { setView(v); saveSettings({ historyView: v }); };
 
   useEffect(() => {
     setView(getSettings().historyView);
@@ -677,25 +676,6 @@ export default function HistoryPage() {
               {streak > 0 && (
                 <div className="rs-hide" style={{ display: "flex", alignItems: "center", gap: 6, background: V.amberLt, color: V.amber, padding: "7px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600 }}>
                   🔥 {streak} 回連続上昇中
-                </div>
-              )}
-              {records.length > 0 && (
-                <div role="radiogroup" aria-label="ふりかえりの表示" className="hist-view" style={{ display: "inline-flex", padding: 3, borderRadius: 999, background: "rgba(255,255,255,0.06)", border: `1px solid ${V.border}` }}>
-                  {([["basic", "Basic"], ["standard", "Standard"]] as const).map(([value, label]) => {
-                    const on = view === value;
-                    return (
-                      <button
-                        key={value}
-                        type="button"
-                        role="radio"
-                        aria-checked={on}
-                        onClick={() => changeView(value)}
-                        style={{ border: "none", cursor: "pointer", fontFamily: V.sans, fontSize: 12.5, fontWeight: 700, padding: "6px 16px", borderRadius: 999, background: on ? "rgba(255,255,255,0.92)" : "transparent", color: on ? "#1d1a2e" : V.ink2 }}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
                 </div>
               )}
             </div>

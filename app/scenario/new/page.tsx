@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Scenario } from "@/types";
 import { AVATAR_OPTIONS, DEFAULT_AVATAR } from "@/lib/avatars";
+import { getSettings, planOf } from "@/lib/settings";
 
 interface FormData {
   title: string;
@@ -75,6 +76,11 @@ export default function NewScenarioPage() {
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [saved, setSaved] = useState(false);
+
+  // シナリオの作成は、Pro だけ。Free は、練習の画面へ戻す
+  useEffect(() => {
+    if (planOf(getSettings().historyView) === "free") router.replace("/session");
+  }, [router]);
 
   const set =
     (field: keyof FormData) =>

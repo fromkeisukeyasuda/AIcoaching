@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getSettings, saveSettings, VoiceWait, VOICE_WAIT_OPTIONS } from "@/lib/settings";
+import { getSettings, saveSettings, VoiceWait, VOICE_WAIT_OPTIONS, HistoryView } from "@/lib/settings";
 import { getUid } from "@/lib/track";
 import { usedVoiceNames, voiceCredit, VOICEVOX_SITE } from "@/lib/voiceCredit";
 
@@ -63,6 +63,7 @@ export default function MyPage() {
   const [hint, setHint] = useState(true);
   const [voice, setVoice] = useState(true);
   const [voiceWait, setVoiceWait] = useState<VoiceWait>("normal");
+  const [plan, setPlan] = useState<HistoryView>("basic");   // basic = Free / standard = Pro
   const [uid, setUid] = useState("");
 
   useEffect(() => {
@@ -70,12 +71,14 @@ export default function MyPage() {
     setHint(st.hint);
     setVoice(st.voice);
     setVoiceWait(st.voiceWait);
+    setPlan(st.historyView);
     setUid(getUid());
   }, []);
 
   // 切り替えたら、その場で保存する
   const changeHint = (v: boolean) => { setHint(v); saveSettings({ hint: v }); };
   const changeVoice = (v: boolean) => { setVoice(v); saveSettings({ voice: v }); };
+  const changePlan = (v: HistoryView) => { setPlan(v); saveSettings({ historyView: v }); };
   const changeVoiceWait = (v: VoiceWait) => { setVoiceWait(v); saveSettings({ voiceWait: v }); };
 
   const items = [
@@ -90,6 +93,31 @@ export default function MyPage() {
         <h1 className="reveal" style={{ fontSize: 34, fontWeight: 800, color: V.navy, letterSpacing: "-0.03em", lineHeight: 1.15, margin: "0 0 4px" }}>
           マイページ
         </h1>
+
+        {/* 料金プラン（お試し期間中は、ここで、Free と Pro を切り替えられる） */}
+        <section className="reveal" style={{ ...card, ["--i" as string]: 1 } as React.CSSProperties}>
+          <div style={cardTitle}>料金プラン</div>
+          <div role="radiogroup" aria-label="料金プラン" style={{ display: "inline-flex", padding: 3, borderRadius: 999, background: "rgba(255,255,255,0.06)", border: `1px solid ${V.border}` }}>
+            {([["basic", "Free"], ["standard", "Pro"]] as const).map(([value, label]) => {
+              const on = plan === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => changePlan(value)}
+                  style={{ border: "none", cursor: "pointer", fontFamily: V.sans, fontSize: 12.5, fontWeight: 700, padding: "6px 20px", borderRadius: 999, background: on ? "rgba(255,255,255,0.92)" : "transparent", color: on ? "#1d1a2e" : V.ink2 }}
+                >
+                  {value === "standard" && plan === "basic" ? "🔒 " : ""}{label}
+                </button>
+              );
+            })}
+          </div>
+          <p style={{ margin: "12px 0 0", fontSize: 12, color: V.ink3, lineHeight: 1.7 }}>
+            お試し期間中は、ここで、FreeとProを切り替えられます。Freeは、チュートリアル・クイズ（初級）・練習（田中さん）が使えます。Proは、すべての機能が使えます。
+          </p>
+        </section>
 
         {/* サポート設定 */}
         <section className="reveal" style={{ ...card, ["--i" as string]: 1 } as React.CSSProperties}>

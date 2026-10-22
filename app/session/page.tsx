@@ -11,7 +11,7 @@ import CharacterAvatar from "@/components/CharacterAvatar";
 import { clients } from "@/lib/coaches";
 import { voiceCredit } from "@/lib/voiceCredit";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
-import { getSettings } from "@/lib/settings";
+import { getSettings, planOf, Plan } from "@/lib/settings";
 import { avatarSrc, avatarVoicePrefs } from "@/lib/avatars";
 import { track } from "@/lib/track";
 import { useOralExam } from "@/hooks/useOralExam";
@@ -68,6 +68,9 @@ function detectEmotion(text: string): string {
 
 const IN_PROGRESS_KEY = "sessionInProgress";
 
+/** Free で練習できるシナリオ（ほかは、Pro）。田中 誠さんだけ */
+const FREE_SCENARIO_IDS = ["team-management"];
+
 export default function SessionPage() {
   const router = useRouter();
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
@@ -90,8 +93,11 @@ export default function SessionPage() {
   const sendWithTextRef = useRef<(text: string) => void>(() => {});
   const oralRef = useRef<{ phase: string; submitAnswer: (t: string) => void } | null>(null);
 
+  const [plan, setPlan] = useState<Plan>("free");
+  const [lockedNote, setLockedNote] = useState<string | null>(null);   // Free で、Pro のものを押したときの案内
   useEffect(() => {
     setHintEnabled(getSettings().hint);
+    setPlan(planOf(getSettings().historyView));
   }, []);
 
   /* 練習の途中の状態を、タブを閉じるまで、保持する（ほかのタブへ移って戻っても、続きから） */
@@ -406,23 +412,43 @@ export default function SessionPage() {
               <span className="text-grad">誰の相談を、聴く？</span>
             </h1>
             <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
-              <Link href="/scenario/new" className="btn-ghost inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white/80" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.16)" }}>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                </svg>
-                シナリオを作成
-              </Link>
+              {plan === "free" ? (
+                <button
+                  type="button"
+                  onClick={() => setLockedNote("create")}
+                  className="btn-ghost inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white/55"
+                  style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.16)" }}
+                >
+                  シナリオを作成
+                  <span className="text-[12px] font-bold text-pink-200/90">🔒 Pro</span>
+                </button>
+              ) : (
+                <Link href="/scenario/new" className="btn-ghost inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white/80" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.16)" }}>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                  シナリオを作成
+                </Link>
+              )}
             </div>
           </div>
+
+          {lockedNote && (
+            <p className="mt-3 text-[13px] leading-relaxed text-pink-200">
+              {lockedNote === "create" ? "シナリオの作成は、Pro で利用できます。" : "Free で練習できるのは、田中 誠さんです。佐藤さん・鈴木さんは、Pro で練習できます。"}
+            </p>
+          )}
 
           {/* 相談者カード（PCでは画面の高さいっぱいに収める） */}
           <div className="fit-rows mt-4 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
             {scenarios.map((scenario, idx) => {
               const portrait = clients.find((c) => c.scenarioId === scenario.id)?.images?.idle ?? avatarSrc(scenario.avatar);
+              const locked = plan === "free" && !scenario.isCustom && !FREE_SCENARIO_IDS.includes(scenario.id);
               return (
                 <div key={scenario.id} className="reveal group/card relative min-h-0" style={{ ["--i" as string]: idx + 1 }}>
                   <button
-                    onClick={() => startSession(scenario)}
+                    onClick={() => (locked ? setLockedNote(scenario.id) : startSession(scenario))}
+                    aria-disabled={locked}
                     className="glass lift group flex h-full w-full min-w-0 flex-col overflow-hidden rounded-[28px] text-left"
                   >
                     <div className="relative aspect-[4/4.2] w-full overflow-hidden md:aspect-auto md:min-h-0 md:flex-1">
@@ -438,6 +464,14 @@ export default function SessionPage() {
                       <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-pink-400 to-fuchsia-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-lg shadow-fuchsia-500/30">
                         {scenario.title}
                       </div>
+                      {locked && (
+                        <>
+                          <div className="absolute inset-0 bg-[#14121f]/45" />
+                          <div className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-black/60 px-3 py-1.5 text-xs font-bold text-pink-200 backdrop-blur">
+                            🔒 Pro
+                          </div>
+                        </>
+                      )}
                       <div className="absolute inset-x-5 bottom-3">
                         <p className="text-2xl font-extrabold tracking-tight">{scenario.clientName}</p>
                         <p className="mt-0.5 text-xs text-white/65">{scenario.clientRole}</p>

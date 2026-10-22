@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QUIZ_GROUPS, QuizGroup, QuizQuestion } from "@/lib/quiz";
 import { trackQuiz } from "@/lib/track";
+import { getSettings, planOf, Plan } from "@/lib/settings";
 import { loadDefaultJapaneseParser } from "budoux";
 
 /* 1問1答クイズ。グループを選ぶ → 4択で答える → すぐに○×と考え方 → 結果 */
@@ -91,13 +92,15 @@ const runTitle = (r: Run) => `${r.group.title}${r.band !== null ? `・${r.group.
 
 export default function QuizPage() {
   const [progress, setProgress] = useState<ProgressMap>({});
+  const [plan, setPlan] = useState<Plan>("free");
+  const [lockedNote, setLockedNote] = useState<string | null>(null); // Free で、Pro の難易度を押したときの案内（グループID）
   const [run, setRun] = useState<Run | null>(null);
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);   // 表示上の位置
   const [results, setResults] = useState<{ q: QuizQuestion; ok: boolean }[]>([]);
   const feedbackRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setProgress(readProgress()); }, []);
+  useEffect(() => { setProgress(readProgress()); setPlan(planOf(getSettings().historyView)); }, []);
 
   const finished = run !== null && idx >= run.questions.length;
   const question = run && !finished ? run.questions[idx] : null;
@@ -173,26 +176,32 @@ export default function QuizPage() {
                     <div className="grid grid-cols-4 gap-2">
                       {g.bands.map((band, bi) => {
                         const bp = progress[`${g.id}#b${bi}`];
+                        const locked = plan === "free" && bi > 0; // Free は、初級（最初の25問）だけ
                         return (
                           <button
                             key={band.label}
-                            onClick={() => start(g, bi)}
-                            className="rounded-xl bg-white px-1 py-3 text-center text-black hover:bg-white/90"
+                            onClick={() => (locked ? setLockedNote(g.id) : start(g, bi))}
+                            aria-disabled={locked}
+                            className={`rounded-xl px-1 py-3 text-center ${locked ? "bg-white/[0.08] text-white/45 hover:bg-white/[0.12]" : "bg-white text-black hover:bg-white/90"}`}
                           >
                             <span className="block text-[14px] font-extrabold tracking-tight">{band.label}</span>
-                            <span className="mt-0.5 block text-[11px] font-semibold text-black/55">
-                              {bp ? `${bp.best.score}/${bp.best.total}` : "未挑戦"}
+                            <span className={`mt-0.5 block text-[11px] font-semibold ${locked ? "text-pink-200/80" : "text-black/55"}`}>
+                              {locked ? "🔒 Pro" : bp ? `${bp.best.score}/${bp.best.total}` : "未挑戦"}
                             </span>
                           </button>
                         );
                       })}
                     </div>
                     <button
-                      onClick={() => start(g, null)}
+                      onClick={() => (plan === "free" ? setLockedNote(g.id) : start(g, null))}
+                      aria-disabled={plan === "free"}
                       className="mt-2 w-full rounded-xl bg-white/10 px-4 py-3 text-[13px] font-bold text-white/90 hover:bg-white/15"
                     >
-                      全{g.questions.length}問に挑戦{progress[g.id] ? `（最高 ${progress[g.id].best.score} / ${progress[g.id].best.total}）` : ""}
+                      {plan === "free" ? `🔒 全${g.questions.length}問に挑戦（Pro）` : `全${g.questions.length}問に挑戦${progress[g.id] ? `（最高 ${progress[g.id].best.score} / ${progress[g.id].best.total}）` : ""}`}
                     </button>
+                    {lockedNote === g.id && (
+                      <p className="mt-2 text-[12px] leading-relaxed text-pink-200">Free で挑戦できるのは、初級（{BAND_SIZE}問）です。中級・上級・最上級と、全{g.questions.length}問は、Pro で挑戦できます。</p>
+                    )}
                   </div>
                 </div>
               );

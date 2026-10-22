@@ -8,6 +8,10 @@ export interface AppSettings {
 
 export type HistoryView = "basic" | "standard";
 
+/** プラン。いまは、ふりかえりの右上の切り替え（Free / Pro）が、そのまま、プランになる（決済は、まだない） */
+export type Plan = "free" | "pro";
+export const planOf = (v: HistoryView): Plan => (v === "standard" ? "pro" : "free");
+
 /** 音声入力の無音の長さ（短め・ふつう・長め） */
 export type VoiceWait = "short" | "normal" | "long" | "manual";
 export const VOICE_WAIT_OPTIONS: { value: VoiceWait; label: string; sub: string; ms: number }[] = [
@@ -24,7 +28,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   hint: true,
   voice: true,
   voiceWait: "normal",
-  historyView: "standard",
+  historyView: "basic",
 };
 
 export function getSettings(): AppSettings {
@@ -33,7 +37,7 @@ export function getSettings(): AppSettings {
     return {
       hint: typeof s.hint === "boolean" ? s.hint : DEFAULT_SETTINGS.hint,
       voice: typeof s.voice === "boolean" ? s.voice : DEFAULT_SETTINGS.voice,
-      historyView: s.historyView === "basic" ? "basic" : "standard",
+      historyView: s.historyView === "standard" ? "standard" : "basic",
       voiceWait: s.voiceWait === "short" || s.voiceWait === "long" || s.voiceWait === "manual" ? s.voiceWait : "normal",
     };
   } catch {

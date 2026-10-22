@@ -71,7 +71,7 @@ export default function HomePage() {
             </div>
 
             <p className="reveal" style={{ ...stagger(2), fontSize: 17, lineHeight: 1.9, color: V.ink2, margin: "28px 0 0", maxWidth: 460 }}>
-              AIの相談者を相手に面談を練習して、すぐに評価をもらえる。<br />
+              AIの相談者を相手に面談を練習して、<br className="sm:hidden" />すぐに評価をもらえる。<br className="hidden sm:inline" />
               クイズで、主訴の捉え方や見立ての考え方も学べます。
             </p>
 
@@ -79,8 +79,16 @@ export default function HomePage() {
             {challenge && tutorialStep === "done" && (
               <div className="reveal" style={{ ...stagger(3), marginTop: 22, maxWidth: 460 }}>
                 <OverallBar overall={overall} />
-                <div style={{ marginTop: 14, fontSize: 11, fontWeight: 700, color: "#8F8AA8" }}>今日のチャレンジ</div>
-                <div style={{ marginTop: 2, fontSize: 20, fontWeight: 800, color: "#F5F1FF", letterSpacing: "-0.01em" }}>{challenge.title}</div>
+                {/* 左: 今日のチャレンジ / 右: 練習をはじめるボタン */}
+                <div style={{ marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#8F8AA8" }}>今日のチャレンジ</div>
+                    <div style={{ marginTop: 2, fontSize: 20, fontWeight: 800, color: "#F5F1FF", letterSpacing: "-0.01em" }}>{challenge.title}</div>
+                  </div>
+                  <Link href="/session" className="btn-primary" style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", background: V.accent, color: "white", padding: "12px 20px", borderRadius: 999, fontWeight: 700, fontSize: 14, textDecoration: "none", boxShadow: V.accentShadow }}>
+                    練習をはじめる
+                  </Link>
+                </div>
               </div>
             )}
 
@@ -94,7 +102,8 @@ export default function HomePage() {
                     練習をはじめる
                   </Link>
                 </>
-              ) : (
+              ) : !(challenge && tutorialStep === "done") && (
+                // チュートリアルが済んだあとは、「練習をはじめる」は、今日のチャレンジの右隣にある
                 <Link href="/session" className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: V.accent, color: "white", padding: "16px 30px", borderRadius: 999, fontWeight: 700, fontSize: 16, textDecoration: "none", boxShadow: V.accentShadow }}>
                 練習をはじめる
                 </Link>

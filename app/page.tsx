@@ -1,6 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { SessionRecord } from "@/types";
+import { getChallenge, getOverall, Challenge } from "@/lib/skills";
+import OverallBar from "@/components/OverallBar";
 import { TALK_ENABLED } from "@/lib/features";
 
 /* ── デザイントークン ── */
@@ -30,6 +34,20 @@ const V = {
 export default function HomePage() {
   const stagger = (n: number) => ({ ["--i" as string]: n } as React.CSSProperties);
 
+  // 今日のチャレンジと、現在のレベル（端末内の記録から）
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [overall, setOverall] = useState<number | null>(null);
+  useEffect(() => {
+    try {
+      const records: SessionRecord[] = JSON.parse(localStorage.getItem("sessionHistory") ?? "[]");
+      const list = Array.isArray(records) ? records : [];
+      setChallenge(getChallenge(list));
+      setOverall(getOverall(list));
+    } catch {
+      setChallenge(getChallenge([]));
+    }
+  }, []);
+
   return (
     <main className="screen-minh rs-main" style={{ padding: "24px 32px 56px", display: "flex", alignItems: "center" }}>
       <div style={{ maxWidth: 1180, width: "100%", margin: "0 auto" }}>
@@ -52,7 +70,16 @@ export default function HomePage() {
               クイズで、主訴の捉え方や見立ての考え方も学べます。
             </p>
 
-            <div className="reveal" style={{ ...stagger(3), display: "flex", gap: 12, flexWrap: "wrap", marginTop: 32 }}>
+            {/* 今日のチャレンジ（意識することを一言で決めてから、練習をはじめる） */}
+            {challenge && (
+              <div className="reveal" style={{ ...stagger(3), marginTop: 22, maxWidth: 460 }}>
+                <OverallBar overall={overall} />
+                <div style={{ marginTop: 14, fontSize: 11, fontWeight: 700, color: "#8F8AA8" }}>今日のチャレンジ</div>
+                <div style={{ marginTop: 2, fontSize: 20, fontWeight: 800, color: "#F5F1FF", letterSpacing: "-0.01em" }}>{challenge.title}</div>
+              </div>
+            )}
+
+            <div className="reveal" style={{ ...stagger(3), display: "flex", gap: 12, flexWrap: "wrap", marginTop: 22 }}>
               <Link href="/session" className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: V.accent, color: "white", padding: "16px 30px", borderRadius: 999, fontWeight: 700, fontSize: 16, textDecoration: "none", boxShadow: V.accentShadow }}>
                 練習をはじめる
               </Link>

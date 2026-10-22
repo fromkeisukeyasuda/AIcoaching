@@ -5,6 +5,7 @@ import Link from "next/link";
 import { OralResult, ReflectionNotes, SessionRecord } from "@/types";
 import { ORAL_QUESTIONS } from "@/lib/oral";
 import { getSettings, saveSettings, HistoryView } from "@/lib/settings";
+import SkillDiagnosis from "@/components/SkillDiagnosis";
 
 /* ══════════════════════════════════════════════════════════════════════
    デザイントークン（v3）
@@ -165,7 +166,7 @@ function TextArea({ value, onChange, placeholder, rows = 3 }: { value: string; o
 }
 
 /** 口頭試問と面接官評価（口頭試問を受けた場合だけ） */
-function OralResultView({ oral }: { oral: OralResult }) {
+function OralResultView({ oral, basic = false }: { oral: OralResult; basic?: boolean }) {
   const meta = Object.fromEntries(ORAL_QUESTIONS.map((q) => [q.key, q])) as Record<string, (typeof ORAL_QUESTIONS)[number]>;
   const list = (items: string[], color: string) =>
     items.length > 0 && (
@@ -207,7 +208,8 @@ function OralResultView({ oral }: { oral: OralResult }) {
           )}
         </div>
 
-        {oral.items.map((it) => {
+        {/* ①できたこと 以降（5つの質問ごとの答えと講評）は、Standard だけで表示する */}
+        {!basic && oral.items.map((it) => {
           const m = meta[it.key];
           return (
             <div key={it.key} style={{ ...SHEET_BOX, padding: "14px 18px" }}>
@@ -409,7 +411,7 @@ function ReflectionSheetView({
       </section>
 
       {/* ── 口頭試問と面接官評価（受けた場合） ── */}
-      {record.oral && <OralResultView oral={record.oral} />}
+      {record.oral && <OralResultView oral={record.oral} basic={basic} />}
 
       {basic && !record.oral && (
         <p style={{ margin: 0, fontSize: 12.5, color: V.ink3, lineHeight: 1.8 }}>
@@ -725,6 +727,9 @@ export default function HistoryPage() {
             </span>
           </div>
         )}
+
+        {/* 面談スキルの診断（レーダー・強みと伸びしろ・次の一手） */}
+        {records.length > 0 && <SkillDiagnosis records={records} />}
 
         {/* 統計カード */}
         {records.length > 0 && (

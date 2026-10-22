@@ -22,6 +22,7 @@ export function useTextToSpeech() {
   const [enabled, setEnabled] = useState(true);
   const [speaking, setSpeaking] = useState(false);
   const [voiceBoxAvailable, setVoiceBoxAvailable] = useState(false);
+  const [checked, setChecked] = useState(false); // VOICEVOXの確認が終わったか（使えるかどうかに関わらず）
   const [speakerStyles, setSpeakerStyles] = useState<VoiceBoxSpeakerStyle[]>([]);
   const [selectedSpeakerId, setSelectedSpeakerId] = useState(3);
 
@@ -73,7 +74,7 @@ export function useTextToSpeech() {
         }
       })
       .catch(() => {})
-      .finally(() => readyRef.current?.resolve());
+      .finally(() => { readyRef.current?.resolve(); setChecked(true); });
 
     if (typeof window !== "undefined" && window.speechSynthesis) {
       const pick = () => {
@@ -242,7 +243,7 @@ export function useTextToSpeech() {
   }, [speaking, stop]);
 
   return {
-    enabled, speaking, voiceBoxAvailable,
+    enabled, speaking, voiceBoxAvailable, checked,
     speakerStyles, selectedSpeakerId, setSelectedSpeakerId,
     pushChunk, stop, toggle, unlock, setVoicePrefs,
   };

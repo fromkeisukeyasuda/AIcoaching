@@ -191,7 +191,7 @@ export default function MyPage() {
               if (confirm("すべての練習履歴・設定を削除しますか？この操作は取り消せません。")) {
                 try {
                   // 相談の会話・プロフィール・レベル（talk_ で始まるもの）と、練習の履歴・設定を、すべて消す
-                  const keys = ["sessionHistory", "coachingSession", "mypageSettings", "customScenarios", "rm_uid", "quizProgress"];
+                  const keys = ["sessionHistory", "coachingSession", "mypageSettings", "customScenarios", "rm_uid", "quizProgress", "tutorialProgress"];
                   for (let i = 0; i < localStorage.length; i++) {
                     const k = localStorage.key(i);
                     if (k?.startsWith("talk_")) keys.push(k);

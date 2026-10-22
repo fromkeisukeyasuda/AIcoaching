@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     .map((it, i) => `【${i + 1}】${it.question}\n答え: ${it.answer.trim() || "（無回答）"}\n点数: ${it.score ?? "—"}／講評: ${[it.headline, it.good, it.improve].filter(Boolean).join(" ")}`)
     .join("\n\n");
 
-  const prompt = `あなたは、キャリアコンサルティングの面接試験の面接官です。口頭試問（5問）が終わりました。各問の答えと講評をもとに、総評をまとめてください。
+  const prompt = `あなたは、キャリアコンサルティングの面接試験の面接官です。口頭試問（${items.length}問）が終わりました。各問の答えと講評をもとに、総評をまとめてください。
 
 【面談の相談者】${scenario.clientName}（${scenario.clientRole}）／${scenario.description}
 
@@ -30,7 +30,7 @@ ${body}
 - summary: 総評（3〜4文）。まず、良かった点を認め、そのあとに、課題を伝える
 - strengths: 強み（2〜3個。各1文）
 - improvements: 次に向けた課題（2〜3個。各1文。具体的に）
-- consistency: 5問（できたこと／改善点／主訴／見立て／今後の面談方針）が、一つの筋として、整合していたかの所見（1〜2文）
+- consistency: 答えが、一つの筋として、整合していたかの所見（1〜2文）。問いは、できたこと／改善点／主訴／見立て／今後の面談方針のうち、上の記録にあるものだけ
 - すべて日本語。Markdownは使わない
 
 次のJSON形式のみで返答してください（他のテキストは一切含めないこと）:

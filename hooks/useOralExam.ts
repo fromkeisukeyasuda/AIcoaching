@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Message, OralItem, OralResult, Scenario, SessionData } from "@/types";
-import { INTERVIEWER_VOICE_PREFS, ORAL_INTRO, ORAL_OUTRO, ORAL_QUESTIONS, spokenQuestion } from "@/lib/oral";
+import { INTERVIEWER_VOICE_PREFS, oralIntro, ORAL_OUTRO, ORAL_QUESTIONS, spokenQuestion } from "@/lib/oral";
 import { cacheEvaluation, cacheOral, fetchEvaluation, readHistory } from "@/lib/evalClient";
 
 export type OralPhase = "idle" | "confirm" | "oral" | "finishing" | "result";
@@ -43,8 +43,11 @@ export function useOralExam(opts: {
   startedAt: string | null;
   /** 口頭試問を受けないとき（「いいえ」・やめる）の、いつもの終了処理 */
   onSkip: () => void;
+  /** 質問の数（チュートリアルは、短く2問。指定がなければ、5問） */
+  questionCount?: number;
 }) {
   const { tts, scenario, messages, startedAt, onSkip } = opts;
+  const QUESTIONS = ORAL_QUESTIONS.slice(0, opts.questionCount ?? ORAL_QUESTIONS.length);
   const router = useRouter();
 
   const [phase, setPhase] = useState<OralPhase>("idle");
@@ -92,23 +95,24 @@ export function useOralExam(opts: {
     setResult(null);
     setReady(false);
 
-    const first = spokenQuestion(0);
+    const intro = oralIntro(QUESTIONS.length);
+    const first = spokenQuestion(0, QUESTIONS.length);
     setDialog([
-      { role: "assistant", content: ORAL_INTRO },
+      { role: "assistant", content: intro },
       { role: "assistant", content: first },
     ]);
     setStep(0);
     setPhase("oral");
-    speak(ORAL_INTRO);
+    speak(intro);
     speak(first);
-  }, [scenario, startedAt, messages, tts, speak]);
+  }, [scenario, startedAt, messages, tts, speak, QUESTIONS.length]);
 
   const finish = useCallback(async () => {
     const session = sessionRef.current;
     if (!session) return;
 
     const feedback = await Promise.all(feedbackRef.current);
-    const items: OralItem[] = ORAL_QUESTIONS.map((q, i) => ({
+    const items: OralItem[] = QUESTIONS.map((q, i) => ({
       key: q.key,
       question: q.text,
       answer: answersRef.current[i] ?? "",
@@ -144,7 +148,7 @@ export function useOralExam(opts: {
     setDialog((d) => [...d, { role: "assistant", content: message }]);
     setPhase("result");
     speak(message);
-  }, [speak]);
+  }, [speak, QUESTIONS]);
 
   /** 振り返りシートを見る（面談の評価が用意できてから） */
   const review = useCallback(() => {
@@ -160,7 +164,7 @@ export function useOralExam(opts: {
 
     tts.stop();
     const idx = step;
-    const q = ORAL_QUESTIONS[idx];
+    const q = QUESTIONS[idx];
     answersRef.current[idx] = answer;
 
     // 答えを、裏で採点しておく（試問が続く間に、終わる）
@@ -168,8 +172,8 @@ export function useOralExam(opts: {
       postJson<Feedback>("/api/oral", { scenario: session.scenario, messages: session.messages, key: q.key, question: q.text, answer })
     ).catch(() => ({ score: undefined, headline: undefined, good: undefined, improve: undefined }) as Feedback);
 
-    if (idx < ORAL_QUESTIONS.length - 1) {
-      const reply = "ありがとうございます。" + spokenQuestion(idx + 1);
+    if (idx < QUESTIONS.length - 1) {
+      const reply = "ありがとうございます。" + spokenQuestion(idx + 1, QUESTIONS.length);
       setDialog((d) => [...d, { role: "user", content: answer }, { role: "assistant", content: reply }]);
       setStep(idx + 1);
       speak(reply);
@@ -180,7 +184,7 @@ export function useOralExam(opts: {
       speak(ORAL_OUTRO);
       void finish();
     }
-  }, [phase, step, tts, speak, finish]);
+  }, [phase, step, tts, speak, finish, QUESTIONS]);
 
   /** 途中でやめて、いつもの終了処理へ */
   const cancel = useCallback(() => {
@@ -190,5 +194,5 @@ export function useOralExam(opts: {
     onSkip();
   }, [tts, onSkip]);
 
-  return { phase, dialog, step, result, ready, total: ORAL_QUESTIONS.length, openConfirm, decline, accept, submitAnswer, cancel, review };
+  return { phase, dialog, step, result, ready, total: QUESTIONS.length, openConfirm, decline, accept, submitAnswer, cancel, review };
 }

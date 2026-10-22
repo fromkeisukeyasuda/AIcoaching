@@ -584,6 +584,11 @@ function ReflectionSheetView({
           削除
         </button>
       </div>
+      {basic && (
+        <p style={{ margin: 0, fontSize: 12, color: V.ink3, lineHeight: 1.8, textAlign: "center" }}>
+          面談プロセス・発言ごとの評価・振り返りシートは、Standard で確認できます
+        </p>
+      )}
     </div>
   );
 }

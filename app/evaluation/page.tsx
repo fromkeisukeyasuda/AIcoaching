@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { EvaluationResult, SessionData, SessionRecord } from "@/types";
 import { MIN_EVAL_USER_MESSAGES } from "@/lib/scenarios";
 import { track } from "@/lib/track";
+import { getTutorial, saveTutorial } from "@/lib/tutorial";
 import { clearEvalCaches, fetchEvaluation, readCachedEvaluation, readCachedOral } from "@/lib/evalClient";
 
 /* 面談の終了後に、AIが評価と振り返りシートを作る待ち画面。
@@ -52,6 +53,8 @@ export default function EvaluationPage() {
       } catch { /* 容量超過などは無視。記録の画面には、保存できた分だけ出る */ }
       clearEvalCaches();
       track("eval", "practice");
+      // チュートリアルの面談なら、結果のステップへ戻る
+      if (getTutorial().session === record.id) { saveTutorial({ step: "result" }); router.replace("/tutorial"); return; }
       router.replace(`/history?open=${encodeURIComponent(record.id)}`);
     };
 

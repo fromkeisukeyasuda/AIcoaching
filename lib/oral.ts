@@ -23,13 +23,13 @@ export const ORAL_QUESTIONS: OralQuestion[] = [
 ];
 
 /** 面接官が読み上げる、質問の文（最初・最後の質問であることを添える） */
-export function spokenQuestion(i: number): string {
-  const lead = i === 0 ? "最初の質問です。" : i === ORAL_QUESTIONS.length - 1 ? "最後の質問です。" : "次の質問です。";
+export function spokenQuestion(i: number, total: number = ORAL_QUESTIONS.length): string {
+  const lead = i === 0 ? "最初の質問です。" : i === total - 1 ? "最後の質問です。" : "次の質問です。";
   return lead + ORAL_QUESTIONS[i].text;
 }
 
-export const ORAL_INTRO =
-  "これから、口頭試問を始めます。今回の面談について、5つの質問をします。落ち着いて、お答えください。";
+export const oralIntro = (n: number = ORAL_QUESTIONS.length) =>
+  `これから、口頭試問を始めます。今回の面談について、${n}つの質問をします。落ち着いて、お答えください。`;
 export const ORAL_OUTRO = "以上で、口頭試問を終わります。お疲れさまでした。評価をまとめますので、少しお待ちください。";
 
 /** 面接官の見た目と声 */

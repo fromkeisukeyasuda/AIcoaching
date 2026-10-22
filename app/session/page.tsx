@@ -17,6 +17,7 @@ import { avatarSrc, avatarVoicePrefs } from "@/lib/avatars";
 import { track } from "@/lib/track";
 import { useOralExam } from "@/hooks/useOralExam";
 import { INTERVIEWER_IMAGE, INTERVIEWER_NAME } from "@/lib/oral";
+import { MISSIONS, TUTORIAL_ORAL_QUESTIONS, TUTORIAL_SCENARIO_ID, saveTutorial } from "@/lib/tutorial";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
 /* ── カウンセリングLv（面談練習でコーチ役として話すほど上がる） ── */
@@ -117,6 +118,8 @@ export default function SessionPage() {
       if (!raw) return;
       const saved = JSON.parse(raw) as { scenario: Scenario; messages: Message[]; startedAt: string };
       if (!saved?.scenario || !Array.isArray(saved.messages) || saved.messages.length === 0) return;
+      // チュートリアルとして開いたときは、チュートリアルの面談だけを復元する（別の練習の途中は、使わない）
+      if (new URLSearchParams(window.location.search).get("tutorial") && saved.scenario.id !== TUTORIAL_SCENARIO_ID) { sessionStorage.removeItem(IN_PROGRESS_KEY); return; }
       startedRef.current = true;
       setSelectedScenario(saved.scenario);
       setMessages(saved.messages);
@@ -336,6 +339,27 @@ export default function SessionPage() {
     [streamResponse, tts]
   );
 
+  /* ── チュートリアル: ?tutorial=1 で開いたら、佐藤さんの面談を自動で始め、ミッションを1つずつ出す ── */
+  const [tutorial, setTutorial] = useState(false);
+  const [ttsWaited, setTtsWaited] = useState(false);
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).get("tutorial")) return;
+    setTutorial(true);
+    const timer = setTimeout(() => setTtsWaited(true), 6000); // 声の準備が遅くても、6秒で始める
+    return () => clearTimeout(timer);
+  }, []);
+  /* 声の準備（VOICEVOXの確認）が終わってから始める。ほかのモードと同じ声で、最初の一言から読み上げるため */
+  useEffect(() => {
+    if (!tutorial || startedRef.current || !(tts.checked || ttsWaited)) return;
+    const scenario = builtInScenarios.find((s) => s.id === TUTORIAL_SCENARIO_ID);
+    if (scenario) startSession(scenario);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tutorial, tts.checked, ttsWaited]);
+  /* チュートリアルの面談の ID（開始時刻）を覚えておく。評価のあと、結果の画面へ進めるため */
+  useEffect(() => {
+    if (tutorial && sessionStartTime) saveTutorial({ step: "practice", session: sessionStartTime });
+  }, [tutorial, sessionStartTime]);
+
   const sendMessage = () => {
     const text = input.trim();
     if (!text) return;
@@ -365,9 +389,10 @@ export default function SessionPage() {
   };
 
   const userMsgCount = messages.filter((m) => m.role === "user").length;
+  const spoken = Math.max(0, userMsgCount - 1); // 面談の最初に自動で送る、あいさつの分を除いた、あなたの発言の数
 
   /* 終了後の、口頭試問と面接官評価（「はい」を選んだとき） */
-  const oral = useOralExam({ tts, scenario: selectedScenario, messages, startedAt: sessionStartTime, onSkip: endWithoutOral });
+  const oral = useOralExam({ tts, scenario: selectedScenario, messages, startedAt: sessionStartTime, onSkip: endWithoutOral, questionCount: tutorial ? TUTORIAL_ORAL_QUESTIONS : undefined });
   oralRef.current = oral;
   const inOral = oral.phase === "oral" || oral.phase === "finishing" || oral.phase === "result";
   const locked = isLoading || isStarting || oral.phase === "finishing" || oral.phase === "result";
@@ -375,6 +400,7 @@ export default function SessionPage() {
 
   /* 評価に必要な会話があるときだけ、口頭試問を勧める。足りないときは、これまでどおり */
   const onEndClick = () => {
+    if (tutorial) { if (userMsgCount >= MIN_EVAL_USER_MESSAGES) oral.accept(); return; } // チュートリアルは、確認なしで、口頭試問へ
     if (userMsgCount >= MIN_EVAL_USER_MESSAGES) oral.openConfirm();
     else endWithoutOral();
   };
@@ -541,6 +567,22 @@ export default function SessionPage() {
           )}
         </div>
       </div>
+
+      {/* ── チュートリアルのミッション。あなたが1回話すたびに、次のミッションへ進む ── */}
+      {tutorial && !inOral && (
+        <div className="flex-shrink-0 border-b border-pink-300/20 bg-pink-400/10 px-4 py-2.5 md:px-5">
+          {spoken < MISSIONS.length ? (
+            <div className="min-w-0">
+              <p className="tnum text-[10.5px] font-bold text-pink-200">ミッション {spoken + 1} / {MISSIONS.length}</p>
+              <p className="text-[14px] font-extrabold leading-snug text-white">{MISSIONS[spoken].title}</p>
+              <p className="hidden text-[12px] leading-snug text-white/70 sm:block">{MISSIONS[spoken].detail}</p>
+              <p className="mt-0.5 text-[12px] leading-snug text-pink-100/90">例）{MISSIONS[spoken].example}</p>
+            </div>
+          ) : (
+            <p className="text-[13px] font-bold leading-snug text-white">ミッション完了です。右上の「終了」を押して、口頭試問へ進みましょう。</p>
+          )}
+        </div>
+      )}
 
       {/* ── 2カラム ── */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">

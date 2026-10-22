@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SessionRecord } from "@/types";
 import { getChallenge, getOverall, Challenge } from "@/lib/skills";
 import OverallBar from "@/components/OverallBar";
+import { getTutorial, TutorialStep } from "@/lib/tutorial";
 import { TALK_ENABLED } from "@/lib/features";
 
 /* ── デザイントークン ── */
@@ -37,12 +38,16 @@ export default function HomePage() {
   // 今日のチャレンジと、現在のレベル（端末内の記録から）
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [overall, setOverall] = useState<number | null>(null);
+  const [tutorialStep, setTutorialStep] = useState<TutorialStep | null>(null);
   useEffect(() => {
     try {
       const records: SessionRecord[] = JSON.parse(localStorage.getItem("sessionHistory") ?? "[]");
       const list = Array.isArray(records) ? records : [];
       setChallenge(getChallenge(list));
       setOverall(getOverall(list));
+      // すでに練習した人（チュートリアルを始めていない）は、チュートリアルを済んだものとして扱う
+      const tp = getTutorial().step;
+      setTutorialStep(tp === "welcome" && list.length > 0 ? "done" : tp);
     } catch {
       setChallenge(getChallenge([]));
     }
@@ -71,7 +76,7 @@ export default function HomePage() {
             </p>
 
             {/* 今日のチャレンジ（意識することを一言で決めてから、練習をはじめる） */}
-            {challenge && (
+            {challenge && tutorialStep === "done" && (
               <div className="reveal" style={{ ...stagger(3), marginTop: 22, maxWidth: 460 }}>
                 <OverallBar overall={overall} />
                 <div style={{ marginTop: 14, fontSize: 11, fontWeight: 700, color: "#8F8AA8" }}>今日のチャレンジ</div>
@@ -80,9 +85,20 @@ export default function HomePage() {
             )}
 
             <div className="reveal" style={{ ...stagger(3), display: "flex", gap: 12, flexWrap: "wrap", marginTop: 22 }}>
-              <Link href="/session" className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: V.accent, color: "white", padding: "16px 30px", borderRadius: 999, fontWeight: 700, fontSize: 16, textDecoration: "none", boxShadow: V.accentShadow }}>
+              {tutorialStep !== null && tutorialStep !== "done" ? (
+                <>
+                  <Link href="/tutorial" className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: V.accent, color: "white", padding: "16px 30px", borderRadius: 999, fontWeight: 700, fontSize: 16, textDecoration: "none", boxShadow: V.accentShadow }}>
+                    {tutorialStep === "welcome" ? "チュートリアルを始める" : "チュートリアルの続きから"}
+                  </Link>
+                  <Link href="/session" className="btn-ghost" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: V.ink2, padding: "16px 26px", borderRadius: 999, fontWeight: 600, fontSize: 15, textDecoration: "none", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.14)" }}>
+                    練習をはじめる
+                  </Link>
+                </>
+              ) : (
+                <Link href="/session" className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: V.accent, color: "white", padding: "16px 30px", borderRadius: 999, fontWeight: 700, fontSize: 16, textDecoration: "none", boxShadow: V.accentShadow }}>
                 練習をはじめる
-              </Link>
+                </Link>
+              )}
               {TALK_ENABLED && <Link href="/talk" className="btn-ghost" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: V.ink2, padding: "16px 26px", borderRadius: 999, fontWeight: 600, fontSize: 15, textDecoration: "none", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.14)" }}>
                 コーチに相談する
               </Link>}

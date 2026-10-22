@@ -640,12 +640,6 @@ export default function HistoryPage() {
     localStorage.setItem("sessionHistory", JSON.stringify(updated));
   };
 
-  const clearAll = () => {
-    if (!confirm("全ての練習記録を削除しますか？")) return;
-    setRecords([]);
-    localStorage.removeItem("sessionHistory");
-  };
-
   const avgScore = records.length > 0
     ? Math.round(records.reduce((s, r) => s + r.evaluation.overallScore, 0) / records.length) : 0;
 
@@ -673,72 +667,44 @@ export default function HistoryPage() {
     <div className="screen-minh" style={{ background: "transparent", fontFamily: V.sans }}>
 
       {/* ─── ページヘッダー ─── */}
-      <div className="rs-px reveal" style={{ padding: "32px 32px 0" }}>
+      <div className="rs-px reveal hist-head" style={{ padding: "12px 32px 0" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-          <div className="rs-wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 0" }}>
-            <div>
-              <h1 className="text-grad" style={{ fontSize: "clamp(30px, 4.4vw, 46px)", fontWeight: 800, margin: 0, letterSpacing: "-0.035em", lineHeight: 1.1 }}>
-                ふりかえり
-              </h1>
-              <div style={{ fontSize: 13, color: V.ink3, marginTop: 4 }}>
-                {records.length > 0
-                  ? `${records.length} セッションの練習記録`
-                  : "まだ記録がありません"}
-              </div>
-            </div>
-            <div className="rs-wrap" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "8px 0" }}>
+            <h1 className="text-grad" style={{ fontSize: "clamp(30px, 4.4vw, 46px)", fontWeight: 800, margin: 0, letterSpacing: "-0.035em", lineHeight: 1.1 }}>
+              ふりかえり
+            </h1>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               {streak > 0 && (
-                <div style={{ display: "flex", alignItems: "center", gap: 6, background: V.amberLt, color: V.amber, padding: "7px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600 }}>
+                <div className="rs-hide" style={{ display: "flex", alignItems: "center", gap: 6, background: V.amberLt, color: V.amber, padding: "7px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600 }}>
                   🔥 {streak} 回連続上昇中
                 </div>
               )}
               {records.length > 0 && (
-                <button
-                  onClick={clearAll}
-                  style={{ fontSize: 12, color: V.ink3, background: "transparent", border: `1px solid ${V.border}`, borderRadius: 10, padding: "8px 14px", cursor: "pointer", fontFamily: V.sans }}
-                >
-                  全て削除
-                </button>
+                <div role="radiogroup" aria-label="ふりかえりの表示" className="hist-view" style={{ display: "inline-flex", padding: 3, borderRadius: 999, background: "rgba(255,255,255,0.06)", border: `1px solid ${V.border}` }}>
+                  {([["basic", "Basic"], ["standard", "Standard"]] as const).map(([value, label]) => {
+                    const on = view === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() => changeView(value)}
+                        style={{ border: "none", cursor: "pointer", fontFamily: V.sans, fontSize: 12.5, fontWeight: 700, padding: "6px 16px", borderRadius: 999, background: on ? "rgba(255,255,255,0.92)" : "transparent", color: on ? "#1d1a2e" : V.ink2 }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
-              <Link
-                href="/session"
-                className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "12px 24px", background: V.accent, color: "white", borderRadius: 999, fontWeight: 700, fontSize: 13, textDecoration: "none", boxShadow: V.accentShadow }}
-              >
-                ▶ 練習を始める
-              </Link>
             </div>
           </div>
         </div>
       </div>
 
       {/* ─── コンテンツ ─── */}
-      <div className="rs-px" style={{ maxWidth: 1064, margin: "0 auto", padding: "24px 32px 40px" }}>
-
-        {/* 表示の切り替え（Basic: 基本情報と面接官評価だけ / Standard: すべて） */}
-        {records.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 14px", marginBottom: 16 }}>
-            <div role="radiogroup" aria-label="ふりかえりの表示" style={{ display: "inline-flex", padding: 3, borderRadius: 999, background: "rgba(255,255,255,0.06)", border: `1px solid ${V.border}` }}>
-              {([["basic", "Basic"], ["standard", "Standard"]] as const).map(([value, label]) => {
-                const on = view === value;
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => changeView(value)}
-                    style={{ border: "none", cursor: "pointer", fontFamily: V.sans, fontSize: 12.5, fontWeight: 700, padding: "7px 20px", borderRadius: 999, background: on ? "rgba(255,255,255,0.92)" : "transparent", color: on ? "#1d1a2e" : V.ink2 }}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-            <span style={{ fontSize: 12, color: V.ink3 }}>
-              {view === "basic" ? "基本情報と、面接官評価だけを表示します" : "発言ごとの評価・振り返りシートを含め、すべて表示します"}
-            </span>
-          </div>
-        )}
+      <div className="rs-px hist-body" style={{ maxWidth: 1064, margin: "0 auto", padding: "12px 32px 40px" }}>
 
         {/* 面談スキルの診断（レーダー・強みと伸びしろ・次の一手） */}
         {records.length > 0 && <SkillDiagnosis records={records} />}

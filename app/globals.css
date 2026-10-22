@@ -327,3 +327,25 @@ body > * { position: relative; z-index: 1; }
   .sheet-row { grid-template-columns: 1fr; gap: 8px; }
   .sheet-lab { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; color: #8F8AA8; margin-bottom: 1px; }
 }
+
+/* ふりかえり: スマホでは、「あなたの面談スキル」の枠が、スクロールなしで、全部、見えるように、まわりを詰める */
+@media (max-width: 640px) {
+  .hist-head { padding-top: 0 !important; }
+  .hist-head .rs-wrap { padding: 4px 0 !important; }
+  .hist-head h1 { font-size: 24px !important; }
+  .hist-actions { display: none !important; }
+  .hist-body { padding-top: 4px !important; }
+  .skill-card { padding: 12px 16px 10px !important; margin-bottom: 12px !important; }
+  .skill-card .skill-sub, .skill-card .skill-list, .skill-card .skill-hint, .skill-card .skill-tip { display: none !important; }
+  .skill-card .skill-bar { margin-bottom: 8px !important; }
+  .skill-card .skill-cols { gap: 6px !important; }
+  .skill-card svg { max-width: 270px !important; }
+  .skill-card .overall-legend { display: none !important; }
+  .skill-card h2 { font-size: 16px !important; }
+}
+
+/* 面談スキルの枠の格子: スマホは、1列（バー・強み伸びしろ・レーダー・チャレンジの順）。広い画面は、左右2列で、右の列の左右の端をそろえる */
+.skill-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; grid-template-areas: "bar" "sw" "radar" "side"; }
+@media (min-width: 641px) {
+  .skill-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; row-gap: 2px; align-items: start; grid-template-areas: "bar sw" "radar side"; }
+}

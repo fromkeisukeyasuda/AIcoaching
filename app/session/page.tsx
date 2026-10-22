@@ -10,7 +10,6 @@ import TypingIndicator from "@/components/TypingIndicator";
 import CharacterAvatar from "@/components/CharacterAvatar";
 import { clients } from "@/lib/coaches";
 import { voiceCredit } from "@/lib/voiceCredit";
-import { Counseling, addCounselingXp, getCounseling, xpNeeded, XP_PER_COACH_MESSAGE } from "@/lib/talkStore";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { getSettings } from "@/lib/settings";
 import { avatarSrc, avatarVoicePrefs } from "@/lib/avatars";
@@ -19,20 +18,6 @@ import { useOralExam } from "@/hooks/useOralExam";
 import { INTERVIEWER_IMAGE, INTERVIEWER_NAME } from "@/lib/oral";
 import { MISSIONS, TUTORIAL_ORAL_QUESTIONS, TUTORIAL_SCENARIO_ID, saveTutorial } from "@/lib/tutorial";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
-
-/* ── カウンセリングLv（面談練習でコーチ役として話すほど上がる） ── */
-function LevelBar({ c, flash = false }: { c: Counseling; flash?: boolean }) {
-  const pct = Math.min(100, (c.xp / xpNeeded(c.lv)) * 100);
-  return (
-    <div className={`flex w-full items-center gap-3 rounded-full bg-white/[0.06] px-4 py-2 text-xs transition-shadow ${flash ? "ring-2 ring-pink-300" : ""}`}>
-      <span className="tnum whitespace-nowrap font-bold text-pink-200">カウンセリング Lv.{c.lv}</span>
-      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
-        <div className="h-full rounded-full bg-gradient-to-r from-pink-400 to-fuchsia-500 transition-all duration-700" style={{ width: `${pct}%` }} />
-      </div>
-      <span className="tnum whitespace-nowrap text-white/45">{c.xp}/{xpNeeded(c.lv)}</span>
-    </div>
-  );
-}
 
 /* ── Sound wave bars ── */
 function SoundWave({ active }: { active: boolean }) {
@@ -93,8 +78,6 @@ export default function SessionPage() {
   const [sessionStartTime, setSessionStartTime] = useState<string | null>(null);
   const [customScenarios, setCustomScenarios] = useState<Scenario[]>([]);
   const [emotion, setEmotion] = useState("idle");
-  const [counseling, setCounseling] = useState<Counseling>({ lv: 1, xp: 0 });
-  const [levelFlash, setLevelFlash] = useState(false);
   const [hintEnabled, setHintEnabled] = useState(false);
   const [hintParts, setHintParts] = useState<{ label: string; text: string }[] | null>(null);
   const [hintLoading, setHintLoading] = useState(false);
@@ -168,7 +151,6 @@ export default function SessionPage() {
   };
 
   useEffect(() => {
-    setCounseling(getCounseling());
     const stored = localStorage.getItem("customScenarios");
     if (stored) setCustomScenarios(JSON.parse(stored));
   }, []);
@@ -269,13 +251,6 @@ export default function SessionPage() {
       const newMessages = [...messages, userMessage];
       setMessages(newMessages);
       setInput("");
-      /* コーチ役として話すたびに経験値 */
-      const { state, leveledUp } = addCounselingXp(XP_PER_COACH_MESSAGE);
-      setCounseling(state);
-      if (leveledUp) {
-        setLevelFlash(true);
-        setTimeout(() => setLevelFlash(false), 2500);
-      }
       if (textareaRef.current) textareaRef.current.style.height = "auto";
       setIsLoading(true);
       try {
@@ -431,7 +406,6 @@ export default function SessionPage() {
               <span className="text-grad">誰の相談を、聴く？</span>
             </h1>
             <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
-              <div className="min-w-[240px] flex-1 md:w-[280px] md:flex-none"><LevelBar c={counseling} /></div>
               <Link href="/scenario/new" className="btn-ghost inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white/80" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.16)" }}>
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -606,11 +580,9 @@ export default function SessionPage() {
           {/* 下部バー: 音声波形 + ステータス */}
           <div className="flex-shrink-0 flex flex-col items-center gap-1 md:gap-1.5 pb-2 md:pb-3 px-4">
             <div className="hidden md:block"><SoundWave active={tts.speaking && !isStarting} /></div>
-            {!inOral && <LevelBar c={counseling} flash={levelFlash} />}
             {tts.voiceBoxAvailable && tts.enabled && voiceName && (
               <p className="text-[10px] text-white/45">{voiceCredit(voiceName)}</p>
             )}
-            {levelFlash && <p className="text-center text-xs text-pink-200">レベルアップ。カウンセリング Lv.{counseling.lv}</p>}
             <div className={`h-4 items-center justify-center ${isStarting ? "flex" : "hidden md:flex"}`}>
               <p className="text-white/35 text-xs">
                 {isStarting ? "セッションを準備中..." : inOral ? "" : userMsgCount > 0 ? `${userMsgCount}往復` : ""}

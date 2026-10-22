@@ -189,7 +189,7 @@ function ResultStep({ index, onFinish }: { index: number; onFinish: () => void }
         <div className="mt-0.5 text-[20px] font-extrabold text-white">{challenge.title}</div>
       </div>
       {latest && (
-        <Link href={`/history?open=${encodeURIComponent(latest.id)}`} onClick={() => { saveTutorial({ step: "done" }); saveSettings({ historyView: "basic" }); }} className="mt-4 block rounded-xl bg-white/10 py-3 text-center text-[13.5px] font-semibold text-white/85 hover:bg-white/15">
+        <Link href={`/history?open=${encodeURIComponent(latest.id)}`} onClick={() => { saveTutorial({ step: "done" }); saveSettings({ historyView: "basic" }); }} /* チュートリアルのあとは、Free */ className="mt-4 block rounded-xl bg-white/10 py-3 text-center text-[13.5px] font-semibold text-white/85 hover:bg-white/15">
           振り返りシートを見る
         </Link>
       )}

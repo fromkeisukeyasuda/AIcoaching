@@ -28,7 +28,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   hint: true,
   voice: true,
   voiceWait: "normal",
-  historyView: "basic",
+  historyView: "standard",   // 初期状態は Pro（お試し期間）
 };
 
 export function getSettings(): AppSettings {
@@ -37,7 +37,7 @@ export function getSettings(): AppSettings {
     return {
       hint: typeof s.hint === "boolean" ? s.hint : DEFAULT_SETTINGS.hint,
       voice: typeof s.voice === "boolean" ? s.voice : DEFAULT_SETTINGS.voice,
-      historyView: s.historyView === "standard" ? "standard" : "basic",
+      historyView: s.historyView === "basic" ? "basic" : "standard",
       voiceWait: s.voiceWait === "short" || s.voiceWait === "long" || s.voiceWait === "manual" ? s.voiceWait : "normal",
     };
   } catch {

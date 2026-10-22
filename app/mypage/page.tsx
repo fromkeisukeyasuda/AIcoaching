@@ -63,7 +63,7 @@ export default function MyPage() {
   const [hint, setHint] = useState(true);
   const [voice, setVoice] = useState(true);
   const [voiceWait, setVoiceWait] = useState<VoiceWait>("normal");
-  const [plan, setPlan] = useState<HistoryView>("basic");   // basic = Free / standard = Pro
+  const [plan, setPlan] = useState<HistoryView>("standard");   // basic = Free / standard = Pro
   const [uid, setUid] = useState("");
 
   useEffect(() => {

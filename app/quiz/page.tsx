@@ -92,7 +92,7 @@ const runTitle = (r: Run) => `${r.group.title}${r.band !== null ? `・${r.group.
 
 export default function QuizPage() {
   const [progress, setProgress] = useState<ProgressMap>({});
-  const [plan, setPlan] = useState<Plan>("free");
+  const [plan, setPlan] = useState<Plan>("pro");
   const [lockedNote, setLockedNote] = useState<string | null>(null); // Free で、Pro の難易度を押したときの案内（グループID）
   const [run, setRun] = useState<Run | null>(null);
   const [idx, setIdx] = useState(0);

@@ -93,7 +93,7 @@ export default function SessionPage() {
   const sendWithTextRef = useRef<(text: string) => void>(() => {});
   const oralRef = useRef<{ phase: string; submitAnswer: (t: string) => void } | null>(null);
 
-  const [plan, setPlan] = useState<Plan>("free");
+  const [plan, setPlan] = useState<Plan>("pro");
   const [lockedNote, setLockedNote] = useState<string | null>(null);   // Free で、Pro のものを押したときの案内
   useEffect(() => {
     setHintEnabled(getSettings().hint);

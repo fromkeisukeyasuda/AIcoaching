@@ -604,7 +604,7 @@ export default function HistoryPage() {
   const [records, setRecords] = useState<SessionRecord[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [loaded, setLoaded] = useState(false);
-  const [view, setView] = useState<HistoryView>("basic"); // プランの切り替えは、マイページで行う
+  const [view, setView] = useState<HistoryView>("standard"); // プランの切り替えは、マイページで行う
 
 
   useEffect(() => {

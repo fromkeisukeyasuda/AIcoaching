@@ -25,7 +25,8 @@ interface Progress {
 }
 type ProgressMap = Record<string, Progress>;
 
-const COUNT_OPTIONS = [10, 25]; // 「全問」は、別に用意する
+const BAND_SIZE = 25; // 難易度（初級・中級・上級・最上級）ごとの問題数。問題は、先頭から25問ずつ区切る
+const bandQuestions = (g: QuizGroup, i: number) => g.questions.slice(i * BAND_SIZE, (i + 1) * BAND_SIZE);
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -77,18 +78,16 @@ function saveResult(groupId: string, score: number, total: number, askedIds: str
   writeProgress(all);
 }
 
-/** 出題する問題を選ぶ。まだ出していない問題を優先する */
-function pickQuestions(group: QuizGroup, count: number, seen: string[]): QuizQuestion[] {
-  const unseen = shuffle(group.questions.filter((q) => !seen.includes(q.id)));
-  const seenQs = shuffle(group.questions.filter((q) => seen.includes(q.id)));
-  return shuffle([...unseen, ...seenQs].slice(0, Math.min(count, group.questions.length)));
-}
-
 interface Run {
   group: QuizGroup;
   questions: QuizQuestion[];
   review: boolean;         // 間違えた問題の復習か（最高点には数えない）
+  band: number | null;     // 難易度の番号（null は、全問）
+  key: string;             // 成績の保存先（全問は、グループID。難易度は、グループID#b番号）
+  poolSize: number;        // その範囲の問題数
 }
+
+const runTitle = (r: Run) => `${r.group.title}${r.band !== null ? `・${r.group.bands[r.band]?.label ?? ""}` : ""}${r.review ? "（復習）" : ""}`;
 
 export default function QuizPage() {
   const [progress, setProgress] = useState<ProgressMap>({});
@@ -106,10 +105,11 @@ export default function QuizPage() {
   // 選択肢の並びを、問題ごとに入れ替える（表示上の位置 → 元の番号）
   const order = useMemo(() => (question ? shuffle(question.choices.map((_, i) => i)) : []), [question]);
 
-  /** count: 出題数（Infinity で全問）。only: 復習する問題 */
-  const start = (group: QuizGroup, count: number, only?: QuizQuestion[]) => {
-    const picked = only ? shuffle(only) : pickQuestions(group, count, readProgress()[group.id]?.seen ?? []);
-    setRun({ group, questions: picked, review: !!only });
+  /** band: 難易度の番号（null で全問）。only: 復習する問題 */
+  const start = (group: QuizGroup, band: number | null, only?: QuizQuestion[]) => {
+    const pool = band === null ? group.questions : bandQuestions(group, band);
+    const key = band === null ? group.id : `${group.id}#b${band}`;
+    setRun({ group, questions: shuffle(only ?? pool), review: !!only, band, key, poolSize: pool.length });
     setIdx(0);
     setPicked(null);
     setResults([]);
@@ -130,7 +130,7 @@ export default function QuizPage() {
     const last = idx + 1 >= run.questions.length;
     if (last) {
       const score = results.filter((r) => r.ok).length;
-      saveResult(run.group.id, score, run.questions.length, run.questions.map((q) => q.id), !run.review, run.group.questions.length);
+      saveResult(run.key, score, run.questions.length, run.questions.map((q) => q.id), !run.review, run.poolSize);
       setProgress(readProgress());
     }
     setIdx(idx + 1);
@@ -156,9 +156,6 @@ export default function QuizPage() {
 
           <div className="mt-4 grid gap-4 sm:mt-6 sm:grid-cols-2">
             {QUIZ_GROUPS.map((g, i) => {
-              const p = progress[g.id];
-              const counts = [...COUNT_OPTIONS.filter((n) => n < g.questions.length), g.questions.length];
-              const remaining = p ? g.questions.filter((q) => !p.seen.includes(q.id)).length : g.questions.length;
               return (
                 <div
                   key={g.id}
@@ -171,22 +168,31 @@ export default function QuizPage() {
                   </div>
                   <p className="mt-2.5 text-[13px] leading-relaxed text-white/60">{g.summary}</p>
                   <p className="mt-2 hidden rounded-xl bg-white/[0.05] px-3 py-2 text-[11.5px] sm:block leading-relaxed text-white/65">{g.point}</p>
-                  <p className="mt-4 text-[11.5px] text-white/50">
-                    {p ? `最高 ${p.best.score} / ${p.best.total}（${Math.round(rate(p.best) * 100)}%）　挑戦 ${p.plays}回　未出題 ${remaining}問` : "まだ挑戦していません"}
-                  </p>
                   <div className="mt-5">
-                    <p className="mb-2 text-[11px] font-bold text-white/45">何問にチャレンジしますか？</p>
-                    <div className="flex flex-wrap gap-2">
-                      {counts.map((n) => (
-                        <button
-                          key={n}
-                          onClick={() => start(g, n)}
-                          className="flex-1 rounded-xl bg-white px-4 py-3 text-[13px] font-bold text-black hover:bg-white/90"
-                        >
-                          {n === g.questions.length ? `全${n}問` : `${n}問`}
-                        </button>
-                      ))}
+                    <p className="mb-2 text-[11px] font-bold text-white/45">難易度を選んで、チャレンジ（各{BAND_SIZE}問。成績は、最高点）</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {g.bands.map((band, bi) => {
+                        const bp = progress[`${g.id}#b${bi}`];
+                        return (
+                          <button
+                            key={band.label}
+                            onClick={() => start(g, bi)}
+                            className="rounded-xl bg-white px-1 py-3 text-center text-black hover:bg-white/90"
+                          >
+                            <span className="block text-[14px] font-extrabold tracking-tight">{band.label}</span>
+                            <span className="mt-0.5 block text-[11px] font-semibold text-black/55">
+                              {bp ? `${bp.best.score}/${bp.best.total}` : "未挑戦"}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
+                    <button
+                      onClick={() => start(g, null)}
+                      className="mt-2 w-full rounded-xl bg-white/10 px-4 py-3 text-[13px] font-bold text-white/90 hover:bg-white/15"
+                    >
+                      全{g.questions.length}問に挑戦{progress[g.id] ? `（最高 ${progress[g.id].best.score} / ${progress[g.id].best.total}）` : ""}
+                    </button>
                   </div>
                 </div>
               );
@@ -211,7 +217,7 @@ export default function QuizPage() {
       <main className="screen-minh px-5 pb-10 pt-6 sm:px-8">
         <div className="mx-auto w-full max-w-[720px]">
           <div className="glass reveal rounded-[24px] p-7 text-center">
-            <p className="text-[12px] font-bold text-white/50">{run.group.title}{run.review ? "（復習）" : ""}</p>
+            <p className="text-[12px] font-bold text-white/50">{runTitle(run)}</p>
             <p className="mt-2 text-6xl font-extrabold text-white">
               {score}<span className="ml-1.5 text-2xl font-semibold text-white/45">/ {total}</span>
             </p>
@@ -231,12 +237,12 @@ export default function QuizPage() {
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             {wrong.length > 0 && (
-              <button onClick={() => start(run.group, wrong.length, wrong)} className="flex-1 rounded-xl bg-white py-3.5 text-sm font-bold text-black hover:bg-white/90">
+              <button onClick={() => start(run.group, run.band, wrong)} className="flex-1 rounded-xl bg-white py-3.5 text-sm font-bold text-black hover:bg-white/90">
                 間違えた{wrong.length}問を復習する
               </button>
             )}
-            <button onClick={() => start(run.group, run.questions.length)} className={`flex-1 rounded-xl py-3.5 text-sm font-bold ${wrong.length > 0 ? "bg-white/10 text-white/85 hover:bg-white/15" : "bg-white text-black hover:bg-white/90"}`}>
-              もう一度（新しい問題を優先します）
+            <button onClick={() => start(run.group, run.band)} className={`flex-1 rounded-xl py-3.5 text-sm font-bold ${wrong.length > 0 ? "bg-white/10 text-white/85 hover:bg-white/15" : "bg-white text-black hover:bg-white/90"}`}>
+              もう一度
             </button>
             <button onClick={backToGroups} className="flex-1 rounded-xl bg-white/10 py-3.5 text-sm font-semibold text-white/85 hover:bg-white/15">
               グループ選択へ
@@ -258,7 +264,7 @@ export default function QuizPage() {
       <div className="mx-auto w-full max-w-[760px]">
         <div className="flex items-center justify-between gap-3">
           <button onClick={backToGroups} className="text-[13px] font-semibold text-white/55 hover:text-white">← グループ選択</button>
-          <span className="text-[13px] font-bold text-white/70">{run.group.title}{run.review ? "（復習）" : ""}　{idx + 1} / {total}</span>
+          <span className="text-[13px] font-bold text-white/70">{runTitle(run)}　{idx + 1} / {total}</span>
         </div>
         <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
           <div className="h-full rounded-full bg-gradient-to-r from-pink-400 to-fuchsia-500 transition-all duration-300" style={{ width: `${((idx + (answered ? 1 : 0)) / total) * 100}%` }} />

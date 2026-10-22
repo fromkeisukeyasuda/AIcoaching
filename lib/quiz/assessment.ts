@@ -1,6 +1,8 @@
 import { QuizGroup, QuizQuestion } from "./types";
 import { assessmentMore1 } from "./assessment-more1";
 import { assessmentMore2 } from "./assessment-more2";
+import { assessmentAdv1 } from "./assessment-adv1";
+import { assessmentAdv2 } from "./assessment-adv2";
 
 /* グループ: 見立てを考える
    見立て ＝ 語られた事実を根拠にした、心理的な課題についての「仮説」。断定せず、専門的な視点で言葉にする。診断や治療は、医師などの領域
@@ -15,6 +17,14 @@ export const assessmentGroup: QuizGroup = {
     ...baseQuestions(),
     ...assessmentMore1,
     ...assessmentMore2,
+    ...assessmentAdv1,
+    ...assessmentAdv2,
+  ],
+  bands: [
+    { label: "初級", note: "基本の型" },
+    { label: "中級", note: "語りから読み取る" },
+    { label: "上級", note: "紛らわしい誤答・根拠の比べ方" },
+    { label: "最上級", note: "防衛機制・複数の仮説" },
   ],
 };
 

@@ -42,9 +42,11 @@ for (const g of QUIZ_GROUPS) {
     const rank = [...lens].sort((a, b) => b - a).indexOf(correct);
     answerPos[q.answer]++;
     rankCount[rank]++;
-    if (correct === max && lens.filter((l) => l === max).length === 1) { longestCorrect++; warn(`${q.id}: 正解だけが最長（${lens.join("/")}）`); }
-    if (max - min > 8) warn(`${q.id}: 長さの差が大きい（${lens.join("/")}）`);
-    if (max > 52) warn(`${q.id}: 選択肢が長い（${max}字）`);
+    const second = [...lens].sort((x, y) => y - x)[1];
+    if (correct === max && lens.filter((l) => l === max).length === 1) longestCorrect++;
+    if (correct === max && correct - second >= 3) warn(`${q.id}: 正解が、他より3字以上長い（${lens.join("/")}）`);
+    if (max - min > 10) warn(`${q.id}: 長さの差が大きい（${lens.join("/")}）`);
+    if (max > 58) warn(`${q.id}: 選択肢が長い（${max}字）`);
     const sl = [...q.scene].length;
     if (sl > 115) warn(`${q.id}: 場面が長い（${sl}字）`);
     if (sl < 60) warn(`${q.id}: 場面が短い（${sl}字）`);

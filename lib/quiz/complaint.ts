@@ -1,6 +1,8 @@
 import { QuizGroup, QuizQuestion } from "./types";
 import { complaintMore1 } from "./complaint-more1";
 import { complaintMore2 } from "./complaint-more2";
+import { complaintAdv1 } from "./complaint-adv1";
+import { complaintAdv2 } from "./complaint-adv2";
 
 /* グループ: 主訴を見抜く
    主訴 ＝ 客観的事実 ＋ 主観的な苦悩・葛藤。「どうしたい（依頼・手段）」や、語られていない背景の推測とは、分けて捉える
@@ -15,7 +17,16 @@ export const complaintGroup: QuizGroup = {
     ...baseQuestions(),
     ...complaintMore1,
     ...complaintMore2,
+    ...complaintAdv1,
+    ...complaintAdv2,
   ],
+  bands: [
+    { label: "初級", note: "基本の型" },
+    { label: "中級", note: "語りから読み取る" },
+    { label: "上級", note: "紛らわしい誤答・複数の悩み" },
+    { label: "最上級", note: "隠れた本音・板挟み" },
+  ],
+
 };
 
 /** 最初に作った6問（1〜6） */

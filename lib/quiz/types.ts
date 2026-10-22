@@ -14,6 +14,12 @@ export interface QuizQuestion {
   terms: QuizTerm[];   // 解説に出てくる専門用語
 }
 
+/** 難易度の区分。問題の並び順で、25問ずつ（初級・中級・上級・最上級） */
+export interface QuizBand {
+  label: string;
+  note: string;
+}
+
 export interface QuizGroup {
   id: string;
   title: string;        // グループ名（例: 主訴を見抜く）
@@ -21,4 +27,5 @@ export interface QuizGroup {
   point: string;        // このグループで身につけたい考え方
   prompt: string;       // 問いかけ（各問題の上に表示）
   questions: QuizQuestion[];
+  bands: QuizBand[];    // 難易度の区分（questions を、25問ずつ、先頭から順に区切る）
 }

@@ -19,7 +19,7 @@ export default function SkillRadar({ axes }: { axes: SkillAxis[] }) {
   const label = axes.map((a) => `${a.label} ${a.value ?? "未測定"}`).join("、");
 
   return (
-    <svg viewBox={`-40 18 ${SIZE + 80} ${SIZE - 20}`} role="img" aria-label={`面談スキルのレーダーチャート。${label}`} style={{ width: "100%", maxWidth: 380, display: "block", margin: "0 auto" }}>
+    <svg viewBox={`-32 18 ${SIZE + 64} ${SIZE - 20}`} role="img" aria-label={`面談スキルのレーダーチャート。${label}`} style={{ width: "100%", maxWidth: 380, display: "block", margin: "0 auto" }}>
       {/* 目盛り（25・50・75・100） */}
       {[25, 50, 75, 100].map((g) => (
         <path key={g} d={toPath(axes.map((_, i) => point(i, n, g)))} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth={1} />

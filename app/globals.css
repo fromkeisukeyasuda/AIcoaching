@@ -339,7 +339,7 @@ body > * { position: relative; z-index: 1; }
   .skill-card .skill-sub, .skill-card .skill-list, .skill-card .skill-hint, .skill-card .skill-tip { display: none !important; }
   .skill-card .skill-bar { margin-bottom: 8px !important; }
   .skill-card .skill-cols { gap: 6px !important; }
-  .skill-card svg { max-width: 270px !important; }
+  .skill-card svg { max-width: 100% !important; }
   .skill-card .overall-legend { display: none !important; }
   .skill-card h2 { font-size: 16px !important; }
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { OralResult, ReflectionNotes, SessionRecord } from "@/types";
 import { ORAL_QUESTIONS } from "@/lib/oral";
+import { getSettings, saveSettings, HistoryView } from "@/lib/settings";
 
 /* ══════════════════════════════════════════════════════════════════════
    デザイントークン（v3）
@@ -358,11 +359,12 @@ function UtteranceFeedbackView({
 
 /** 1件分の振り返りシート */
 function ReflectionSheetView({
-  record, onUpdate, onDelete,
+  record, onUpdate, onDelete, basic,
 }: {
   record: SessionRecord;
   onUpdate: (patch: Partial<SessionRecord>) => void;
   onDelete: () => void;
+  basic: boolean;   // Basic: 基本情報と面接官評価だけ
 }) {
   const sc = record.session.scenario;
   const ev = record.evaluation;
@@ -409,10 +411,16 @@ function ReflectionSheetView({
       {/* ── 口頭試問と面接官評価（受けた場合） ── */}
       {record.oral && <OralResultView oral={record.oral} />}
 
-      {/* ── 発言ごとの評価 ── */}
-      <UtteranceFeedbackView record={record} onUpdate={onUpdate} />
+      {basic && !record.oral && (
+        <p style={{ margin: 0, fontSize: 12.5, color: V.ink3, lineHeight: 1.8 }}>
+          このセッションは、口頭試問と面接官評価を受けていません。Standard に切り替えると、発言ごとの評価や振り返りシートを見られます。
+        </p>
+      )}
 
-      {!sheet ? (
+      {/* ── 発言ごとの評価 ── */}
+      {!basic && <UtteranceFeedbackView record={record} onUpdate={onUpdate} />}
+
+      {basic ? null : !sheet ? (
         <section style={{ ...SHEET_BOX, padding: "22px", textAlign: "center" }}>
           <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>このセッションの振り返りシートは、まだ作成されていません</div>
           <p style={{ margin: "0 0 14px", fontSize: 12.5, color: V.ink3, lineHeight: 1.8 }}>会話の記録から、面談プロセス・口頭試問の整合性・キークエスチョンを自動でまとめます。</p>
@@ -515,7 +523,7 @@ function ReflectionSheetView({
       )}
 
       {/* ── D. 総合得点・自己フィードバック ── */}
-      <section>
+      {!basic && <section>
         <SheetTitle badge="D" title="総合得点・自己フィードバック" />
         <div style={{ ...SHEET_BOX, padding: "16px 18px" }}>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: "14px 28px" }}>
@@ -565,10 +573,10 @@ function ReflectionSheetView({
             </div>
           )}
         </div>
-      </section>
+      </section>}
 
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <span style={{ fontSize: 11, color: V.ink3 }}>自己採点・テーマ・メモは、入力すると自動で保存されます</span>
+        {!basic && <span style={{ fontSize: 11, color: V.ink3 }}>自己採点・テーマ・メモは、入力すると自動で保存されます</span>}
         <div style={{ flex: 1 }} />
         <button onClick={onDelete} style={{ fontSize: 11, color: V.ink3, background: "transparent", border: `1px solid ${V.border}`, borderRadius: 999, padding: "7px 14px", cursor: "pointer", fontFamily: V.sans }}>
           削除
@@ -582,8 +590,12 @@ export default function HistoryPage() {
   const [records, setRecords] = useState<SessionRecord[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [loaded, setLoaded] = useState(false);
+  const [view, setView] = useState<HistoryView>("standard");
+
+  const changeView = (v: HistoryView) => { setView(v); saveSettings({ historyView: v }); };
 
   useEffect(() => {
+    setView(getSettings().historyView);
     const raw = localStorage.getItem("sessionHistory");
     if (raw) setRecords(JSON.parse(raw));
     // 面談の終了後は、できたばかりの記録を開いた状態で表示する
@@ -687,6 +699,32 @@ export default function HistoryPage() {
 
       {/* ─── コンテンツ ─── */}
       <div className="rs-px" style={{ maxWidth: 1064, margin: "0 auto", padding: "24px 32px 40px" }}>
+
+        {/* 表示の切り替え（Basic: 基本情報と面接官評価だけ / Standard: すべて） */}
+        {records.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 14px", marginBottom: 16 }}>
+            <div role="radiogroup" aria-label="ふりかえりの表示" style={{ display: "inline-flex", padding: 3, borderRadius: 999, background: "rgba(255,255,255,0.06)", border: `1px solid ${V.border}` }}>
+              {([["basic", "Basic"], ["standard", "Standard"]] as const).map(([value, label]) => {
+                const on = view === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => changeView(value)}
+                    style={{ border: "none", cursor: "pointer", fontFamily: V.sans, fontSize: 12.5, fontWeight: 700, padding: "7px 20px", borderRadius: 999, background: on ? "rgba(255,255,255,0.92)" : "transparent", color: on ? "#1d1a2e" : V.ink2 }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            <span style={{ fontSize: 12, color: V.ink3 }}>
+              {view === "basic" ? "基本情報と、面接官評価だけを表示します" : "発言ごとの評価・振り返りシートを含め、すべて表示します"}
+            </span>
+          </div>
+        )}
 
         {/* 統計カード */}
         {records.length > 0 && (
@@ -794,6 +832,7 @@ export default function HistoryPage() {
                       record={record}
                       onUpdate={(patch) => updateRecord(record.id, patch)}
                       onDelete={() => deleteRecord(record.id)}
+                      basic={view === "basic"}
                     />
                   )}
                 </div>

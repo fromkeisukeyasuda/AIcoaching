@@ -578,17 +578,24 @@ function ReflectionSheetView({
       </section>}
 
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        {!basic && <span style={{ fontSize: 11, color: V.ink3 }}>自己採点・テーマ・メモは、入力すると自動で保存されます</span>}
-        <div style={{ flex: 1 }} />
+        {basic ? (
+          <>
+            {/* 左に、削除ボタンと同じ幅の見えない枠を置いて、文を行の中央に揃える */}
+            <span aria-hidden style={{ visibility: "hidden", fontSize: 11, border: "1px solid transparent", padding: "7px 14px" }}>削除</span>
+            <span style={{ flex: 1, minWidth: 0, textAlign: "center", fontSize: 13.5, fontWeight: 700, color: "#F9A8D4", lineHeight: 1.6 }}>
+              面談プロセス・発言ごとの評価・振り返りシートは、Standard で確認できます
+            </span>
+          </>
+        ) : (
+          <>
+            <span style={{ fontSize: 11, color: V.ink3 }}>自己採点・テーマ・メモは、入力すると自動で保存されます</span>
+            <div style={{ flex: 1 }} />
+          </>
+        )}
         <button onClick={onDelete} style={{ fontSize: 11, color: V.ink3, background: "transparent", border: `1px solid ${V.border}`, borderRadius: 999, padding: "7px 14px", cursor: "pointer", fontFamily: V.sans }}>
           削除
         </button>
       </div>
-      {basic && (
-        <p style={{ margin: 0, fontSize: 12, color: V.ink3, lineHeight: 1.8, textAlign: "center" }}>
-          面談プロセス・発言ごとの評価・振り返りシートは、Standard で確認できます
-        </p>
-      )}
     </div>
   );
 }

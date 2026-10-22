@@ -154,7 +154,7 @@ export default function QuizPage() {
             <h1 className="text-grad text-[24px] font-extrabold leading-tight tracking-tight sm:text-4xl">クイズ</h1>
           </div>
 
-          <div className="mt-3 grid gap-3 sm:mt-6 sm:grid-cols-2 sm:gap-4">
+          <div className="mt-4 grid gap-4 sm:mt-6 sm:grid-cols-2">
             {QUIZ_GROUPS.map((g, i) => {
               const p = progress[g.id];
               const counts = [...COUNT_OPTIONS.filter((n) => n < g.questions.length), g.questions.length];
@@ -162,26 +162,26 @@ export default function QuizPage() {
               return (
                 <div
                   key={g.id}
-                  className="glass reveal flex flex-col rounded-[20px] p-4 sm:rounded-[24px] sm:p-6"
+                  className="glass reveal flex flex-col rounded-[22px] px-5 py-6 sm:rounded-[24px] sm:p-6"
                   style={{ ["--i" as string]: i + 1 }}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <h2 className="text-xl font-extrabold tracking-tight text-white">{g.title}</h2>
                     <span className="flex-shrink-0 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/70">全{g.questions.length}問</span>
                   </div>
-                  <p className="mt-1.5 text-[13px] text-white/60">{g.summary}</p>
+                  <p className="mt-2.5 text-[13px] leading-relaxed text-white/60">{g.summary}</p>
                   <p className="mt-2 hidden rounded-xl bg-white/[0.05] px-3 py-2 text-[11.5px] sm:block leading-relaxed text-white/65">{g.point}</p>
-                  <p className="mt-2 text-[11.5px] text-white/50">
+                  <p className="mt-4 text-[11.5px] text-white/50">
                     {p ? `最高 ${p.best.score} / ${p.best.total}（${Math.round(rate(p.best) * 100)}%）　挑戦 ${p.plays}回　未出題 ${remaining}問` : "まだ挑戦していません"}
                   </p>
-                  <div className="mt-2">
-                    <p className="mb-1 text-[11px] font-bold text-white/45">何問にチャレンジしますか？</p>
+                  <div className="mt-5">
+                    <p className="mb-2 text-[11px] font-bold text-white/45">何問にチャレンジしますか？</p>
                     <div className="flex flex-wrap gap-2">
                       {counts.map((n) => (
                         <button
                           key={n}
                           onClick={() => start(g, n)}
-                          className="flex-1 rounded-xl bg-white px-4 py-2 text-[13px] font-bold text-black hover:bg-white/90"
+                          className="flex-1 rounded-xl bg-white px-4 py-3 text-[13px] font-bold text-black hover:bg-white/90"
                         >
                           {n === g.questions.length ? `全${n}問` : `${n}問`}
                         </button>

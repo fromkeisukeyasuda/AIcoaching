@@ -121,7 +121,10 @@ export function computeSkills(records: SessionRecord[]): { axes: SkillAxis[]; ad
   let advice: SkillAdvice | null = null;
   if (measured.length > 0) {
     const weakest = measured.reduce((m, a) => (a.value < m.value ? a : m));
-    advice = { key: weakest.key, label: weakest.label, ...ADVICE[weakest.key] };
+    const base = ADVICE[weakest.key];
+    // 次回のチャレンジ: クイズで学ぶスキルは、そのクイズへ。面談で磨くスキルは、そのチャレンジを意識した面談へ
+    const cta = base.cta.href === "/quiz" ? base.cta : { label: `面談で「${CHALLENGES[weakest.key]}」に挑戦`, href: "/session" };
+    advice = { key: weakest.key, label: weakest.label, ...base, cta };
   }
   const unmeasured = axes.filter((a) => a.value === null).map((a) => a.label);
   const hint = unmeasured.length > 0

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { SessionRecord } from "@/types";
-import { computeSkills, getChallenge, getOverall } from "@/lib/skills";
+import { computeSkills, getOverall } from "@/lib/skills";
 import OverallBar from "@/components/OverallBar";
 import SkillRadar from "@/components/SkillRadar";
 
@@ -23,7 +23,6 @@ const T = {
 /** 面談スキルの診断カード。レーダー、強みと伸びしろ、次の一手を出す */
 export default function SkillDiagnosis({ records }: { records: SessionRecord[] }) {
   const { axes, advice, hint } = useMemo(() => computeSkills(records), [records]);
-  const challenge = useMemo(() => getChallenge(records), [records]);
   const overall = useMemo(() => getOverall(records), [records]);
   const measured = axes.filter((a) => a.value !== null) as (typeof axes[number] & { value: number })[];
   if (measured.length === 0) return null;
@@ -68,21 +67,16 @@ export default function SkillDiagnosis({ records }: { records: SessionRecord[] }
         <div style={{ gridArea: "side", minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
           {advice && (
             <div style={{ borderRadius: 16, padding: "10px 16px", background: "rgba(244,114,182,0.12)", border: "1px solid rgba(244,114,182,0.25)" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.pink, marginBottom: 2 }}>今日のチャレンジ</div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: T.navy, marginBottom: 4 }}>{challenge.title}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: T.pink, marginBottom: 2 }}>次回のチャレンジ</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: T.navy, marginBottom: 4 }}>{advice.cta.label}</div>
               <p className="skill-tip" style={{ margin: "0 0 8px", fontSize: 12.5, color: T.ink2, lineHeight: 1.8 }}>{advice.tip}</p>
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 14px" }}>
-                <Link
-                  href="/session"
-                  className="btn-primary"
-                  style={{ display: "inline-flex", alignItems: "center", padding: "9px 20px", background: T.accent, color: "white", borderRadius: 999, fontWeight: 700, fontSize: 12.5, textDecoration: "none", boxShadow: T.accentShadow }}
-                >
-                  練習をはじめる
-                </Link>
-                {advice.cta.href === "/quiz" && (
-                  <Link href="/quiz" style={{ fontSize: 12, fontWeight: 700, color: T.pink, textDecoration: "none" }}>{advice.cta.label}</Link>
-                )}
-              </div>
+              <Link
+                href={advice.cta.href}
+                className="btn-primary"
+                style={{ display: "inline-flex", alignItems: "center", padding: "9px 20px", background: T.accent, color: "white", borderRadius: 999, fontWeight: 700, fontSize: 12.5, textDecoration: "none", boxShadow: T.accentShadow }}
+              >
+                {advice.cta.href === "/quiz" ? "クイズに挑戦する" : "練習をはじめる"}
+              </Link>
             </div>
           )}
 

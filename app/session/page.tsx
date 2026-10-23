@@ -349,7 +349,13 @@ export default function SessionPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    if (e.key !== "Enter" || e.shiftKey) return;
+    // 日本語入力の変換を確定する Enter では、送信しない
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+    // スマホなど、タッチ操作の端末では、Enter（改行ボタン）は、改行にする。送信は、送信ボタンで行う
+    if (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches) return;
+    e.preventDefault();
+    sendMessage();
   };
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

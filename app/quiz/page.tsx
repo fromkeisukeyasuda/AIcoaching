@@ -59,6 +59,25 @@ function writeProgress(all: ProgressMap) {
   try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(all)); } catch { /* 保存できなくても、遊べる */ }
 }
 
+/* ───── 途中保存（localStorage）。ほかのタブへ移っても、アプリを閉じても、続きから再開できる ───── */
+const INPROGRESS_KEY = "quizInProgress";
+interface InProgress {
+  groupId: string;
+  band: number | null;
+  key: string;
+  review: boolean;
+  ids: string[];                       // 出題の順番
+  results: { id: string; ok: boolean }[];   // 答えた問題（先頭から、順に）
+}
+function readInProgress(): InProgress | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(INPROGRESS_KEY) ?? "null");
+    return v && typeof v.groupId === "string" && Array.isArray(v.ids) && Array.isArray(v.results) ? (v as InProgress) : null;
+  } catch { return null; }
+}
+const writeInProgress = (v: InProgress) => { try { localStorage.setItem(INPROGRESS_KEY, JSON.stringify(v)); } catch { /* 保存できなくても、遊べる */ } };
+const clearInProgress = () => { try { localStorage.removeItem(INPROGRESS_KEY); } catch { /* noop */ } };
+
 const rate = (s: Score) => (s.total ? s.score / s.total : 0);
 const rate_ = (score: number, total: number) => (total ? score / total : 0);
 
@@ -99,8 +118,17 @@ export default function QuizPage() {
   const [picked, setPicked] = useState<number | null>(null);   // 表示上の位置
   const [results, setResults] = useState<{ q: QuizQuestion; ok: boolean }[]>([]);
   const feedbackRef = useRef<HTMLDivElement>(null);
+  const [resume, setResume] = useState<InProgress | null>(null);   // 途中のクイズ
 
-  useEffect(() => { setProgress(readProgress()); setPlan(planOf(getSettings().historyView)); }, []);
+  useEffect(() => {
+    setProgress(readProgress());
+    setPlan(planOf(getSettings().historyView));
+    // 保存された、途中のクイズ。グループや問題が、いまのデータにないときは、捨てる
+    const saved = readInProgress();
+    const g = saved ? QUIZ_GROUPS.find((x) => x.id === saved.groupId) : undefined;
+    if (saved && g && saved.ids.every((id) => g.questions.some((q) => q.id === id)) && saved.results.length < saved.ids.length) setResume(saved);
+    else if (saved) clearInProgress();
+  }, []);
 
   const finished = run !== null && idx >= run.questions.length;
   const question = run && !finished ? run.questions[idx] : null;
@@ -112,19 +140,46 @@ export default function QuizPage() {
   const start = (group: QuizGroup, band: number | null, only?: QuizQuestion[]) => {
     const pool = band === null ? group.questions : bandQuestions(group, band);
     const key = band === null ? group.id : `${group.id}#b${band}`;
-    setRun({ group, questions: shuffle(only ?? pool), review: !!only, band, key, poolSize: pool.length });
+    const questions = shuffle(only ?? pool);
+    setRun({ group, questions, review: !!only, band, key, poolSize: pool.length });
     setIdx(0);
     setPicked(null);
     setResults([]);
+    setResume(null);
+    writeInProgress({ groupId: group.id, band, key, review: !!only, ids: questions.map((q) => q.id), results: [] });
     window.scrollTo({ top: 0 });
   };
+
+  /** 保存された、途中のクイズを、続きから始める */
+  const resumeRun = () => {
+    if (!resume) return;
+    const group = QUIZ_GROUPS.find((g) => g.id === resume.groupId);
+    if (!group) { clearInProgress(); setResume(null); return; }
+    const byId = new Map(group.questions.map((q) => [q.id, q]));
+    const questions = resume.ids.map((id) => byId.get(id)!).filter(Boolean);
+    const done = resume.results.filter((r) => byId.has(r.id)).map((r) => ({ q: byId.get(r.id)!, ok: r.ok }));
+    const poolSize = resume.band === null ? group.questions.length : bandQuestions(group, resume.band).length;
+    setRun({ group, questions, review: resume.review, band: resume.band, key: resume.key, poolSize });
+    setResults(done);
+    setIdx(done.length);
+    setPicked(null);
+    setResume(null);
+    window.scrollTo({ top: 0 });
+  };
+
+  const discardResume = () => { clearInProgress(); setResume(null); };
 
   const choose = (pos: number) => {
     if (!question || picked !== null) return;
     const ok = order[pos] === question.answer;
     setPicked(pos);
     trackQuiz(ok);
-    setResults((r) => [...r, { q: question, ok }]);
+    const nextResults = [...results, { q: question, ok }];
+    setResults(nextResults);
+    // 途中保存（最後の1問は、結果を見るまで、保存しない。続きから再開したとき、最後の問題から、やり直す）
+    if (run && nextResults.length < run.questions.length) {
+      writeInProgress({ groupId: run.group.id, band: run.band, key: run.key, review: run.review, ids: run.questions.map((q) => q.id), results: nextResults.map((r) => ({ id: r.q.id, ok: r.ok })) });
+    }
     setTimeout(() => feedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   };
 
@@ -135,6 +190,7 @@ export default function QuizPage() {
       const score = results.filter((r) => r.ok).length;
       saveResult(run.key, score, run.questions.length, run.questions.map((q) => q.id), !run.review, run.poolSize);
       setProgress(readProgress());
+      clearInProgress();
     }
     setIdx(idx + 1);
     setPicked(null);
@@ -142,6 +198,8 @@ export default function QuizPage() {
   };
 
   const backToGroups = () => {
+    const sv = readInProgress();   // 途中でグループ選択へ戻ったときは、続きから再開できるように、カードを出す
+    setResume(sv && sv.results.length < sv.ids.length ? sv : null);
     setRun(null);
     setIdx(0);
     setPicked(null);
@@ -156,6 +214,24 @@ export default function QuizPage() {
           <div className="reveal" style={{ ["--i" as string]: 0 }}>
             <h1 className="text-grad text-[24px] font-extrabold leading-tight tracking-tight sm:text-4xl">クイズ</h1>
           </div>
+
+          {resume && (() => {
+            const g = QUIZ_GROUPS.find((x) => x.id === resume.groupId);
+            if (!g) return null;
+            const label = `${g.title}${resume.band !== null ? `・${g.bands[resume.band]?.label ?? ""}` : ""}${resume.review ? "（復習）" : ""}`;
+            return (
+              <div className="glass mt-4 flex items-center justify-between gap-3 rounded-[18px] px-4 py-3 sm:mt-6">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-pink-200">途中のクイズがあります</p>
+                  <p className="truncate text-[14px] font-extrabold text-white">{label}　<span className="tnum text-[12px] font-semibold text-white/60">{resume.results.length} / {resume.ids.length}問</span></p>
+                </div>
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <button onClick={discardResume} className="rounded-full px-3 py-2 text-[12px] font-semibold text-white/55 hover:text-white">やめる</button>
+                  <button onClick={resumeRun} className="rounded-full bg-white px-4 py-2 text-[13px] font-bold text-black hover:bg-white/90">続きから</button>
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="mt-4 grid gap-4 sm:mt-6 sm:grid-cols-2">
             {QUIZ_GROUPS.map((g, i) => {

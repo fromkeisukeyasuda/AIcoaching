@@ -51,6 +51,22 @@ const NETWORK_ERROR =
   "① Windowsの設定 → プライバシー → マイクで「アプリのアクセスを許可」を確認\n" +
   "② chrome://settings/content/microphone でlocalhost が許可されているか確認";
 
+/** 認識結果をつなげる。Android の Chrome は、同じ文が、少しずつ伸びた形で、何度も届くことがある
+    （「今の」「今の仕事を」「今の仕事をやりたい」…）。前の結果で始まる結果は、前の結果を置き換え、重なる分は、足さない */
+export function joinResults(parts: string[]): string {
+  const segs: string[] = [];
+  for (const p of parts) {
+    if (!p) continue;
+    const last = segs[segs.length - 1];
+    if (last !== undefined) {
+      if (p.startsWith(last)) { segs[segs.length - 1] = p; continue; }   // 伸びた結果: 置き換える
+      if (last.startsWith(p) || last.endsWith(p)) continue;               // すでに含まれている結果: 足さない
+    }
+    segs.push(p);
+  }
+  return segs.join("");
+}
+
 function getSR(): ISpeechRecognitionCtor | null {
   if (typeof window === "undefined") return null;
   const w = window as Window & {
@@ -165,8 +181,9 @@ export function useVoiceInput(onResult: (text: string) => void, onInterim?: (tex
 
     r.onresult = (e: ISpeechRecognitionEvent) => {
       // 全部の結果をつなげる（確定した分も、認識中の分も）
-      let text = manualRef.current ? baseRef.current : "";
-      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+      const parts: string[] = manualRef.current && baseRef.current ? [baseRef.current] : [];
+      for (let i = 0; i < e.results.length; i++) parts.push(e.results[i][0].transcript);
+      const text = joinResults(parts);
       textRef.current = text;
       setErrorMsg("");
       onInterimRef.current?.(text);

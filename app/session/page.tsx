@@ -67,6 +67,7 @@ function detectEmotion(text: string): string {
 }
 
 const IN_PROGRESS_KEY = "sessionInProgress";
+const IN_PROGRESS_MAX_IDLE_MS = 30 * 60 * 1000;   // 最後の返答から30分以上、たっていたら、途中状態は使わず、最初から
 
 /** Free で練習できるシナリオ（ほかは、Pro）。田中 誠さんだけ */
 const FREE_SCENARIO_IDS = ["team-management"];
@@ -105,7 +106,9 @@ export default function SessionPage() {
     try {
       const raw = sessionStorage.getItem(IN_PROGRESS_KEY);
       if (!raw) return;
-      const saved = JSON.parse(raw) as { scenario: Scenario; messages: Message[]; startedAt: string };
+      const saved = JSON.parse(raw) as { scenario: Scenario; messages: Message[]; startedAt: string; savedAt?: number };
+      // 30分以上、放置されていたら、途中状態を捨てて、最初から（保存の時刻がない古い保存も、捨てる）
+      if (!saved?.savedAt || Date.now() - saved.savedAt > IN_PROGRESS_MAX_IDLE_MS) { sessionStorage.removeItem(IN_PROGRESS_KEY); return; }
       if (!saved?.scenario || !Array.isArray(saved.messages) || saved.messages.length === 0) return;
       // チュートリアルとして開いたときは、チュートリアルの面談だけを復元する（別の練習の途中は、使わない）
       if (new URLSearchParams(window.location.search).get("tutorial") && saved.scenario.id !== TUTORIAL_SCENARIO_ID) { sessionStorage.removeItem(IN_PROGRESS_KEY); return; }
@@ -126,7 +129,7 @@ export default function SessionPage() {
     if (!selectedScenario || !sessionStartTime || isLoading || isStarting || messages.length === 0) return;
     if (messages[messages.length - 1].content === "") return;
     try {
-      sessionStorage.setItem(IN_PROGRESS_KEY, JSON.stringify({ scenario: selectedScenario, messages, startedAt: sessionStartTime }));
+      sessionStorage.setItem(IN_PROGRESS_KEY, JSON.stringify({ scenario: selectedScenario, messages, startedAt: sessionStartTime, savedAt: Date.now() }));
     } catch { /* 保存できなくても、練習は続けられる */ }
   }, [selectedScenario, sessionStartTime, messages, isLoading, isStarting]);
 
